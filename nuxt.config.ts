@@ -5,6 +5,13 @@ export default defineNuxtConfig({
   devServer: {
     port: 5000,
   },
+  app: {
+    head: {
+      title: "Ñwed Nnyi&#x0323;n",
+      meta: [{ charset: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, { hid: "description", name: "description", content: "My cool Nuxt app" }],
+      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+    },
+  },
   modules: ["@nuxtjs/tailwindcss", "shadcn-nuxt"],
   shadcn: {
     /**

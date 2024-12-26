@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarShortcut, MenubarTrigger } from "@/components/ui/menubar";
+import LeftSideBar from "@/components/LeftSideBar.vue";
+import RightSideBar from "@/components/RightSideBar.vue";
+import routes from "../utils/routes";
 </script>
 
 <template>
@@ -8,16 +11,12 @@ import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, Me
 
     <section class="container mx-auto col-span-6">
       <Menubar>
-        <MenubarMenu>
-          <MenubarTrigger>Archives</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem> New Tab <MenubarShortcut>⌘T</MenubarShortcut> </MenubarItem>
-            <MenubarItem>New Window</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Print</MenubarItem>
-          </MenubarContent>
+        <MenubarMenu class="flex justify-between">
+          <MenubarTrigger>
+            <NuxtLink :to="routes.archive">Archives</NuxtLink>
+          </MenubarTrigger>
+          <NuxtLink :to="routes.dictionary.list">Dictionary</NuxtLink>
+          <MenubarTrigger>Stories</MenubarTrigger>
         </MenubarMenu>
       </Menubar>
       <main class="my-4">

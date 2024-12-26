@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "nwed-nyin",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,6 +15,7 @@
     "@vueuse/core": "^12.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.469.0",
     "nuxt": "^3.15.0",
     "radix-vue": "^1.9.11",
     "shadcn-nuxt": "0.11.3",
