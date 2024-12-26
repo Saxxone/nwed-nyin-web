@@ -1,7 +1,8 @@
 export interface Word {
   word: string;
+  alt_spelling: string;
   pronunciation: string;
-  partOfSpeech: string[];
+  part_of_speech: string[];
   definitions: Definition[];
   synonyms: string[];
   antonyms: string[];
