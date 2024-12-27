@@ -15,8 +15,8 @@ import routes from "../utils/routes";
           <MenubarTrigger>
             <NuxtLink :to="routes.archives.list">Archives</NuxtLink>
           </MenubarTrigger>
+
           <NuxtLink :to="routes.dictionary.list">Dictionary</NuxtLink>
-          <MenubarTrigger>Stories</MenubarTrigger>
         </MenubarMenu>
       </Menubar>
       <main class="my-4">
