@@ -14,6 +14,7 @@ const dictStore = useDictStore();
 
 onMounted(async () => {
   words.value = await dictStore.fetchWords();
+  console.log(words.value);
 });
 </script>
 
@@ -26,6 +27,6 @@ onMounted(async () => {
       </div>
     </div>
 
-    <Definition :word="word" v-for="word in words" :key="word.term" />
+    <Definition :word="word" v-for="word in words" :key="word.id" />
   </main>
 </template>

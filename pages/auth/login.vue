@@ -41,17 +41,7 @@ if (process.client)
   <div class="container h-dvh md:grid lg:grid-cols-12 mx-auto p-4">
     <div class="h-full bg-slate-900 rounded-lg flex-col p-6 text-white dark:border-r lg:flex lg:col-span-4">
       <div class="flex items-center text-lg font-medium">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          class="mr-2 h-6 w-6">
-          <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-        </svg>
+        <img src="/favicon-32x32.png" class="h-6 rounded-full mr-3" alt="nsibidi" />
         Ñwed Nnyi&#x0323;n
       </div>
       <div class="mt-auto">
@@ -70,7 +60,7 @@ if (process.client)
         <div class="max-w-96 mx-auto">
           <div class="text-center">
             <h1 class="text-2xl font-semibold tracking-tight">Create an account or Login</h1>
-            <p class="text-sm text-muted-foreground">Login or signup with </p>
+            <p class="text-sm text-muted-foreground">Login or signup with</p>
           </div>
           <div class="my-4">
             <div

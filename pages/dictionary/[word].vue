@@ -13,8 +13,10 @@ const word = ref<Word>();
 const route = useRoute();
 
 const dictStore = useDictStore();
-onBeforeMount(async () => {
+
+onMounted(async () => {
   word.value = await dictStore.fetchWord(route.params.word as string);
+  console.log(word.value);
 });
 </script>
 
