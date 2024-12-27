@@ -1,6 +1,16 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import Definition from "../../components/dictionary/Definition.vue";
+import { words } from "../../assets/data";
 
+definePageMeta({
+  title: "Nwed Nyin - Dictionary",
+  layout: "articles",
+});
+</script>
 
 <template>
-  
+  <main>
+    <h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
+    <Definition :word="word" v-for="word in words" :key="word.word" />
+  </main>
 </template>
