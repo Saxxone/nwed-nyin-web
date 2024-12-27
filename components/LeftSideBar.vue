@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "@/components/ui/sidebar";
+import { SidebarHeader } from "@/components/ui/sidebar";
 
 const items = [
   {
@@ -33,30 +33,6 @@ const items = [
 
 <template>
   <div>
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarContent>
-          <main>
-            <SidebarTrigger />
-          </main>
-          <SidebarHeader>Ñwed Nnyi&#x0323;n</SidebarHeader>
-          <SidebarGroup>
-            <SidebarGroupLabel>Links</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem :key="item.title" v-for="item in items">
-                  <SidebarMenuButton asChild>
-                    <a :href="item.url">
-                      <item.icon />
-                      <span>{{ item.title }}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
-    </SidebarProvider>
+    <SidebarHeader>Ñwed Nnyi&#x0323;n</SidebarHeader>
   </div>
 </template>

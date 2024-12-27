@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { Word } from "../../types/dictionary/word";
+import type { Word } from "~/types/word";
 
 interface Props {
   word: Word;
@@ -10,10 +10,10 @@ const props = defineProps<Props>();
 </script>
 
 <template>
-  <section class="border rounded-md p-4 text-sm word-wrap">
+  <section class="border rounded-md p-4 text-sm word-wrap mb-4">
     <h5 class="scroll-m-20 text-2xl flex items-end capitalize font-bold tracking-tight lg:text-xl">
-      <span class="block">{{ props.word.word }}</span>
-      <span class="text-gray-300 ml-3 font-medium block">({{ props.word.alt_spelling }})</span>
+      <span class="block">{{ props.word.term }}</span>
+      <span class="text-gray-500 ml-1 text-lg font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</span>
     </h5>
     <p class="mb-2">{{ props.word.pronunciation }}</p>
 
@@ -43,7 +43,7 @@ const props = defineProps<Props>();
         </div>
       </div>
 
-      <NuxtLink :to="`${routes.dictionary.view(props.word.word)}`" class="text-blue-500 text-xs" v-if="props.word.definitions.length > 0 && !props.more">see more</NuxtLink>
+      <NuxtLink :to="`${routes.dictionary.view(props.word.term)}`" class="text-blue-500 text-xs" v-if="props.word.definitions.length > 0 && !props.more">see more</NuxtLink>
     </div>
   </section>
 </template>

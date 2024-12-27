@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import Definition from "../../components/dictionary/Definition.vue";
-import { words } from "../../assets/data";
+import Definition from "@/components/dictionary/Definition.vue";
+import type { Word } from "@/types/word";
+import { useDictStore } from "@/store/dictionary";
 
 definePageMeta({
   title: "Nwed Nyin - Dictionary",
   layout: "articles",
 });
+
+const word = ref<Word>();
+
+const route = useRoute();
+
+const dictStore = useDictStore();
+onBeforeMount(async () => {
+  word.value = await dictStore.fetchWord(route.params.word as string);
+});
 </script>
 
 <template>
   <main>
-    <h1 class="text-4xl mb-4 font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
-    <Definition :word="word" v-for="word in words" :key="word.word" :more="true" />
+    <Definition v-if="word" :word="word" :more="true" />
   </main>
 </template>

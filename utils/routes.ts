@@ -1,4 +1,10 @@
 const routes = {
+  archives: {
+    list: "/archives",
+    view: (id: string) => `/archives/${id}`,
+    add: "/archives/add",
+    edit: (id: string) => `/archives/${id}/edit`,
+  },
   dictionary: {
     list: "/dictionary",
     add: "/dictionary/add",

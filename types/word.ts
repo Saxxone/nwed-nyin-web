@@ -1,6 +1,6 @@
 export interface Word {
-  word: string;
-  alt_spelling: string;
+  term: string;
+  alt_spelling?: string;
   pronunciation: string;
   definitions: Definition[];
   synonyms: string[];
