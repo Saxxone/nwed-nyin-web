@@ -3,6 +3,7 @@ import type { Word } from "../../types/dictionary/word";
 
 interface Props {
   word: Word;
+  more?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -17,28 +18,32 @@ const props = defineProps<Props>();
     <p class="mb-2">{{ props.word.pronunciation }}</p>
 
     <div>
-      <div v-for="definition in props.word.definitions" class="mb-4">
-        <p class="text-xs italic text-gray-600">{{ definition.part_of_speech }}</p>
-        <p>{{ definition.meaning }}</p>
-        <div class="my-1">
-          <h6 class="text-xs">Examples:</h6>
+      <div v-for="(definition, index) in props.word.definitions" class="mb-4">
+        <div v-if="props.more || index === 0">
+          <p class="text-xs italic text-gray-600">{{ definition.part_of_speech }}</p>
+          <p>{{ definition.meaning }}</p>
+          <div class="my-1">
+            <h6 class="text-xs">Examples:</h6>
+
+            <div>
+              <p v-for="example in definition.examples">{{ example }}</p>
+            </div>
+          </div>
+          <div>
+            <h6 class="text-xs">Synonyms:</h6>
+
+            <div>
+              <span v-for="synonym in props.word.synonyms" class="text-xs">{{ synonym }}, </span>
+            </div>
+          </div>
 
           <div>
-            <p v-for="example in definition.examples">{{ example }}</p>
+            <NuxtLink v-for="link in definition.links" :to="`${routes.dictionary.view(link.target)}`" class="text-blue-500 text-xs">{{ link.text }}</NuxtLink>
           </div>
-        </div>
-        <div>
-          <h6 class="text-xs">Synonyms:</h6>
-
-          <div>
-            <span v-for="synonym in props.word.synonyms" class="text-xs">{{ synonym }}, </span>
-          </div>
-        </div>
-
-        <div>
-          <NuxtLink v-for="link in definition.links" :to="`${routes.dictionary.view(link.target)}`" class="text-blue-500 text-xs">{{ link.text }}</NuxtLink>
         </div>
       </div>
+
+      <NuxtLink :to="`${routes.dictionary.view(props.word.word)}`" class="text-blue-500 text-xs" v-if="props.word.definitions.length > 0 && !props.more">see more</NuxtLink>
     </div>
   </section>
 </template>

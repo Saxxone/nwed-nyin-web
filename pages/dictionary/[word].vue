@@ -11,6 +11,6 @@ definePageMeta({
 <template>
   <main>
     <h1 class="text-4xl mb-4 font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
-    <Definition :word="word" v-for="word in words" :key="word.word" />
+    <Definition :word="word" v-for="word in words" :key="word.word" :more="true" />
   </main>
 </template>
