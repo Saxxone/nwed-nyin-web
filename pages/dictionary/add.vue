@@ -75,7 +75,27 @@ const definitions = [
     placeholder: "Synonyms",
   },
 ];
-
+const base_word = {
+  term: "",
+  pronunciation: "",
+  etymology: "",
+  definitions: [
+    {
+      part_of_speech: {
+        name: "",
+        id: "",
+      },
+      examples: [],
+      synonyms: [],
+      meaning: "",
+      id: "",
+      word_id: "",
+      antonyms: [],
+      order: null,
+    },
+  ],
+  alt_spelling: "",
+};
 const word = ref<Word>({
   term: "",
   pronunciation: "",
@@ -122,10 +142,14 @@ function removeDefinition(index: number) {
   word.value.definitions.splice(index, 1);
 }
 
-const onSubmit = (values: Event) => {
-  console.log("Form submitted!", values);
-  dictStore.makeWord(word.value);
-};
+async function onSubmit() {
+  try {
+    await dictStore.makeWord(word.value);
+    word.value = base_word;
+  } catch (error) {
+    alert(error);
+  }
+}
 
 onMounted(async () => {
   parts_of_speech.value = await dictStore.fetchPartsOfSpeech();
@@ -144,7 +168,6 @@ onMounted(async () => {
             :id="field.name"
             type="text"
             v-model="(word[field.name] as string)"
-            :pattern="field.validation ? field.validation.regex.toString() : undefined"
             :placeholder="field.placeholder" />
         </div>
       </div>
