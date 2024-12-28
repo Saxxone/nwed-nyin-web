@@ -205,7 +205,11 @@ onMounted(async () => {
                 class="mb-4" />
               <div v-if="definition.name === 'examples'">
                 <div v-for="(example, exampleIndex) in word.definitions[definitionIndex].examples" class="flex items-center mb-2">
-                  <Input type="text" v-model="word.definitions[definitionIndex].examples[exampleIndex].sentence" placeholder="Example sentence" class="mb-4 mr-2" />
+                  <input
+                    type="text"
+                    v-model="word.definitions[definitionIndex].examples[exampleIndex].sentence"
+                    placeholder="Example sentence"
+                    class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4 mr-2" />
                   <button type="button" class="text-red-500 hover:text-red-700" @click="word.definitions[definitionIndex].examples.splice(exampleIndex, 1)">Remove</button>
                 </div>
                 <Button
@@ -230,7 +234,11 @@ onMounted(async () => {
               </div>
               <div v-if="definition.name === 'synonyms'">
                 <div v-for="(synonym, synonymIndex) in word.definitions[definitionIndex].synonyms" class="flex items-center mb-2">
-                  <Input type="text" v-model="word.definitions[definitionIndex].synonyms[synonymIndex].synonym" placeholder="Synonym" class="mb-4 mr-2" />
+                  <input
+                    class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4 mr-2"
+                    type="text"
+                    v-model="word.definitions[definitionIndex].synonyms[synonymIndex].synonym"
+                    placeholder="Synonym" />
                   <button type="button" class="text-red-500 hover:text-red-700" @click="word.definitions[definitionIndex].synonyms.splice(synonymIndex, 1)">Remove</button>
                 </div>
                 <Button
