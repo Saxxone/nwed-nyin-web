@@ -2,32 +2,34 @@ import type { DateString } from "./types";
 import type { User } from "@/types/user";
 
 export interface Word {
-  id: string;
+  id?: string;
   term: string;
-  pronunciation: string | null;
-  etymology: string | null;
+  pronunciation?: string | null;
+  etymology?: string | null;
   alt_spelling: string | null;
-  created_at: DateString;
-  updated_at: DateString;
-  deleted_at: DateString | null;
+  created_at?: DateString;
+  updated_at?: DateString;
+  deleted_at?: DateString | null;
   definitions: Definition[];
-  contributors: User[];
-  related_from: WordRelation[];
-  related_to: WordRelation[];
+  contributors?: User[];
+  related_from?: WordRelation[];
+  related_to?: WordRelation[];
+  [key: string]: any;
 }
 
 export interface Definition {
-  id: string;
-  word_id: string;
-  part_of_speech_id: string;
+  id?: string;
+  word_id?: string;
+  part_of_speech_id?: string;
   meaning: string;
   order: null | number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
   part_of_speech: PartOfSpeech;
   examples: Example[];
   synonyms: Synonym[];
   antonyms: Antonym[];
+  [key: string]: any;
 }
 
 export interface PartOfSpeech {
@@ -36,22 +38,22 @@ export interface PartOfSpeech {
 }
 
 export interface Example {
-  id: string;
-  definition_id: string;
+  id?: string;
+  definition_id?: string;
   sentence: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Synonym {
-  id: string;
-  definition_id: string;
+  id?: string;
+  definition_id?: string;
   synonym: string;
 }
 
 export interface Antonym {
-  id: string;
-  definition_id: string;
+  id?: string;
+  definition_id?: string;
   antonym: string;
 }
 

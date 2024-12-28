@@ -1,7 +1,15 @@
 <script setup lang="ts">
+import app_routes from "~/utils/routes";
+
 definePageMeta({
   title: "Nwed Nyin",
   layout: "articles",
+});
+
+const router = useRouter();
+
+onBeforeMount(() => {
+  router.push(app_routes.dictionary.list);
 });
 </script>
 

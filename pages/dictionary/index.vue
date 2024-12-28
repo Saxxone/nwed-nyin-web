@@ -4,7 +4,7 @@ import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
 
 definePageMeta({
-  title: "Nwed Nyin - Dictionary",
+  title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Dictionary",
   layout: "articles",
 });
 

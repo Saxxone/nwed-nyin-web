@@ -1,6 +1,6 @@
 import { FetchMethod } from "~/types/types";
 import api_routes from "~/utils/api-routes";
-import type { Word } from "~/types/word";
+import type { PartOfSpeech, Word } from "~/types/word";
 import type { Pagination } from "~/types/types";
 
 export const useDictStore = defineStore("dict", () => {
@@ -41,8 +41,40 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
+  async function fetchPartsOfSpeech() {
+    try {
+      const response = await useApiConnect<null, PartOfSpeech[]>(api_routes.dictionary.parts_of_speech, FetchMethod.GET);
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
+      console.error("Error fetching words:", error);
+      throw error;
+    }
+  }
+
+  async function makeWord(word: Word) {
+    try {
+      const response = await useApiConnect<Word, Word>(api_routes.dictionary.add, FetchMethod.POST, word);
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
+      console.error("Error fetching words:", error);
+      throw error;
+    }
+  }
+
   return {
     fetchWords,
     fetchWord,
+    makeWord,
+    fetchPartsOfSpeech,
   };
 });

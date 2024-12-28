@@ -4,7 +4,7 @@ import type { Word } from "@/types/word";
 import { useDictStore } from "@/store/dictionary";
 
 definePageMeta({
-  title: "Nwed Nyin - Dictionary",
+  title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Dictionary",
   layout: "articles",
 });
 
