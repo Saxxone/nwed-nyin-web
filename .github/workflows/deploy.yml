@@ -16,7 +16,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/repositories/nwed-nyin-web
-            git pull origin main
+            git pull origin master
+            
             npm i
             npm run generate
             pm2 restart nwed-nyin-web
