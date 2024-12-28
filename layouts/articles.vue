@@ -9,7 +9,7 @@ import routes from "../utils/routes";
   <div class="grid grid-cols-12 gap-4 py-4">
     <LeftSideBar class="col-span-2 hidden lg:block" />
 
-    <section class="container mx-auto lg:col-span-8">
+    <section class="container mx-auto col-span-12 lg:col-span-8">
       <Menubar>
         <MenubarMenu class="flex justify-between">
           <MenubarTrigger>
