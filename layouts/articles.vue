@@ -17,7 +17,7 @@ const pages = [
 </script>
 
 <template>
-  <div class="grid grid-cols-12 gap-4 py-4">
+  <div class="grid grid-cols-12 py-4">
     <LeftSideBar class="col-span-2 hidden lg:block" />
 
     <section class="container mx-auto col-span-12 lg:col-span-8">
