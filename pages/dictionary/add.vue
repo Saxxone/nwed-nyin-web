@@ -33,9 +33,6 @@ const form_fields = [
     name: "pronunciation",
     label: "Pronunciation (/pronunciation/)",
     type: "text",
-    validation: {
-      regex: /^\/.*\/$/,
-    },
     placeholder: "Pronunciation in phonemic transcription (/pronunciation/)",
   },
   {
