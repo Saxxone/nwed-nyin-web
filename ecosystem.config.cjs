@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "nwed-nyin",
+      name: "nwed-nyin-web",
       script: "node .output/server/index.mjs",
       port: 4000,
       cwd: "./",
