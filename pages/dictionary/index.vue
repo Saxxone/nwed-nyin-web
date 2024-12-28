@@ -21,10 +21,10 @@ onMounted(async () => {
 
 <template>
   <main>
-    <div class="flex items-center justify-between">
+    <div class="flex items-start justify-between">
       <h1 class="text-4xl mb-4 font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
 
-      <NuxtLink :to="app_routes.dictionary.add" class="text-underline">Contribute</NuxtLink>
+      <NuxtLink :to="app_routes.dictionary.add">Contribute</NuxtLink>
     </div>
     <div class="flex justify-end gap-4">
       <div class="">

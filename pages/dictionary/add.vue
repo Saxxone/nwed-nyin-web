@@ -152,9 +152,14 @@ onMounted(async () => {
           <div class="rounded border p-4 mb-4" v-for="(d, definitionIndex) in word.definitions">
             <div class="flex relative mb-2">
               <div
+                v-if="word.definitions.length > 1"
                 @click="removeDefinition(definitionIndex)"
-                class="hover:text-red-700 cursor-pointer -top-5 rounded-full leading-none w-6 h-6 bg-gray-200 flex items-center justify-center absolute -right-6">
-                x
+                class="hover:text-red-700 hover:bg-red-100 cursor-pointer -top-6 rounded-full leading-none w-6 h-6 bg-gray-200 flex items-center justify-center absolute -right-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="m13.41 12l4.3-4.29a1 1 0 1 0-1.42-1.42L12 10.59l-4.29-4.3a1 1 0 0 0-1.42 1.42l4.3 4.29l-4.3 4.29a1 1 0 0 0 0 1.42a1 1 0 0 0 1.42 0l4.29-4.3l4.29 4.3a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.42Z" />
+                </svg>
               </div>
               <div class="inline-flex w-4 h-4 bg-slate-200 -top-3 absolute rounded-full mr-2 text-xs items-center justify-center text-center">
                 {{ definitionIndex + 1 }}
