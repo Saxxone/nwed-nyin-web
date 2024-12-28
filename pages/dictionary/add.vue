@@ -31,9 +31,12 @@ const form_fields = [
   },
   {
     name: "pronunciation",
-    label: "Pronunciation",
+    label: "Pronunciation (/pronunciation/)",
     type: "text",
-    placeholder: "Pronunciation",
+    validation: {
+      regex: /^\/.*\/$/,
+    },
+    placeholder: "Pronunciation in phonemic transcription (/pronunciation/)",
   },
   {
     name: "alt_spelling",
@@ -139,7 +142,13 @@ onMounted(async () => {
         <h2 class="mb-4 text-2xl font-medium tracking-tight">Word</h2>
         <div :name="field.label" v-for="field in form_fields" class="mb-4">
           <label :for="field.name">{{ field.label }}</label>
-          <Input :id="field.name" type="text" v-model="(word[field.name] as string)" :placeholder="field.placeholder" class="mb-4" />
+          <input
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4"
+            :id="field.name"
+            type="text"
+            v-model="(word[field.name] as string)"
+            :pattern="field.validation ? field.validation.regex.toString() : undefined"
+            :placeholder="field.placeholder" />
         </div>
       </div>
       <div class="col-span-12 md:col-span-8">
@@ -198,10 +207,6 @@ onMounted(async () => {
                     {{ part_of_speech.name }}
                   </option>
                 </select>
-                <div v-for="(example, exampleIndex) in word.definitions[definitionIndex].examples" class="flex items-center mb-2">
-                  <Input type="text" v-model="word.definitions[definitionIndex].examples[exampleIndex].sentence" placeholder="Example sentence" class="mb-4 mr-2" />
-                  <button type="button" class="text-red-500 hover:text-red-700" @click="word.definitions[definitionIndex].examples.splice(exampleIndex, 1)">Remove</button>
-                </div>
               </div>
               <div v-if="definition.name === 'synonyms'">
                 <div v-for="(synonym, synonymIndex) in word.definitions[definitionIndex].synonyms" class="flex items-center mb-2">
