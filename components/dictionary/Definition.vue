@@ -15,7 +15,7 @@ const props = defineProps<Props>();
       <span class="block">{{ props.word.term }}</span>
       <span class="text-gray-500 ml-1 text-lg font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</span>
     </h5>
-    <p class="mb-2 font-mono text-xs">/{{ props.word.pronunciation }}/</p>
+    <p class="mb-2 font-mono text-xs">{{ props.word.pronunciation }}</p>
 
     <div>
       <div v-for="(definition, index) in props.word.definitions" class="mb-4">
