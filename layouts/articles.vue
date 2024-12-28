@@ -3,6 +3,17 @@ import { Menubar, MenubarMenu, MenubarTrigger } from "@/components/ui/menubar";
 import LeftSideBar from "@/components/LeftSideBar.vue";
 import RightSideBar from "@/components/RightSideBar.vue";
 import routes from "../utils/routes";
+
+const pages = [
+  {
+    name: "Dictionary",
+    route: routes.dictionary.list,
+  },
+  {
+    name: "Archives",
+    route: routes.archives.list,
+  },
+];
 </script>
 
 <template>
@@ -12,11 +23,7 @@ import routes from "../utils/routes";
     <section class="container mx-auto col-span-12 lg:col-span-8">
       <Menubar>
         <MenubarMenu class="flex justify-between">
-          <MenubarTrigger>
-            <NuxtLink :to="routes.archives.list">Archives</NuxtLink>
-          </MenubarTrigger>
-
-          <NuxtLink :to="routes.dictionary.list">Dictionary</NuxtLink>
+          <NuxtLink :to="page.route" v-for="page in pages" :key="page.name" class="px-2">{{ page.name }}</NuxtLink>
         </MenubarMenu>
       </Menubar>
       <main class="my-4">

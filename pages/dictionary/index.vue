@@ -2,6 +2,7 @@
 import type { Word } from "~/types/word";
 import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
+import app_routes from "~/utils/routes";
 
 definePageMeta({
   title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Dictionary",
@@ -20,7 +21,11 @@ onMounted(async () => {
 
 <template>
   <main>
-    <h1 class="text-4xl mb-4 font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
+    <div class="flex items-center justify-between">
+      <h1 class="text-4xl mb-4 font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
+
+      <NuxtLink :to="app_routes.dictionary.add" class="text-underline">Contribute</NuxtLink>
+    </div>
     <div class="flex justify-end gap-4">
       <div class="">
         <Input type="search" v-model="query" placeholder="Search..." class="mb-4" />
