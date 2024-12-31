@@ -83,10 +83,16 @@ definePageMeta({
     </div>
     <div class="flex justify-end gap-4 z-20 relative">
       <div class="">
-        <input class="input" type="search" v-model="query" placeholder="Search..." />
+        <form @submit.prevent="search">
+          <input class="input" type="search" v-model="query" placeholder="Search..." @keydown.enter="search" />
+        </form>
         <div class="absolute w-72 right-0 bg-base-white shadow-lg rounded-lg" v-if="search_results.length > 0">
           <div></div>
-          <NuxtLink v-for="word in search_results" :key="word.id + 'search'" :to="`${routes.dictionary.view(word.alt_spelling?.length ? word.alt_spelling : word.term)}`" class="p-4 block">
+          <NuxtLink
+            v-for="word in search_results"
+            :key="word.id + 'search'"
+            :to="`${routes.dictionary.view(word.alt_spelling?.length ? word.alt_spelling : word.term)}`"
+            class="p-4 block">
             <div>{{ word.term }}</div>
             <div class="w-40 text-sm text-muted">
               <p class="truncate">{{ word.definitions[0].meaning }}</p>
