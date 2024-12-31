@@ -199,7 +199,7 @@ function bindForm() {
   buttons.value = document.querySelectorAll("button");
   textArea.value = document.querySelectorAll("textarea");
   select.value = document.querySelectorAll("select");
-  form.value = document.getElementById("add-form");
+  form.value = document.getElementById("add-form") as HTMLFormElement;
 }
 </script>
 
