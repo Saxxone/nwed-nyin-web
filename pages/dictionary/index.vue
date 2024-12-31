@@ -18,7 +18,6 @@ onMounted(async () => {
   const { words: dictionary, totalCount } = await dictStore.fetchWords();
   count.value = totalCount;
   words.value = dictionary;
-  console.log(words.value);
 });
 </script>
 
