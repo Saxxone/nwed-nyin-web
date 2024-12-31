@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PartOfSpeech, Word } from "~/types/word";
@@ -15,15 +12,12 @@ definePageMeta({
 });
 
 const { toast } = useToast();
-const formSchema = toTypedSchema(
-  z.object({
-    username: z.string().min(2).max(50),
-  })
-);
+const inputs = ref<NodeListOf<HTMLInputElement>>();
+const buttons = ref<NodeListOf<HTMLButtonElement>>();
+const textArea = ref<NodeListOf<HTMLTextAreaElement>>();
+const select = ref<NodeListOf<HTMLSelectElement>>();
+const form = ref<HTMLFormElement>();
 
-const form = useForm({
-  validationSchema: formSchema,
-});
 const parts_of_speech = ref<PartOfSpeech[]>([]);
 const form_fields = [
   {
@@ -147,30 +141,72 @@ function removeDefinition(index: number) {
 
 async function onSubmit() {
   try {
+    disbaleForm();
     await dictStore.makeWord(word.value);
     toast({
       title: `${word.value.term} added to dictionary`,
       description: "You're doing a great job. Keeep it up! ❤️",
     });
-    word.value = base_word;
+    form.value?.reset();
   } catch (error) {
     toast({
       title: "An error occurred",
       description: error as string,
     });
     alert(error);
+  } finally {
+    enableForm();
   }
+}
+
+function disbaleForm() {
+  inputs.value?.forEach((input) => {
+    input.disabled = true;
+  });
+  buttons.value?.forEach((button) => {
+    button.disabled = true;
+  });
+  textArea.value?.forEach((textArea) => {
+    textArea.disabled = true;
+  });
+  select.value?.forEach((select) => {
+    select.disabled = true;
+  });
+}
+
+function enableForm() {
+  inputs.value?.forEach((input) => {
+    input.disabled = false;
+  });
+  buttons.value?.forEach((button) => {
+    button.disabled = false;
+  });
+  textArea.value?.forEach((textArea) => {
+    textArea.disabled = false;
+  });
+  select.value?.forEach((select) => {
+    select.disabled = false;
+  });
 }
 
 onMounted(async () => {
   parts_of_speech.value = await dictStore.fetchPartsOfSpeech();
+  bindForm();
 });
+
+function bindForm() {
+  inputs.value = document.querySelectorAll("input");
+  buttons.value = document.querySelectorAll("button");
+  textArea.value = document.querySelectorAll("textarea");
+  select.value = document.querySelectorAll("select");
+  form.value = document.getElementById("add-form");
+}
 </script>
 
 <template>
   <main>
     <Toaster />
-    <form @submit.prevent="onSubmit" class="grid card md:grid-cols-12 gap-4 rounded-md border p-4">
+    <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card md:grid-cols-12 gap-4 rounded-md border p-4">
       <div class="col-span-12 md:col-span-4">
         <h2 class="mb-4 text-2xl font-medium tracking-tight">
           Word <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
@@ -183,7 +219,7 @@ onMounted(async () => {
       <div class="col-span-12 md:col-span-8">
         <div class="flex justify-between mb-4">
           <h2 class="mb-4 text-2xl font-medium tracking-tight">Definitions</h2>
-          <Button class="bg-transparent text-dark border shadow-none hover:bg-gray-100" type="button" @click="addDefinition">Add Definition</Button>
+          <Button variant="outline" type="button" @click="addDefinition">Add Definition</Button>
         </div>
 
         <div>
@@ -192,7 +228,7 @@ onMounted(async () => {
               <div
                 v-if="word.definitions.length > 1"
                 @click="removeDefinition(definitionIndex)"
-                class="hover:text-red-700 hover:bg-red-100 cursor-pointer -top-6 rounded-full leading-none w-6 h-6 bg-gray-200 flex items-center justify-center absolute -right-6">
+                class="hover:text-red-700 hover:bg-red-100 cursor-pointer -top-6 rounded-full leading-none w-6 h-6 bg-gray-200 flex text-gray-900 items-center justify-center absolute -right-6">
                 <IconsCloseIcon width="16" height="16" />
               </div>
               <div class="inline-flex w-4 h-4 bg-base-light text-main -top-3 absolute rounded-full mr-2 text-xs items-center justify-center text-center">
