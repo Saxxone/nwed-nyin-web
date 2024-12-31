@@ -4,6 +4,7 @@ const api_routes = {
     add: "/dictionary/add",
     edit: (word: string) => `/dictionary/edit/${word}`,
     view: (word: string) => `/dictionary/${word}`,
+    search: (query: string) => `/dictionary/search?term=${query}`,
     parts_of_speech: "/dictionary/parts-of-speech",
   },
   archives: {
