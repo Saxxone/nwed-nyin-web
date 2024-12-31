@@ -14,7 +14,7 @@ onMounted(async () => {
 });
 
 definePageMeta({
-  title: `${word.value?.term} Nnyi&#x0323;n (Nwed Nyin) - Dictionary"`,
+  title: `${word.value?.term} Nnyịn (Nwed Nyin) - Dictionary"`,
   layout: "articles",
 
   meta: [

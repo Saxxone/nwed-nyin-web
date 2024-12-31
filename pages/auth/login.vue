@@ -42,7 +42,7 @@ if (process.client)
     <div class="h-full bg-slate-900 rounded-lg flex-col p-6 text-white dark:border-r lg:flex lg:col-span-4">
       <div class="flex items-center text-lg font-medium">
         <img src="/favicon-32x32.png" class="h-6 rounded-full mr-3" alt="nsibidi" />
-        Ñwed Nnyi&#x0323;n
+        Ñwed Nnyịn
       </div>
       <div class="mt-auto">
         <blockquote class="space-y-2">

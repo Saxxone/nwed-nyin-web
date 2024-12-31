@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/toast/use-toast";
 
 definePageMeta({
-  title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Dictionary",
+  title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
   layout: "articles",
 });
 

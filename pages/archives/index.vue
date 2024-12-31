@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Archives",
+  title: "Ñwed Nnyịn (Nwed Nyin) - Archives",
   layout: "articles",
 });
 

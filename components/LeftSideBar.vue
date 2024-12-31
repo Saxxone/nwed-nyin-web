@@ -34,7 +34,9 @@ const items = [
 <template>
   <div>
     <SidebarHeader>
-      <h1 class="text-xl">Ñwed Nnyi&#x0323;n</h1>
+      <h1 class="text-xl">
+        <NuxtLink to="/">Ñwed Nnyịn</NuxtLink>
+      </h1>
     </SidebarHeader>
   </div>
 </template>

@@ -10,13 +10,15 @@ const props = defineProps<Props>();
 </script>
 
 <template>
-  <section class="border rounded-md card text-sm word-wrap mb-4">
+  <section class="border rounded-md card text-sm word-wrap mb-4 select-text break-words ove">
     <h5 class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-2">
       <div>{{ props.word.term }}</div>
 
       <div class="text-gray-500 text-sm font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</div>
     </h5>
-    <p class="mb-2 font-mono text-xs">{{ props.word.pronunciation }}</p>
+    <p class="mb-2 font-serif text-xs">
+      {{ `${props.word.pronunciation?.startsWith("/") ? "" : "/"}${props.word.pronunciation}${props.word.pronunciation?.endsWith("/") ? "" : "/"}` }}
+    </p>
 
     <div>
       <div v-for="(definition, index) in props.word.definitions" class="mb-4">
