@@ -11,9 +11,10 @@ const props = defineProps<Props>();
 
 <template>
   <section class="border rounded-md card text-sm word-wrap mb-4">
-    <h5 class="scroll-m-20 text-2xl flex items-end capitalize font-bold tracking-tight lg:text-xl">
-      <span class="block">{{ props.word.term }}</span>
-      <span class="text-gray-500 ml-1 text-lg font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</span>
+    <h5 class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-2">
+      <div>{{ props.word.term }}</div>
+
+      <div class="text-gray-500 text-sm font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</div>
     </h5>
     <p class="mb-2 font-mono text-xs">{{ props.word.pronunciation }}</p>
 

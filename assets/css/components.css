@@ -3,7 +3,7 @@
 
 
 html, body{
-  @apply bg-gray-100 dark:bg-gray-800 select-none w-full;
+  @apply bg-gray-100 dark:bg-gray-800 select-none w-full min-h-screen;
 }
 
 h1 {

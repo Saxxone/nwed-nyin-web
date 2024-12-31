@@ -20,16 +20,18 @@ const pages = [
   <div class="grid grid-cols-12 py-4">
     <LeftSideBar class="col-span-2 hidden lg:block" />
 
-    <section class="container mx-auto col-span-12 lg:col-span-8">
-      <AppDarkMode />
-      <Menubar>
-        <MenubarMenu class="flex justify-between">
-          <NuxtLink :to="page.route" v-for="page in pages" :key="page.name" class="px-2">{{ page.name }}</NuxtLink>
-        </MenubarMenu>
-      </Menubar>
-      <main class="my-4">
-        <slot></slot>
-      </main>
+    <section class="col-span-12 lg:col-span-8">
+      <div class="container px-4 mx-auto">
+        <AppDarkMode />
+        <Menubar>
+          <MenubarMenu class="flex justify-between">
+            <NuxtLink :to="page.route" v-for="page in pages" :key="page.name" class="px-2">{{ page.name }}</NuxtLink>
+          </MenubarMenu>
+        </Menubar>
+        <main class="my-4">
+          <slot></slot>
+        </main>
+      </div>
     </section>
     <RightSideBar class="col-span-2" />
   </div>

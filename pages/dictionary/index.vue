@@ -4,11 +4,6 @@ import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
 import app_routes from "~/utils/routes";
 
-definePageMeta({
-  title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Dictionary",
-  layout: "articles",
-});
-
 const words = ref<Word[]>([]);
 const count = ref(0);
 const query = ref("");
@@ -18,6 +13,46 @@ onMounted(async () => {
   const { words: dictionary, totalCount } = await dictStore.fetchWords();
   count.value = totalCount;
   words.value = dictionary;
+});
+
+definePageMeta({
+  title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Dictionary",
+  layout: "articles",
+  meta: [
+    {
+      name: "description",
+      content: `The Ñwed Nnyìn (Nwed Nyin) Dictionary. Explore the meaning, pronunciation, etymology, and examples of words in Efik/Ibibio.`,
+    },
+    {
+      property: "og:title",
+      content: `Ñwed Nnyìn (Nwed Nyin) Dictionary`,
+    },
+    {
+      property: "og:description",
+      content: `The Ñwed Nnyìn (Nwed Nyin) Dictionary. Explore the meaning, pronunciation, etymology, and examples of words in Efik/Ibibio.`,
+    },
+    {
+      property: "og:type",
+      content: "article",
+    },
+
+    {
+      name: "twitter:title",
+      content: `Ñwed Nnyìn (Nwed Nyin) Dictionary`,
+    },
+    {
+      name: "twitter:description",
+      content: `the Ñwed Nnyìn (Nwed Nyin) Dictionary. Explore the meaning, pronunciation, etymology, and examples of words in Efik/Ibibio.`,
+    },
+    {
+      name: "twitter:card",
+      content: "summary",
+    },
+    {
+      name: "keywords",
+      content: `dictionary, definition, Ñwed Nnyìn, Nwed Nyin, language, etymology, Efik, Ibibio, Annang, Oron, Eket, Ikot Abasi, Uruan, Mbo, Ibeno, Oron, Eket, Ikot Abasi, Uruan, Mbo`,
+    },
+  ],
 });
 </script>
 
