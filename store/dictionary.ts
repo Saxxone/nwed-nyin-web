@@ -7,7 +7,7 @@ export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
   async function fetchWords(pagination: Pagination = { cursor: "1", skip: 0, take: 10 }) {
     try {
-      const response = await useApiConnect<Partial<Word>, Word[]>(
+      const response = await useApiConnect<Partial<Word>, { words: Word[]; totalCount: number }>(
         `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(pagination.skip as number)}&take=${encodeURIComponent(
           pagination.take as number
         )}`,
@@ -17,7 +17,7 @@ export const useDictStore = defineStore("dict", () => {
       if ("message" in response) {
         throw new Error(response.message);
       } else {
-        last_word.value = response[response.length - 1];
+        last_word.value = response.words[response.words.length - 1];
         return response;
       }
     } catch (error) {

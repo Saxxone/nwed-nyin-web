@@ -33,6 +33,8 @@ const items = [
 
 <template>
   <div>
-    <SidebarHeader>Ñwed Nnyi&#x0323;n</SidebarHeader>
+    <SidebarHeader>
+      <h1 class="text-xl">Ñwed Nnyi&#x0323;n</h1>
+    </SidebarHeader>
   </div>
 </template>

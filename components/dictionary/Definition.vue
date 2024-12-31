@@ -10,7 +10,7 @@ const props = defineProps<Props>();
 </script>
 
 <template>
-  <section class="border rounded-md p-4 text-sm word-wrap mb-4">
+  <section class="border rounded-md card text-sm word-wrap mb-4">
     <h5 class="scroll-m-20 text-2xl flex items-end capitalize font-bold tracking-tight lg:text-xl">
       <span class="block">{{ props.word.term }}</span>
       <span class="text-gray-500 ml-1 text-lg font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</span>
@@ -20,17 +20,17 @@ const props = defineProps<Props>();
     <div>
       <div v-for="(definition, index) in props.word.definitions" class="mb-4">
         <div v-if="props.more || index === 0">
-          <p class="text-xs italic text-gray-600">{{ definition.part_of_speech.name }}</p>
+          <p class="text-xs italic text-muted">{{ definition.part_of_speech.name }}</p>
           <p>{{ definition.meaning }}</p>
           <div class="my-1">
-            <h6 class="text-xs mt-1">Examples:</h6>
+            <h6 class="text-xs mt-2 text-muted">Examples:</h6>
 
             <div>
-              <p v-for="example in definition.examples">{{ example.sentence }}</p>
+              <p v-for="example in definition.examples" class="text-xs">{{ example.sentence }}</p>
             </div>
 
             <div>
-              <h6 class="text-xs mt-1">Synonyms:</h6>
+              <h6 class="text-xs mt-2 text-muted">Synonyms:</h6>
               <div>
                 <span v-for="synonym in definition.synonyms" class="text-xs">{{ synonym.synonym }}, </span>
               </div>

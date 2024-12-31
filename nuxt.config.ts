@@ -13,6 +13,7 @@ export default defineNuxtConfig({
       link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
     },
   },
+  css: ["~/assets/css/components.css"],
   modules: ["@nuxtjs/tailwindcss", "shadcn-nuxt", "@pinia/nuxt", "@vueuse/nuxt"],
   shadcn: {
     /**

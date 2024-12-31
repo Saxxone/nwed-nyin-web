@@ -1,0 +1,114 @@
+
+/* HTML Elements */
+
+
+html, body{
+  @apply bg-gray-100 dark:bg-gray-800 select-none h-full w-full;
+}
+
+h1 {
+  @apply font-semibold  text-4xl
+}
+
+
+/* CSS components */
+.container {
+  @apply mx-auto max-w-7xl
+}
+
+.card {
+  @apply bg-base-white rounded-lg p-4;
+}
+
+.input {
+  @apply flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4 bg-base-white;
+}
+
+button{
+  @apply cursor-pointer rounded-lg
+}
+
+button:disabled {
+  @apply cursor-not-allowed opacity-50 pointer-events-none;
+}
+
+.btn-primary {
+  @apply bg-indigo-500 text-white p-4 rounded-lg font-semibold;
+}
+
+.btn-primary-outline {
+  @apply border border-indigo-500 text-indigo-500 p-4 rounded-lg font-semibold;
+}
+
+.btn-md{
+  @apply py-3 px-4
+}
+
+.btn-sm{
+  @apply py-2 px-3
+}
+
+.avatar {
+  @apply rounded-full object-cover overflow-hidden object-center bg-gray-800;
+}
+
+.post-media {
+  @apply w-full object-cover rounded-lg overflow-hidden;
+}
+
+.z-100 {
+   z-index: 100;
+}
+
+.scroll-bar-none {
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
+
+
+/* Logical components */
+
+
+
+/* dark mode */
+
+.bg-base-white {
+  @apply dark:bg-gray-900 bg-white  dark:text-gray-200 text-gray-700;
+}
+
+.bg-base-dark {
+  @apply dark:bg-white bg-gray-900  text-gray-200 dark:text-gray-700;
+}
+
+.bg-base-light {
+  @apply dark:bg-gray-800 bg-gray-100;
+}
+
+.text-main {
+  @apply dark:text-gray-200 text-gray-700
+}
+
+.text-main-contrast {
+  @apply dark:text-gray-700 text-gray-200
+}
+
+.text-sub {
+  @apply dark:text-gray-300  text-gray-600
+}
+
+.text-sub-contrast {
+  @apply dark:text-gray-600 text-gray-300
+}
+
+.text-muted {
+  @apply text-gray-400 dark:text-gray-400
+}
+
+.text-muted-contrast {
+  @apply text-gray-400 dark:text-gray-400
+}

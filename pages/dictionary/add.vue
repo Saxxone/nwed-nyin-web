@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PartOfSpeech, Word } from "~/types/word";
 import { useDictStore } from "~/store/dictionary";
+import { Toaster } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/toast/use-toast";
 
 definePageMeta({
   title: "Ñwed Nnyi&#x0323;n (Nwed Nyin) - Dictionary",
   layout: "articles",
 });
 
+const { toast } = useToast();
 const formSchema = toTypedSchema(
   z.object({
     username: z.string().min(2).max(50),
@@ -145,8 +148,16 @@ function removeDefinition(index: number) {
 async function onSubmit() {
   try {
     await dictStore.makeWord(word.value);
+    toast({
+      title: `${word.value.term} added to dictionary`,
+      description: "You're doing a great job. Keeep it up! ❤️",
+    });
     word.value = base_word;
   } catch (error) {
+    toast({
+      title: "An error occurred",
+      description: error as string,
+    });
     alert(error);
   }
 }
@@ -158,39 +169,33 @@ onMounted(async () => {
 
 <template>
   <main>
-    <form @submit.prevent="onSubmit" class="grid md:grid-cols-12 gap-4 rounded-md border p-4">
+    <Toaster />
+    <form @submit.prevent="onSubmit" class="grid card md:grid-cols-12 gap-4 rounded-md border p-4">
       <div class="col-span-12 md:col-span-4">
-        <h2 class="mb-4 text-2xl font-medium tracking-tight">Word</h2>
+        <h2 class="mb-4 text-2xl font-medium tracking-tight">
+          Word <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
+        </h2>
         <div :name="field.label" v-for="field in form_fields" class="mb-4">
           <label :for="field.name">{{ field.label }}</label>
-          <input
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4"
-            :id="field.name"
-            type="text"
-            v-model="(word[field.name] as string)"
-            :placeholder="field.placeholder" />
+          <input class="input" :id="field.name" type="text" v-model="(word[field.name] as string)" :placeholder="field.placeholder" />
         </div>
       </div>
       <div class="col-span-12 md:col-span-8">
         <div class="flex justify-between mb-4">
           <h2 class="mb-4 text-2xl font-medium tracking-tight">Definitions</h2>
-          <Button class="bg-transparent text-dark border shadow-none hover:bg-gray-100" @click="addDefinition">Add Definition</Button>
+          <Button class="bg-transparent text-dark border shadow-none hover:bg-gray-100" type="button" @click="addDefinition">Add Definition</Button>
         </div>
 
         <div>
-          <div class="rounded border p-4 mb-4" v-for="(d, definitionIndex) in word.definitions">
+          <div class="rounded-lg border p-4 mb-4" v-for="(d, definitionIndex) in word.definitions">
             <div class="flex relative mb-2">
               <div
                 v-if="word.definitions.length > 1"
                 @click="removeDefinition(definitionIndex)"
                 class="hover:text-red-700 hover:bg-red-100 cursor-pointer -top-6 rounded-full leading-none w-6 h-6 bg-gray-200 flex items-center justify-center absolute -right-6">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="m13.41 12l4.3-4.29a1 1 0 1 0-1.42-1.42L12 10.59l-4.29-4.3a1 1 0 0 0-1.42 1.42l4.3 4.29l-4.3 4.29a1 1 0 0 0 0 1.42a1 1 0 0 0 1.42 0l4.29-4.3l4.29 4.3a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.42Z" />
-                </svg>
+                <IconsCloseIcon width="16" height="16" />
               </div>
-              <div class="inline-flex w-4 h-4 bg-slate-200 -top-3 absolute rounded-full mr-2 text-xs items-center justify-center text-center">
+              <div class="inline-flex w-4 h-4 bg-base-light text-main -top-3 absolute rounded-full mr-2 text-xs items-center justify-center text-center">
                 {{ definitionIndex + 1 }}
               </div>
             </div>
@@ -205,15 +210,12 @@ onMounted(async () => {
                 class="mb-4" />
               <div v-if="definition.name === 'examples'">
                 <div v-for="(example, exampleIndex) in word.definitions[definitionIndex].examples" class="flex items-center mb-2">
-                  <input
-                    type="text"
-                    v-model="word.definitions[definitionIndex].examples[exampleIndex].sentence"
-                    placeholder="Example sentence"
-                    class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4 mr-2" />
+                  <input type="text" v-model="word.definitions[definitionIndex].examples[exampleIndex].sentence" placeholder="Example sentence" class="input mr-2" />
                   <button type="button" class="text-red-500 hover:text-red-700" @click="word.definitions[definitionIndex].examples.splice(exampleIndex, 1)">Remove</button>
                 </div>
                 <Button
                   variant="outline"
+                  type="button"
                   @click="
                     word.definitions[definitionIndex].examples.push({
                       sentence: '',
@@ -224,9 +226,7 @@ onMounted(async () => {
               </div>
 
               <div v-if="definition.name === 'part_of_speech'">
-                <select
-                  v-model="word.definitions[definitionIndex].part_of_speech"
-                  class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4">
+                <select v-model="word.definitions[definitionIndex].part_of_speech" class="input">
                   <option v-for="part_of_speech in parts_of_speech" :value="part_of_speech">
                     {{ part_of_speech.name }}
                   </option>
@@ -234,14 +234,11 @@ onMounted(async () => {
               </div>
               <div v-if="definition.name === 'synonyms'">
                 <div v-for="(synonym, synonymIndex) in word.definitions[definitionIndex].synonyms" class="flex items-center mb-2">
-                  <input
-                    class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mb-4 mr-2"
-                    type="text"
-                    v-model="word.definitions[definitionIndex].synonyms[synonymIndex].synonym"
-                    placeholder="Synonym" />
+                  <input class="input mr-2" type="text" v-model="word.definitions[definitionIndex].synonyms[synonymIndex].synonym" placeholder="Synonym" />
                   <button type="button" class="text-red-500 hover:text-red-700" @click="word.definitions[definitionIndex].synonyms.splice(synonymIndex, 1)">Remove</button>
                 </div>
                 <Button
+                  type="button"
                   variant="outline"
                   @click="
                     word.definitions[definitionIndex].synonyms.push({

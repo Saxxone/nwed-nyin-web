@@ -10,11 +10,14 @@ definePageMeta({
 });
 
 const words = ref<Word[]>([]);
+const count = ref(0);
 const query = ref("");
 const dictStore = useDictStore();
 
 onMounted(async () => {
-  words.value = await dictStore.fetchWords();
+  const { words: dictionary, totalCount } = await dictStore.fetchWords();
+  count.value = totalCount;
+  words.value = dictionary;
   console.log(words.value);
 });
 </script>
@@ -28,7 +31,7 @@ onMounted(async () => {
     </div>
     <div class="flex justify-end gap-4">
       <div class="">
-        <Input type="search" v-model="query" placeholder="Search..." class="mb-4" />
+        <input class="input" type="search" v-model="query" placeholder="Search..." />
       </div>
     </div>
 

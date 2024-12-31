@@ -12,7 +12,7 @@ const query = ref("");
     <h1 class="text-4xl mb-4 font-extrabold tracking-tight lg:text-2xl">Archives</h1>
     <div class="flex justify-end gap-4">
       <div class="">
-        <Input type="search" v-model="query" placeholder="Search..." class="mb-4" />
+        <input class="input" type="search" v-model="query" placeholder="Search..." />
       </div>
     </div>
   </main>

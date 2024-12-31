@@ -21,6 +21,7 @@ const pages = [
     <LeftSideBar class="col-span-2 hidden lg:block" />
 
     <section class="container mx-auto col-span-12 lg:col-span-8">
+      <AppDarkMode />
       <Menubar>
         <MenubarMenu class="flex justify-between">
           <NuxtLink :to="page.route" v-for="page in pages" :key="page.name" class="px-2">{{ page.name }}</NuxtLink>
