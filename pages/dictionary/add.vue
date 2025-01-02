@@ -5,6 +5,7 @@ import type { PartOfSpeech, Word } from "~/types/word";
 import { useDictStore } from "~/store/dictionary";
 import { Toaster } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/toast/use-toast";
+import app_routes from "~/utils/routes";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
@@ -13,6 +14,7 @@ definePageMeta({
 
 const { toast } = useToast();
 const route = useRoute();
+const router = useRouter();
 const inputs = ref<NodeListOf<HTMLInputElement>>();
 const buttons = ref<NodeListOf<HTMLButtonElement>>();
 const textArea = ref<NodeListOf<HTMLTextAreaElement>>();
@@ -149,6 +151,7 @@ async function onSubmit() {
         title: `${word.value.term} updated in dictionary`,
         description: "You're doing a great job. Keeep it up! ❤️",
       });
+      router.replace(app_routes.dictionary.view(encodeURI(route.query.word as string) as string));
     } else {
       await dictStore.makeWord(word.value);
       toast({

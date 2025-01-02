@@ -91,7 +91,7 @@ definePageMeta({
           <NuxtLink
             v-for="word in search_results"
             :key="word.id + 'search'"
-            :to="`${routes.dictionary.view(word.alt_spelling?.length ? word.alt_spelling : word.term)}`"
+            :to="`${routes.dictionary.view(encodeURI(word.alt_spelling?.length ? word.alt_spelling : word.term))}`"
             class="p-4 block">
             <div>{{ word.term }}</div>
             <div class="w-40 text-sm text-muted">

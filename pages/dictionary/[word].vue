@@ -14,7 +14,7 @@ function gotoEdit() {
 }
 
 onMounted(async () => {
-  word.value = await dictStore.fetchWord(route.params.word as string);
+  word.value = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
 });
 
 definePageMeta({
