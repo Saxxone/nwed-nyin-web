@@ -147,10 +147,6 @@ async function onSubmit() {
     disbaleForm();
     if (route.query.action === "edit" && route.query.word && word.value.id) {
       await dictStore.updateWord(word.value.id, word.value);
-      toast({
-        title: `${word.value.term} updated in dictionary`,
-        description: "You're doing a great job. Keeep it up! ❤️",
-      });
       router.replace(app_routes.dictionary.view(encodeURI(route.query.word as string) as string));
     } else {
       await dictStore.makeWord(word.value);
