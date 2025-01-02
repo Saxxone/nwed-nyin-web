@@ -37,7 +37,13 @@ const props = defineProps<Props>();
             <div v-if="definition.synonyms.length > 0">
               <h6 class="text-xs mt-2 text-muted">Synonyms:</h6>
               <div>
-                <span v-for="synonym in definition.synonyms" class="text-xs">{{ synonym.synonym }}, </span>
+                <NuxtLink
+                  :to="`${routes.dictionary.view(encodeURI(synonym.synonym))}`"
+                  v-for="(synonym, index) in definition.synonyms"
+                  :key="synonym.synonym + 'synonym'"
+                  class="text-xs hover:underline"
+                  >{{ synonym.synonym }}{{ `${index < definition.synonyms.length - 1 ? ", " : ""}` }}
+                </NuxtLink>
               </div>
             </div>
           </div>
@@ -47,13 +53,6 @@ const props = defineProps<Props>();
           </div>
         </div>
       </div>
-
-      <NuxtLink
-        :to="`${routes.dictionary.view(encodeURI(props.word.alt_spelling?.length ? props.word.alt_spelling : props.word.term))}`"
-        class="text-blue-500 text-xs"
-        v-if="props.word.definitions.length > 0 && !props.more && $props.word.term && $props.word.related_to"
-        >see more</NuxtLink
-      >
     </div>
   </NuxtLink>
 </template>
