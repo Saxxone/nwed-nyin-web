@@ -2,13 +2,7 @@ import { useAuthStore } from "~/store/auth";
 import type { Error } from "~/types/types";
 import { useGlobalStore } from "~/store/global";
 import { storeToRefs } from "pinia";
-
-enum FetchMethod {
-  GET = "GET",
-  POST = "POST",
-  PUT = "PUT",
-  DELETE = "DELETE",
-}
+import { FetchMethod } from "~/types/types";
 
 /**
  * Makes an API call using the provided parameters.

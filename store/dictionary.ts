@@ -41,7 +41,6 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
-
   async function searchWord(word: string) {
     try {
       const response = await useApiConnect<string, Word[]>(api_routes.dictionary.search(word), FetchMethod.GET);
@@ -87,11 +86,27 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
+  async function updateWord(id: string, word: Word) {
+    try {
+      const response = await useApiConnect<Word, Word>(api_routes.dictionary.update(id), FetchMethod.PATCH, word);
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
+      console.error("Error fetching words:", error);
+      throw error;
+    }
+  }
+
   return {
     fetchWords,
     fetchWord,
     makeWord,
     fetchPartsOfSpeech,
-    searchWord
+    searchWord,
+    updateWord,
   };
 });

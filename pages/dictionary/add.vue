@@ -12,6 +12,7 @@ definePageMeta({
 });
 
 const { toast } = useToast();
+const route = useRoute();
 const inputs = ref<NodeListOf<HTMLInputElement>>();
 const buttons = ref<NodeListOf<HTMLButtonElement>>();
 const textArea = ref<NodeListOf<HTMLTextAreaElement>>();
@@ -142,11 +143,19 @@ function removeDefinition(index: number) {
 async function onSubmit() {
   try {
     disbaleForm();
-    await dictStore.makeWord(word.value);
-    toast({
-      title: `${word.value.term} added to dictionary`,
-      description: "You're doing a great job. Keeep it up! ❤️",
-    });
+    if (route.query.action === "edit" && route.query.word && word.value.id) {
+      await dictStore.updateWord(word.value.id, word.value);
+      toast({
+        title: `${word.value.term} updated in dictionary`,
+        description: "You're doing a great job. Keeep it up! ❤️",
+      });
+    } else {
+      await dictStore.makeWord(word.value);
+      toast({
+        title: `${word.value.term} added to dictionary`,
+        description: "You're doing a great job. Keeep it up! ❤️",
+      });
+    }
     form.value?.reset();
   } catch (error) {
     toast({
@@ -191,6 +200,11 @@ function enableForm() {
 
 onMounted(async () => {
   parts_of_speech.value = await dictStore.fetchPartsOfSpeech();
+  if (route.query.action === "edit" && route.query.word) {
+    disbaleForm();
+    word.value = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
+    enableForm();
+  }
   bindForm();
 });
 
@@ -223,7 +237,7 @@ function bindForm() {
         </div>
 
         <div>
-          <div class="rounded-lg border p-4 mb-4" v-for="(d, definitionIndex) in word.definitions">
+          <div class="rounded-lg border p-4 mb-4" v-for="(_, definitionIndex) in word.definitions">
             <div class="flex relative mb-2">
               <div
                 v-if="word.definitions.length > 1"

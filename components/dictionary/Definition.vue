@@ -25,7 +25,7 @@ const props = defineProps<Props>();
     <div>
       <div v-for="(definition, index) in props.word.definitions" class="mb-4">
         <div v-if="props.more || index === 0">
-          <p class="text-xs italic text-muted">{{ definition.part_of_speech.name }}</p>
+          <p class="text-xs italic text-muted">{{ index + 1 }}. {{ definition.part_of_speech.name }}</p>
           <p>{{ definition.meaning }}</p>
           <div class="my-1" v-if="definition.examples.length > 0">
             <h6 class="text-xs mt-2 text-muted">Examples:</h6>

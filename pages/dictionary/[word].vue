@@ -9,6 +9,10 @@ const route = useRoute();
 
 const dictStore = useDictStore();
 
+function gotoEdit() {
+  navigateTo(`/dictionary/add/?action=edit&word=${encodeURI(word.value?.alt_spelling?.length ? word.value?.alt_spelling : word.value?.term || "")}`);
+}
+
 onMounted(async () => {
   word.value = await dictStore.fetchWord(route.params.word as string);
 });
@@ -57,6 +61,11 @@ definePageMeta({
 
 <template>
   <main>
+    <div class="flex items-center justify-end">
+      <div class="p-2 cursor-pointer" @click="gotoEdit">
+        <IconsEditIcon width="16" height="16" />
+      </div>
+    </div>
     <Definition v-if="word" :word="word" :more="true" />
   </main>
 </template>
