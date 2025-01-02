@@ -77,7 +77,7 @@ definePageMeta({
     <div class="flex items-start justify-between">
       <div class="mb-4">
         <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
-        <p class="text-sm text-muted">{{ count }} words in dictionary</p>
+        <p class="text-sm text-muted" v-show="words.length">{{ count }} words in dictionary</p>
       </div>
       <NuxtLink :to="app_routes.dictionary.add">Contribute</NuxtLink>
     </div>
