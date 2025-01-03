@@ -156,6 +156,8 @@ async function onSubmit() {
       });
     }
     form.value?.reset();
+    word.value = {} as Word;
+    word.value = { ...base_word };
   } catch (error) {
     toast({
       title: "An error occurred",
