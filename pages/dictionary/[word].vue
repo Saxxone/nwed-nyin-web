@@ -10,7 +10,7 @@ const route = useRoute();
 const dictStore = useDictStore();
 
 function gotoEdit() {
-  navigateTo(`/dictionary/add/?action=edit&word=${encodeURI(word.value?.alt_spelling?.length ? word.value?.alt_spelling : word.value?.term || "")}`);
+  navigateTo(`/dictionary/add/?action=edit&word=${encodeURI(word.value?.term)}`);
 }
 
 onMounted(async () => {

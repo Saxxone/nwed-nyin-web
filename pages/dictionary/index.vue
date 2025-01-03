@@ -4,7 +4,6 @@ import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
 import app_routes from "~/utils/routes";
 import { watchDebounced } from "@vueuse/core";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from "@/components/ui/command";
 
 const words = ref<Word[]>([]);
 const count = ref(0);
@@ -88,11 +87,7 @@ definePageMeta({
         </form>
         <div class="absolute w-72 right-0 bg-base-white shadow-lg rounded-lg" v-if="search_results.length > 0">
           <div></div>
-          <NuxtLink
-            v-for="word in search_results"
-            :key="word.id + 'search'"
-            :to="`${routes.dictionary.view(encodeURI(word.alt_spelling?.length ? word.alt_spelling : word.term))}`"
-            class="p-4 block">
+          <NuxtLink v-for="word in search_results" :key="word.id + 'search'" :to="`${routes.dictionary.view(encodeURI(word.term))}`" class="p-4 block">
             <div>{{ word.term }}</div>
             <div class="w-40 text-sm text-muted">
               <p class="truncate">{{ word.definitions[0].meaning }}</p>

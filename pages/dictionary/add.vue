@@ -147,7 +147,7 @@ async function onSubmit() {
     disbaleForm();
     if (route.query.action === "edit" && route.query.word && word.value.id) {
       await dictStore.updateWord(word.value.id, word.value);
-      router.replace(app_routes.dictionary.view(encodeURI(word.value.alt_spelling ? word.value.alt_spelling : word.value.term || "") as string) as string);
+      router.replace(app_routes.dictionary.view(encodeURI(word.value.term) as string) as string);
     } else {
       await dictStore.makeWord(word.value);
       toast({
