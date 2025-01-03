@@ -12,7 +12,7 @@ const props = defineProps<Props>();
 <template>
   <NuxtLink
     :to="`${routes.dictionary.view(encodeURI(props.word.term))}`"
-    class="border block rounded-md card text-sm word-wrap mb-4 select-text break-words ove">
+    class="border block rounded-md card text-sm word-wrap mb-4 break-words ove">
     <h5 class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-1">
       <div>{{ props.word.term }}</div>
 
