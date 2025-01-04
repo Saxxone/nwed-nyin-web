@@ -135,30 +135,55 @@ function getCaretPosition(isStart: boolean): number {
 }
 
 // Set caret position
-function setCaretPosition(position: number) {
+// Update the setCaretPosition function to handle both single caret and range selection
+function setCaretPosition(start: number, end?: number) {
   const sel = window.getSelection();
   if (!sel || !editor.value) return;
 
   let charCount = 0;
   const walker = document.createTreeWalker(editor.value, NodeFilter.SHOW_TEXT, null);
+  let startNode: Node | null = null;
+  let endNode: Node | null = null;
+  let startOffset = 0;
+  let endOffset = 0;
 
   let node = walker.nextNode();
   while (node) {
     const nodeLength = node.nodeValue?.length || 0;
-    if (charCount + nodeLength >= position) {
-      const range = document.createRange();
-      range.setStart(node, position - charCount);
-      range.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(range);
+
+    // Find start position
+    if (!startNode && charCount + nodeLength >= start) {
+      startNode = node;
+      startOffset = start - charCount;
+    }
+
+    // Find end position
+    if (!endNode && charCount + nodeLength >= (end ?? start)) {
+      endNode = node;
+      endOffset = (end ?? start) - charCount;
       break;
     }
+
     charCount += nodeLength;
     node = walker.nextNode();
   }
+
+  if (startNode) {
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+
+    if (end && endNode) {
+      range.setEnd(endNode, endOffset);
+    } else {
+      range.collapse(true);
+    }
+
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
 }
 
-// Enhanced format application with proper content sync
+// Update the applyFormat function to maintain selection
 function applyFormat(evt: Event, action: FormatAction) {
   evt.preventDefault();
 
@@ -169,14 +194,16 @@ function applyFormat(evt: Event, action: FormatAction) {
   const content = article.value.content;
 
   let newText = "";
-  let newPosition = start;
+  let newStart = start;
+  let newEnd = end;
 
   switch (action.command) {
     case "link":
       const url = prompt("Enter URL:", "https://");
       if (url) {
         newText = content.substring(0, start) + `[${text}](${url})` + content.substring(end);
-        newPosition = start + text.length + url.length + 4;
+        newStart = start + 1; // Position after '['
+        newEnd = start + text.length + 1; // Position before ']'
       }
       break;
 
@@ -187,23 +214,27 @@ function applyFormat(evt: Event, action: FormatAction) {
       const lines = text.split("\n");
       const formattedLines = lines.map((line) => action.markdown.prefix + line);
       newText = content.substring(0, start) + formattedLines.join("\n") + content.substring(end);
-      newPosition = end + formattedLines.length * action.markdown.prefix.length;
+      newStart = start + action.markdown.prefix.length;
+      newEnd = end + formattedLines.length * action.markdown.prefix.length;
       break;
 
     default:
       // Handle inline formatting
-      newText = content.substring(0, start) + action.markdown.prefix + text + (action.markdown.suffix || action.markdown.prefix) + content.substring(end);
-      newPosition = end + action.markdown.prefix.length + (action.markdown.suffix?.length || action.markdown.prefix.length);
+      const prefix = action.markdown.prefix;
+      const suffix = action.markdown.suffix || action.markdown.prefix;
+      newText = content.substring(0, start) + prefix + text + suffix + content.substring(end);
+      newStart = start + prefix.length;
+      newEnd = end + prefix.length;
   }
 
   // Update content and history
   updateContent(newText);
   addToHistory(newText);
 
-  // Restore focus and caret position
+  // Restore focus and selection
   nextTick(() => {
     editor.value?.focus();
-    setCaretPosition(newPosition);
+    setCaretPosition(newStart, newEnd);
   });
 }
 
@@ -271,7 +302,11 @@ function handleKeyboard(event: KeyboardEvent) {
         break;
       case "i":
         event.preventDefault();
-        applyFormat(event, actions[3]); // Italic
+        applyFormat(event, actions[1]); // Italic
+        break;
+      case "u":
+        event.preventDefault();
+        applyFormat(event, actions[2]); // Underline
         break;
       case "k":
         event.preventDefault();
@@ -301,10 +336,10 @@ const autoSave = debounce(async () => {
 }, 2000);
 
 function debounce(fn: Function, ms: number) {
-  let timeout: NodeJS.Timeout;
-  return function (...args: any[]) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn.apply(this, args), ms);
+  let timeout: number;
+  return function (this: undefined, ...args: any[]): void {
+    window.clearTimeout(timeout);
+    timeout = window.setTimeout(() => fn.apply(this, args), ms);
   };
 }
 
