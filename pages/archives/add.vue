@@ -366,7 +366,7 @@ watch(
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div variant="outline" class="bg-base-white rounded p-2 cursor-pointer" @click="applyFormat($event, action)">
+                <div class="bg-base-white rounded p-2 cursor-pointer" @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />
