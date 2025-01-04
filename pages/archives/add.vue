@@ -251,9 +251,8 @@ function redo() {
   }
 }
 
-// Improved keyboard shortcuts handler
 function handleKeyboard(event: KeyboardEvent) {
-  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+  const isMac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
   const modifier = isMac ? event.metaKey : event.ctrlKey;
 
   if (modifier) {
@@ -272,11 +271,11 @@ function handleKeyboard(event: KeyboardEvent) {
         break;
       case "i":
         event.preventDefault();
-        applyFormat(event, actions[1]); // Italic
+        applyFormat(event, actions[3]); // Italic
         break;
       case "k":
         event.preventDefault();
-        applyFormat(event, actions[3]); // Link
+        applyFormat(event, actions[4]); // Link
         break;
     }
   }
@@ -390,7 +389,7 @@ watch(
       </div>
 
       <!-- Preview -->
-      <div class="lg:col-span-6">
+      <div class="lg:col-span-6 col-span-12">
         <div class="flex items-center gap-x-2 mb-10 justify-end">
           <Button>Publish</Button>
         </div>
