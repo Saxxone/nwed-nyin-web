@@ -22,7 +22,6 @@ const isEditorFocused = ref(false);
 const editorHistory = ref<string[]>([]);
 const historyIndex = ref(-1);
 const lastCaretPosition = ref<number>(0);
-const savedSelection = ref<Range | null>(null);
 
 const article = ref<Article>({
   content: "",
@@ -169,32 +168,9 @@ function setCaretPosition(start: number, end?: number) {
     sel.addRange(range);
   }
 }
-// Function to save the current selection
-function saveSelection() {
-  const sel = window.getSelection();
-  console.log(sel);
-  if (sel && sel.rangeCount > 0) {
-    savedSelection.value = sel.getRangeAt(0);
-  } else {
-    savedSelection.value = null;
-  }
-}
-
-// Function to restore the saved selection
-function restoreSelection() {
-  if (savedSelection && editor.value) {
-    const sel = window.getSelection();
-    if (sel) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection.value!);
-    }
-  }
-}
 
 // Update the applyFormat function to maintain selection
 function applyFormat(evt: Event, action: FormatAction) {
-  saveSelection();
-
   const selection = getCurrentSelection();
   if (!selection) return;
 
@@ -233,9 +209,7 @@ function applyFormat(evt: Event, action: FormatAction) {
       newText = content.substring(0, start) + prefix + text + suffix + content.substring(end);
       newStart = start + prefix.length;
       newEnd = end + prefix.length;
-      nextTick(() => {
-        restoreSelection();
-      });
+
       break;
   }
 
@@ -392,12 +366,7 @@ watch(
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div
-                  variant="outline"
-                  class="bg-base-white rounded p-2 cursor-pointer"
-                  @click="applyFormat($event, action)"
-                  @mousedown="saveSelection()"
-                  @touchstart="saveSelection()">
+                <div variant="outline" class="bg-base-white rounded p-2 cursor-pointer" @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />
