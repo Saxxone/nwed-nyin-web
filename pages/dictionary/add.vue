@@ -221,7 +221,7 @@ function bindForm() {
 <template>
   <main>
     <Toaster />
-    <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card grid-cols-12 gap-4 rounded-md border p-4">
+    <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="col-span-12 md:col-span-4">
         <h2 class="mb-4 text-2xl font-medium tracking-tight">
           Word <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
