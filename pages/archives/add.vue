@@ -8,21 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-
-// Types
-interface FormatAction {
-  label: string;
-  icon: string;
-  formatting: string;
-  command: FormatCommand;
-  shortcut?: string;
-  markdown: {
-    prefix: string;
-    suffix?: string;
-  };
-}
-
-type FormatCommand = "bold" | "italic" | "underline" | "strikethrough" | "heading" | "link" | "code" | "quote" | "list";
+import type { FormatAction } from "~/types/types";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Archive",
@@ -36,6 +22,7 @@ const isEditorFocused = ref(false);
 const editorHistory = ref<string[]>([]);
 const historyIndex = ref(-1);
 const lastCaretPosition = ref<number>(0);
+const savedSelection = ref<Range | null>(null);
 
 const article = ref<Article>({
   content: "",
@@ -182,10 +169,31 @@ function setCaretPosition(start: number, end?: number) {
     sel.addRange(range);
   }
 }
+// Function to save the current selection
+function saveSelection() {
+  const sel = window.getSelection();
+  console.log(sel);
+  if (sel && sel.rangeCount > 0) {
+    savedSelection.value = sel.getRangeAt(0);
+  } else {
+    savedSelection.value = null;
+  }
+}
+
+// Function to restore the saved selection
+function restoreSelection() {
+  if (savedSelection && editor.value) {
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(savedSelection.value!);
+    }
+  }
+}
 
 // Update the applyFormat function to maintain selection
 function applyFormat(evt: Event, action: FormatAction) {
-  evt.preventDefault();
+  saveSelection();
 
   const selection = getCurrentSelection();
   if (!selection) return;
@@ -225,6 +233,10 @@ function applyFormat(evt: Event, action: FormatAction) {
       newText = content.substring(0, start) + prefix + text + suffix + content.substring(end);
       newStart = start + prefix.length;
       newEnd = end + prefix.length;
+      nextTick(() => {
+        restoreSelection();
+      });
+      break;
   }
 
   // Update content and history
@@ -337,7 +349,7 @@ const autoSave = debounce(async () => {
 
 function debounce(fn: Function, ms: number) {
   let timeout: number;
-  return function (this: undefined, ...args: any[]): void {
+  return function (this: void, ...args: any[]): void {
     window.clearTimeout(timeout);
     timeout = window.setTimeout(() => fn.apply(this, args), ms);
   };
@@ -380,7 +392,12 @@ watch(
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div variant="outline" class="bg-base-white rounded p-2 cursor-pointer" @click="applyFormat($event, action)">
+                <div
+                  variant="outline"
+                  class="bg-base-white rounded p-2 cursor-pointer"
+                  @click="applyFormat($event, action)"
+                  @mousedown="saveSelection()"
+                  @touchstart="saveSelection()">
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />

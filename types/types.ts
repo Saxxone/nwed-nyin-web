@@ -54,9 +54,22 @@ export enum Status {
 
 export type DateString = `${number}-${number}-${number}T${number}:${number}:${number}Z`;
 
-
 export interface Pagination {
   take?: number;
   skip?: number;
   cursor?: string | null;
 }
+
+export interface FormatAction {
+  label: string;
+  icon: string;
+  formatting: string;
+  command: FormatCommand;
+  shortcut?: string;
+  markdown: {
+    prefix: string;
+    suffix?: string;
+  };
+}
+
+export type FormatCommand = "bold" | "italic" | "underline" | "strikethrough" | "heading" | "link" | "code" | "quote" | "list";
