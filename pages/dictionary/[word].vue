@@ -2,6 +2,7 @@
 import Definition from "@/components/dictionary/Definition.vue";
 import type { Word } from "@/types/word";
 import { useDictStore } from "@/store/dictionary";
+import app_routes from "~/utils/routes"
 
 const word = ref<Word>();
 
@@ -11,7 +12,7 @@ const dictStore = useDictStore();
 
 function gotoEdit() {
   if (!word.value) return;
-  navigateTo(`/dictionary/add/?action=edit&word=${encodeURI(word.value.term)}`);
+  navigateTo(`${app_routes.dictionary.add}?action=edit&word=${encodeURI(word.value.term)}`);
 }
 
 onMounted(async () => {

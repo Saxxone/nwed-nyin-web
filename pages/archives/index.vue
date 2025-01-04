@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import app_routes from "~/utils/routes";
+
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Archives",
   layout: "articles",
@@ -9,11 +11,11 @@ const query = ref("");
 
 <template>
   <main>
-    <h1 class="text-4xl mb-4 font-extrabold tracking-tight lg:text-2xl">Archives</h1>
-    <div class="flex justify-end gap-4">
-      <div class="">
-        <input class="input" type="search" v-model="query" placeholder="Search..." />
+    <div class="flex items-start justify-between">
+      <div class="mb-4">
+        <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">Archive</h1>
       </div>
+      <NuxtLink :to="app_routes.archives.add">Contribute</NuxtLink>
     </div>
   </main>
 </template>

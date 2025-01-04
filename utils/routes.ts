@@ -1,4 +1,4 @@
-const routes = {
+const app_routes = {
   archives: {
     list: "/archives",
     view: (id: string) => `/archives/${id}`,
@@ -13,4 +13,4 @@ const routes = {
   },
 };
 
-export default routes;
+export default app_routes;
