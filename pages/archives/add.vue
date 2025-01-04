@@ -180,10 +180,14 @@ function applyFormat(evt: Event, action: FormatAction) {
   let newText = "";
   let newStart = start;
   let newEnd = end;
+  const lines = text.split("\n");
+  const formattedLines = lines.map((line) => action.markdown.prefix + line);
+  const prefix = action.markdown.prefix;
+  const suffix = action.markdown.suffix || action.markdown.prefix;
+  const url = prompt("Enter URL:", "https://");
 
   switch (action.command) {
     case "link":
-      const url = prompt("Enter URL:", "https://");
       if (url) {
         newText = content.substring(0, start) + `[${text}](${url})` + content.substring(end);
         newStart = start + 1; // Position after '['
@@ -194,9 +198,6 @@ function applyFormat(evt: Event, action: FormatAction) {
     case "heading":
     case "quote":
     case "list":
-      // Handle line-based formatting
-      const lines = text.split("\n");
-      const formattedLines = lines.map((line) => action.markdown.prefix + line);
       newText = content.substring(0, start) + formattedLines.join("\n") + content.substring(end);
       newStart = start + action.markdown.prefix.length;
       newEnd = end + formattedLines.length * action.markdown.prefix.length;
@@ -204,8 +205,7 @@ function applyFormat(evt: Event, action: FormatAction) {
 
     default:
       // Handle inline formatting
-      const prefix = action.markdown.prefix;
-      const suffix = action.markdown.suffix || action.markdown.prefix;
+
       newText = content.substring(0, start) + prefix + text + suffix + content.substring(end);
       newStart = start + prefix.length;
       newEnd = end + prefix.length;
