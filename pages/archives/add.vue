@@ -196,7 +196,7 @@ function applyFormat(evt: Event, action: FormatAction) {
     default:
       // Handle inline formatting
 
-      new_text = parsed_article.value.content.substring(0, start) + prefix + text + suffix + parsed_article.value.content.substring(end);
+      new_text = content.substring(0, start) + prefix + text + suffix + parsed_article.value.content.substring(end);
       new_start = start + prefix.length;
       new_end = end + prefix.length;
 
