@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
+import { useTextSelection } from "@vueuse/core";
 import type { Article } from "~/types/article";
 import { useArchiveStore } from "~/store/archive";
 import { Toaster } from "@/components/ui/toast";
@@ -16,12 +17,14 @@ definePageMeta({
 });
 
 const { toast } = useToast();
+const selection = useTextSelection();
 const route = useRoute();
 const editor = ref<HTMLElement | null>(null);
-const isEditorFocused = ref(false);
-const editorHistory = ref<string[]>([]);
-const historyIndex = ref(-1);
-const lastCaretPosition = ref<number>(0);
+const is_editor_focused = ref(false);
+const editor_history = ref<string[]>([]);
+const history_index = ref(-1);
+const last_caret_position = ref<number>(0);
+const selections = ref<string[]>([]);
 
 const article = ref<Article>({
   content: "",
@@ -32,9 +35,8 @@ const parsed_article = ref({
   content: "",
 });
 
-const archiveStore = useArchiveStore();
+const archive_store = useArchiveStore();
 
-// Enhanced formatting actions with improved markdown handling
 const actions: FormatAction[] = [
   {
     label: "Bold",
@@ -91,32 +93,15 @@ const actions: FormatAction[] = [
   },
 ];
 
-// Get current selection with safety checks
-function getCurrentSelection(): { text: string; start: number; end: number } | null {
-  if (!editor.value) return null;
-
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return null;
-
-  const range = selection.getRangeAt(0);
-  if (!editor.value.contains(range.commonAncestorContainer)) return null;
-
-  return {
-    text: selection.toString(),
-    start: getCaretPosition(true),
-    end: getCaretPosition(false),
-  };
-}
-
 // Get caret position
-function getCaretPosition(isStart: boolean): number {
+function getCaretPosition(is_start: boolean): number {
   const selection = window.getSelection();
   if (!selection || !selection.rangeCount) return 0;
 
   const range = selection.getRangeAt(0);
   const preCaretRange = range.cloneRange();
   preCaretRange.selectNodeContents(editor.value!);
-  preCaretRange.setEnd(range[isStart ? "startContainer" : "endContainer"], range[isStart ? "startOffset" : "endOffset"]);
+  preCaretRange.setEnd(range[is_start ? "startContainer" : "endContainer"], range[is_start ? "startOffset" : "endOffset"]);
   return preCaretRange.toString().length;
 }
 
@@ -128,38 +113,38 @@ function setCaretPosition(start: number, end?: number) {
 
   let charCount = 0;
   const walker = document.createTreeWalker(editor.value, NodeFilter.SHOW_TEXT, null);
-  let startNode: Node | null = null;
-  let endNode: Node | null = null;
-  let startOffset = 0;
-  let endOffset = 0;
+  let start_node: Node | null = null;
+  let end_node: Node | null = null;
+  let start_offset = 0;
+  let end_offset = 0;
 
   let node = walker.nextNode();
   while (node) {
-    const nodeLength = node.nodeValue?.length || 0;
+    const node_length = node.nodeValue?.length || 0;
 
     // Find start position
-    if (!startNode && charCount + nodeLength >= start) {
-      startNode = node;
-      startOffset = start - charCount;
+    if (!start_node && charCount + node_length >= start) {
+      start_node = node;
+      start_offset = start - charCount;
     }
 
     // Find end position
-    if (!endNode && charCount + nodeLength >= (end ?? start)) {
-      endNode = node;
-      endOffset = (end ?? start) - charCount;
+    if (!end_node && charCount + node_length >= (end ?? start)) {
+      end_node = node;
+      end_offset = (end ?? start) - charCount;
       break;
     }
 
-    charCount += nodeLength;
+    charCount += node_length;
     node = walker.nextNode();
   }
 
-  if (startNode) {
+  if (start_node) {
     const range = document.createRange();
-    range.setStart(startNode, startOffset);
+    range.setStart(start_node, start_offset);
 
-    if (end && endNode) {
-      range.setEnd(endNode, endOffset);
+    if (end && end_node) {
+      range.setEnd(end_node, end_offset);
     } else {
       range.collapse(true);
     }
@@ -171,106 +156,112 @@ function setCaretPosition(start: number, end?: number) {
 
 // Update the applyFormat function to maintain selection
 function applyFormat(evt: Event, action: FormatAction) {
-  const selection = getCurrentSelection();
-  if (!selection) return;
+  if (!selections.value[selections.value.length - 1] || selections.value[selections.value.length - 1].length === 0) return;
 
-  const { text, start, end } = selection;
+  const text = selections.value[selections.value.length - 1] ?? selections.value[selections.value.length - 2];
+  console.log(text);
   const content = article.value.content;
 
-  let newText = "";
-  let newStart = start;
-  let newEnd = end;
+  let new_text = "";
+  let new_start = 0;
+  let new_end = 0;
+
+  const start = getCaretPosition(true);
+  const end = getCaretPosition(false);
+  console.log(start, end, text);
+
   const lines = text.split("\n");
-  const formattedLines = lines.map((line) => action.markdown.prefix + line);
+  const formatted_lines = lines.map((line) => action.markdown.prefix + line);
   const prefix = action.markdown.prefix;
   const suffix = action.markdown.suffix || action.markdown.prefix;
-  const url = prompt("Enter URL:", "https://");
 
   switch (action.command) {
     case "link":
+      const url = prompt("Enter URL:", "https://");
       if (url) {
-        newText = content.substring(0, start) + `[${text}](${url})` + content.substring(end);
-        newStart = start + 1; // Position after '['
-        newEnd = start + text.length + 1; // Position before ']'
+        new_text = parsed_article.value.content.substring(0, start) + `[${text}](${url})` + parsed_article.value.content.substring(end);
+        new_start = start + 1; // Position after '['
+        new_end = start + text.length + 1; // Position before ']'
       }
       break;
 
     case "heading":
     case "quote":
     case "list":
-      newText = content.substring(0, start) + formattedLines.join("\n") + content.substring(end);
-      newStart = start + action.markdown.prefix.length;
-      newEnd = end + formattedLines.length * action.markdown.prefix.length;
+      new_text = parsed_article.value.content.substring(0, start) + formatted_lines.join("\n") + parsed_article.value.content.substring(end);
+      new_start = start + action.markdown.prefix.length;
+      new_end = end + formatted_lines.length * action.markdown.prefix.length;
       break;
 
     default:
       // Handle inline formatting
 
-      newText = content.substring(0, start) + prefix + text + suffix + content.substring(end);
-      newStart = start + prefix.length;
-      newEnd = end + prefix.length;
+      new_text = parsed_article.value.content.substring(0, start) + prefix + text + suffix + parsed_article.value.content.substring(end);
+      new_start = start + prefix.length;
+      new_end = end + prefix.length;
 
       break;
   }
 
   // Update content and history
-  updateContent(newText);
-  addToHistory(newText);
+  updateContent(new_text);
+  addToHistory(new_text);
 
   // Restore focus and selection
   nextTick(() => {
     editor.value?.focus();
-    setCaretPosition(newStart, newEnd);
+    setCaretPosition(new_start, new_end);
+    selections.value = [];
   });
 }
 
 // Content update handler
 function handleInput(event: Event) {
   const target = event.target as HTMLElement;
-  const newContent = target.innerText;
-  updateContent(newContent);
+  const new_content = target.innerText;
+  updateContent(new_content);
 }
 
 // Update content with proper sync
-function updateContent(newContent: string) {
-  article.value.content = newContent;
-  lastCaretPosition.value = getCaretPosition(false);
+function updateContent(new_content: string) {
+  article.value.content = new_content;
+  last_caret_position.value = getCaretPosition(false);
 }
 
 // History management
 function addToHistory(content: string) {
-  historyIndex.value++;
-  editorHistory.value = editorHistory.value.slice(0, historyIndex.value);
-  editorHistory.value.push(content);
+  history_index.value++;
+  editor_history.value = editor_history.value.slice(0, history_index.value);
+  editor_history.value.push(content);
 }
 
 function undo() {
-  if (historyIndex.value > 0) {
-    historyIndex.value--;
-    const content = editorHistory.value[historyIndex.value];
+  if (history_index.value > 0) {
+    history_index.value--;
+    const content = editor_history.value[history_index.value];
     updateContent(content);
     nextTick(() => {
       editor.value?.focus();
-      setCaretPosition(lastCaretPosition.value);
+      setCaretPosition(last_caret_position.value);
     });
   }
 }
 
 function redo() {
-  if (historyIndex.value < editorHistory.value.length - 1) {
-    historyIndex.value++;
-    const content = editorHistory.value[historyIndex.value];
+  if (history_index.value < editor_history.value.length - 1) {
+    history_index.value++;
+    const content = editor_history.value[history_index.value];
     updateContent(content);
     nextTick(() => {
       editor.value?.focus();
-      setCaretPosition(lastCaretPosition.value);
+      setCaretPosition(last_caret_position.value);
     });
   }
 }
 
 function handleKeyboard(event: KeyboardEvent) {
-  const isMac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
-  const modifier = isMac ? event.metaKey : event.ctrlKey;
+  const is_mac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
+  const modifier = is_mac ? event.metaKey : event.ctrlKey;
 
   if (modifier) {
     switch (event.key.toLowerCase()) {
@@ -306,7 +297,7 @@ function handleKeyboard(event: KeyboardEvent) {
 const autoSave = debounce(async () => {
   if (article.value.id && article.value.content.trim()) {
     try {
-      await archiveStore.updateArticle(article.value.id, article.value);
+      await archive_store.updateArticle(article.value.id, article.value);
       toast({
         title: "Auto-saved",
         description: "Your changes have been saved",
@@ -333,7 +324,7 @@ function debounce(fn: Function, ms: number) {
 onMounted(async () => {
   if (route.query.action === "edit" && route.query.article) {
     try {
-      article.value = await archiveStore.fetchArticle(decodeURI(route.query.article as string));
+      article.value = await archive_store.fetchArticle(decodeURI(route.query.article as string));
       addToHistory(article.value.content);
       nextTick(() => {
         editor.value?.focus();
@@ -349,9 +340,16 @@ onMounted(async () => {
 
 watch(
   () => article.value.content,
-  async (newContent) => {
-    parsed_article.value.content = DOMPurify.sanitize(await marked.parse(newContent, { breaks: true }));
+  async (new_content) => {
+    parsed_article.value.content = DOMPurify.sanitize(await marked.parse(new_content, { breaks: true }));
     autoSave();
+  }
+);
+
+watch(
+  () => selection.text.value,
+  (new_selection) => {
+    selections.value.push(new_selection);
   }
 );
 </script>
@@ -366,7 +364,7 @@ watch(
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div class="bg-base-white rounded p-2 cursor-pointer" @click="applyFormat($event, action)">
+                <div class="bg-base-white rounded p-2 cursor-pointer select-none" @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />
@@ -387,10 +385,10 @@ watch(
           </TooltipProvider>
 
           <div class="ml-auto flex items-center gap-x-2">
-            <Button variant="ghost" size="sm" @click="undo" :disabled="historyIndex <= 0" class="tooltip-left" data-tooltip="Undo (Ctrl+Z)">
+            <Button variant="ghost" size="sm" @click="undo" :disabled="history_index <= 0" class="tooltip-left" data-tooltip="Undo (Ctrl+Z)">
               <i class="icon-undo"></i>
             </Button>
-            <Button variant="ghost" size="sm" @click="redo" :disabled="historyIndex >= editorHistory.length - 1" class="tooltip-left" data-tooltip="Redo (Ctrl+Shift+Z)">
+            <Button variant="ghost" size="sm" @click="redo" :disabled="history_index >= editor_history.length - 1" class="tooltip-left" data-tooltip="Redo (Ctrl+Shift+Z)">
               <i class="icon-redo"></i>
             </Button>
           </div>
@@ -404,13 +402,13 @@ watch(
           class="h-fit min-h-96 bg-base-light rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
           @input="handleInput"
           @keydown="handleKeyboard"
-          @focus="isEditorFocused = true"
-          @blur="isEditorFocused = false"
-          v-text="article.content"></div>
+          @focus="is_editor_focused = true"
+          @blur="is_editor_focused = false"></div>
       </div>
 
       <!-- Preview -->
       <div class="lg:col-span-6 col-span-12">
+        <div>{{ selection.selection }}</div>
         <div class="flex items-center gap-x-2 mb-10 justify-end">
           <Button>Publish</Button>
         </div>
