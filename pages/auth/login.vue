@@ -28,6 +28,7 @@ interface CredentialResponse {
 }
 
 function handleCredentialResponse(response: CredentialResponse) {
+  console.log(response);
   const authStore = useAuthStore();
 
   authStore.authWithGoogle({ token: response.credential }, route.fullPath);
@@ -46,7 +47,7 @@ if (process.client)
       </div>
       <div class="mt-auto">
         <blockquote class="space-y-2">
-          <p class="text-lg">&ldquo;Join us to help create, archive and standardise information on the web.&rdquo;</p>
+          <p class="text-lg">&ldquo;Help us create, archive and standardise information on the web.&rdquo;</p>
           <footer class="text-sm">Stephen Udoekpo</footer>
         </blockquote>
       </div>
@@ -59,7 +60,7 @@ if (process.client)
             <h1 class="text-2xl font-semibold tracking-tight">Create an account or Login</h1>
             <p class="text-sm text-muted-foreground">Login or signup with</p>
           </div>
-          <div class="my-4">
+          <div class="my-4 flex items-center justify-center">
             <div
               ref="g_id_signin"
               id="g_id_onload"
