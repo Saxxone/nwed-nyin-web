@@ -42,24 +42,14 @@ export const useArchiveStore = defineStore("archive", () => {
     }
   }
 
-  async function searchArticles(query: string) {
-    try {
-      const response = await useApiConnect<string, Article[]>(api_routes.archive.search(query), FetchMethod.GET);
 
-      if ("message" in response) {
-        throw new Error(response.message);
-      } else {
-        return response;
-      }
-    } catch (error) {
-      console.error("Error fetching articles:", error);
-      throw error;
-    }
-  }
-
-  async function createArticle(article: Article) {
+  async function publishArticle(article: Article) {
     try {
-      const response = await useApiConnect<Article, Article>(api_routes.archive.add, FetchMethod.POST, article);
+      const response = await useApiConnect<Article, Article>(
+        api_routes.archive.publish,
+        FetchMethod.POST,
+        article
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -74,7 +64,48 @@ export const useArchiveStore = defineStore("archive", () => {
 
   async function updateArticle(id: string, article: Article) {
     try {
-      const response = await useApiConnect<Article, Article>(api_routes.archive.update(id), FetchMethod.PATCH, article);
+      const response = await useApiConnect<Article, Article>(
+        api_routes.archive.update(id),
+        FetchMethod.PATCH,
+        article
+      );
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+      throw error;
+    }
+  }
+
+  async function searchArticles(query: string) {
+    try {
+      const response = await useApiConnect<string, Article[]>(
+        api_routes.archive.search(query),
+        FetchMethod.GET
+      );
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+      throw error;
+    }
+  }
+
+  async function createArticle(article: Article) {
+    try {
+      const response = await useApiConnect<Article, Article>(
+        api_routes.archive.add,
+        FetchMethod.POST,
+        article
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -93,5 +124,6 @@ export const useArchiveStore = defineStore("archive", () => {
     createArticle,
     searchArticles,
     updateArticle,
+    publishArticle,
   };
 });

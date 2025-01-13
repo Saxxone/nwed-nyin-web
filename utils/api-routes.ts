@@ -10,6 +10,7 @@ const api_routes = {
   archive: {
     list: "/archive",
     view: (id: string) => `/archive/${id}`,
+    publish: `/archive/publish`,
     add: "/archive/add",
     update: (id: string) => `/archive/update/${id}`,
     search: (query: string) => `/archive/search?term=${query}`,

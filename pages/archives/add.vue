@@ -312,6 +312,26 @@ const autoSave = debounce(async () => {
   }
 }, 2000);
 
+
+async function publish() {
+  if(!article.value.content.trim()) return
+  console.log(article.value)
+  try {
+      await archive_store.publishArticle(article.value);
+      toast({
+        title: "Published",
+        description: "Your changes have been saved",
+      });
+    } catch (error) {
+      console.error("Failed to publish:", error);
+      toast({
+        title: "Auto-save failed",
+        description: error as string,
+      });
+    }
+}
+
+
 function debounce(fn: Function, ms: number) {
   let timeout: number;
   return function (this: void, ...args: any[]): void {
@@ -410,7 +430,7 @@ watch(
       <div class="lg:col-span-6 col-span-12">
         <div>{{ selection.selection }}</div>
         <div class="flex items-center gap-x-2 mb-10 justify-end">
-          <Button>Publish</Button>
+          <Button @click="publish">Publish</Button>
         </div>
         <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
       </div>
