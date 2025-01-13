@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PartOfSpeech, Word } from "~/types/word";
 import { useDictStore } from "~/store/dictionary";
-import { Toaster } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/toast/use-toast";
 import app_routes from "~/utils/routes";
 
@@ -220,7 +219,6 @@ function bindForm() {
 
 <template>
   <main>
-    <Toaster />
     <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="col-span-12 md:col-span-4">
         <h2 class="mb-4 text-2xl font-medium tracking-tight">

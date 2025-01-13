@@ -3,7 +3,6 @@ import { ref, watch, onMounted } from "vue";
 import { useTextSelection } from "@vueuse/core";
 import type { Article } from "~/types/article";
 import { useArchiveStore } from "~/store/archive";
-import { Toaster } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -376,7 +375,7 @@ watch(
 
 <template>
   <main>
-    <Toaster />
+
     <div class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="rounded-lg lg:col-span-6 col-span-12">
         <!-- Toolbar -->
