@@ -11,6 +11,11 @@ const app_routes = {
     edit: (word: string) => `/dictionary/edit/${word}`,
     view: (word: string) => `/dictionary/${word}`,
   },
+  auth: {
+    login: "/auth/login",
+    signup: "/auth/signup",
+    profile: "/auth/profile",
+  },
 };
 
 export default app_routes;

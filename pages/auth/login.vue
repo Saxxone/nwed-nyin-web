@@ -28,14 +28,34 @@ interface CredentialResponse {
 }
 
 function handleCredentialResponse(response: CredentialResponse) {
-  console.log(response);
   const authStore = useAuthStore();
-
   authStore.authWithGoogle({ token: response.credential }, route.fullPath);
 }
-if (process.client)
+
+onMounted(() => {
+    //@ts-expect-error handleCredentialResponse needs to be defined in a types delcaration file to remove this error
+  
+  google.accounts.id.initialize({
+    client_id: client_id,
+    callback: handleCredentialResponse,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+
   //@ts-expect-error handleCredentialResponse needs to be defined in a types delcaration file to remove this error
-  window.handleCredentialResponse = handleCredentialResponse;
+  
+  google.accounts.id.renderButton(
+    document.querySelector('.g_id_signin')!,
+    { 
+      type: 'standard',
+      shape: 'rectangular',
+      theme: 'outline',
+      text: 'signin_with',
+      size: 'large',
+      logo_alignment: 'left'
+    }
+  );
+})
 </script>
 
 <template>
@@ -53,7 +73,7 @@ if (process.client)
       </div>
     </div>
 
-    <div class="lg:col-span-8 lg: p-6">
+    <div class="lg:col-span-8 lg:p-6">
       <div class="flex flex-col justify-center items-end h-full">
         <div class="max-w-96 mx-auto">
           <div class="text-center">
@@ -61,17 +81,7 @@ if (process.client)
             <p class="text-sm text-muted-foreground">Login or signup with</p>
           </div>
           <div class="my-4 flex items-center justify-center">
-            <div
-              ref="g_id_signin"
-              id="g_id_onload"
-              :data-client_id="client_id"
-              :data-callback="handleCredentialResponse"
-              data-context="login"
-              data-ux_mode="popup"
-              data-nonce=""
-              data-auto_prompt="false" />
-
-            <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left" />
+            <div class="g_id_signin" />
           </div>
           <p class="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our

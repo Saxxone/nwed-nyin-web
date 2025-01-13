@@ -16,6 +16,18 @@ const api_routes = {
     search: (query: string) => `/archive/search?term=${query}`,
     edit: (id: string) => `/archive/${id}/edit`,
   },
+  auth: {
+    login: "/auth/login",
+    register: "/auth/register",
+    google_login: "/auth/login/google",
+    google_signup: "/auth/signup/google",
+    logout: "/auth/logout",
+    profile: "/auth/profile",
+  },
+  files: {
+    upload: "/files/upload",
+    download: (filename: string) => `/files/download/${filename}`,
+  },
 };
 
 export default api_routes;
