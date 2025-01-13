@@ -8,7 +8,7 @@ useHead({
 const g_id_signin = ref(null);
 const route = useRoute();
 
-const oauth_2_endpoint = import.meta.env.VITE_GOOGLE_OAUTH;
+const oauth_2_endpoint = import.meta.env.VITE_GOOGLE_OAUTH_ENDPOINT;
 const client_id = import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID;
 
 useHead({
@@ -39,23 +39,20 @@ if (process.client)
 
 <template>
   <div class="container h-dvh md:grid lg:grid-cols-12 mx-auto p-4">
-    <div class="h-full bg-slate-900 rounded-lg flex-col p-6 text-white dark:border-r lg:flex lg:col-span-4">
+    <div class="h-full bg-slate-900 rounded-lg flex-col p-6 text-white dark:border-r hidden lg:flex lg:col-span-4">
       <div class="flex items-center text-lg font-medium">
         <img src="/favicon-32x32.png" class="h-6 rounded-full mr-3" alt="nsibidi" />
         Ñwed Nnyịn
       </div>
       <div class="mt-auto">
         <blockquote class="space-y-2">
-          <p class="text-lg">&ldquo;This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before.&rdquo;</p>
-          <footer class="text-sm">Sofia Davis</footer>
+          <p class="text-lg">&ldquo;Join us to help create, archive and standardise information on the web.&rdquo;</p>
+          <footer class="text-sm">Stephen Udoekpo</footer>
         </blockquote>
       </div>
     </div>
 
     <div class="lg:col-span-8 lg: p-6">
-      <div class="flex justify-end">
-        <a href="/examples/authentication" class=""> Login </a>
-      </div>
       <div class="flex flex-col justify-center items-end h-full">
         <div class="max-w-96 mx-auto">
           <div class="text-center">
@@ -67,7 +64,7 @@ if (process.client)
               ref="g_id_signin"
               id="g_id_onload"
               :data-client_id="client_id"
-              data-callback="handleCredentialResponse"
+              :data-callback="handleCredentialResponse"
               data-context="login"
               data-ux_mode="popup"
               data-nonce=""
