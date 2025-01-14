@@ -27,7 +27,7 @@ const selections = ref<string[]>([]);
 
 const article = ref<Article>({
   content: "",
-  contributors: [],
+  title: "",
 });
 
 const parsed_article = ref({
@@ -311,25 +311,23 @@ const autoSave = debounce(async () => {
   }
 }, 2000);
 
-
 async function publish() {
-  if(!article.value.content.trim()) return
-  console.log(article.value)
+  if (!article.value.content.trim()) return;
+  console.log(article.value);
   try {
-      await article_store.publishArticle(article.value);
-      toast({
-        title: "Published",
-        description: "Your changes have been saved",
-      });
-    } catch (error) {
-      console.error("Failed to publish:", error);
-      toast({
-        title: "Auto-save failed",
-        description: error as string,
-      });
-    }
+    await article_store.publishArticle(article.value);
+    toast({
+      title: "Published",
+      description: "Your changes have been saved",
+    });
+  } catch (error) {
+    console.error("Failed to publish:", error);
+    toast({
+      title: "Publish failed",
+      description: error as string,
+    });
+  }
 }
-
 
 function debounce(fn: Function, ms: number) {
   let timeout: number;
@@ -375,11 +373,10 @@ watch(
 
 <template>
   <main>
-
     <div class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="rounded-lg lg:col-span-6 col-span-12">
         <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
-          <Input v-model="article.title" placeholder="Title"/>
+          <Input v-model="article.title" placeholder="Title" required />
         </div>
         <!-- Toolbar -->
         <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
@@ -421,7 +418,7 @@ watch(
           ref="editor"
           contenteditable="true"
           spellcheck="true"
-          class="h-fit min-h-96 bg-base-light rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
+          class="h-fit min-h-96 bg-base-light text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
           @input="handleInput"
           @keydown="handleKeyboard"
           @focus="is_editor_focused = true"
@@ -434,6 +431,7 @@ watch(
         <div class="flex items-center gap-x-2 mb-10 justify-end">
           <Button @click="publish">Publish</Button>
         </div>
+        <h1 class="mb-4">{{ article.title }}</h1>
         <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
       </div>
     </div>

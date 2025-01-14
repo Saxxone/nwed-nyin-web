@@ -82,6 +82,7 @@ export async function useApiConnect<Body, Res>(
       } as Error;
     },
   }).catch((error) => {
+    console.log(error);
     if (error.statusCode === 401 || error.status === 401) {
       logout();
       return err;

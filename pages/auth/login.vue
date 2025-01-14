@@ -5,21 +5,10 @@ useHead({
   title: "Login",
 });
 
-const g_id_signin = ref(null);
 const route = useRoute();
 
 const oauth_2_endpoint = import.meta.env.VITE_GOOGLE_OAUTH_ENDPOINT;
 const client_id = import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID;
-
-useHead({
-  script: [
-    {
-      src: oauth_2_endpoint,
-      async: true,
-      defer: true,
-    },
-  ],
-});
 
 interface CredentialResponse {
   credential: string;
@@ -32,30 +21,43 @@ function handleCredentialResponse(response: CredentialResponse) {
   authStore.authWithGoogle({ token: response.credential }, route.fullPath);
 }
 
-onMounted(() => {
-    //@ts-expect-error handleCredentialResponse needs to be defined in a types delcaration file to remove this error
-  
-  google.accounts.id.initialize({
-    client_id: client_id,
-    callback: handleCredentialResponse,
-    auto_select: false,
-    cancel_on_tap_outside: true
+function loadGoogleScript() {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = oauth_2_endpoint;
+    script.onload = () => resolve(script);
+    script.onerror = () => reject(new Error("Failed to load Google API script"));
+    document.head.appendChild(script);
   });
+}
 
-  //@ts-expect-error handleCredentialResponse needs to be defined in a types delcaration file to remove this error
-  
-  google.accounts.id.renderButton(
-    document.querySelector('.g_id_signin')!,
-    { 
-      type: 'standard',
-      shape: 'rectangular',
-      theme: 'outline',
-      text: 'signin_with',
-      size: 'large',
-      logo_alignment: 'left'
+onMounted(async () => {
+  try {
+    await loadGoogleScript();
+
+    if (typeof window.google !== "undefined") {
+      window.google.accounts.id.initialize({
+        client_id: client_id,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      window.google.accounts.id.renderButton(document.querySelector(".g_id_signin")!, {
+        type: "standard",
+        shape: "rectangular",
+        theme: "outline",
+        text: "signin_with",
+        size: "large",
+        logo_alignment: "left",
+      });
+    } else {
+      console.error("Google API script loaded but google object is not defined");
     }
-  );
-})
+  } catch (error) {
+    console.error("Failed to load Google API script", error);
+  }
+});
 </script>
 
 <template>
