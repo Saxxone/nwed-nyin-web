@@ -4,14 +4,21 @@ import type { Article } from "~/types/article";
 import type { Pagination } from "~/types/types";
 import { useApiConnect } from "~/composables/useApiConnect";
 
-export const useArchiveStore = defineStore("archive", () => {
+export const useArticleStore = defineStore("articles", () => {
   const last_article = ref<Article | null>(null);
-  async function fetchArticles(pagination: Pagination = { cursor: "1", skip: 0, take: 10 }) {
+  async function fetchArticles(
+    pagination: Pagination = { cursor: "1", skip: 0, take: 10 }
+  ) {
     try {
-      const response = await useApiConnect<Partial<Article>, { articles: Article[]; totalCount: number }>(
-        `${api_routes.archive.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(pagination.skip as number)}&take=${encodeURIComponent(
-          pagination.take as number
-        )}`,
+      const response = await useApiConnect<
+        Partial<Article>,
+        { articles: Article[]; totalCount: number }
+      >(
+        `${api_routes.articles.list}?cursor=${encodeURIComponent(
+          pagination.cursor as string
+        )}&skip=${encodeURIComponent(
+          pagination.skip as number
+        )}&take=${encodeURIComponent(pagination.take as number)}`,
         FetchMethod.GET
       );
 
@@ -27,9 +34,12 @@ export const useArchiveStore = defineStore("archive", () => {
     }
   }
 
-  async function fetchArticle(article: string) {
+  async function fetchArticle(slug: string) {
     try {
-      const response = await useApiConnect<string, Article>(api_routes.archive.view(article), FetchMethod.GET);
+      const response = await useApiConnect<string, Article>(
+        api_routes.articles.view(slug),
+        FetchMethod.GET
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -42,11 +52,10 @@ export const useArchiveStore = defineStore("archive", () => {
     }
   }
 
-
   async function publishArticle(article: Article) {
     try {
       const response = await useApiConnect<Article, Article>(
-        api_routes.archive.publish,
+        api_routes.articles.publish,
         FetchMethod.POST,
         article
       );
@@ -65,7 +74,7 @@ export const useArchiveStore = defineStore("archive", () => {
   async function updateArticle(id: string, article: Article) {
     try {
       const response = await useApiConnect<Article, Article>(
-        api_routes.archive.update(id),
+        api_routes.articles.update(id),
         FetchMethod.PATCH,
         article
       );
@@ -84,7 +93,7 @@ export const useArchiveStore = defineStore("archive", () => {
   async function searchArticles(query: string) {
     try {
       const response = await useApiConnect<string, Article[]>(
-        api_routes.archive.search(query),
+        api_routes.articles.search(query),
         FetchMethod.GET
       );
 
@@ -102,7 +111,7 @@ export const useArchiveStore = defineStore("archive", () => {
   async function createArticle(article: Article) {
     try {
       const response = await useApiConnect<Article, Article>(
-        api_routes.archive.add,
+        api_routes.articles.add,
         FetchMethod.POST,
         article
       );

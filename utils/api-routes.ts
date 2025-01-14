@@ -7,14 +7,14 @@ const api_routes = {
     search: (query: string) => `/dictionary/search?term=${query}`,
     parts_of_speech: "/dictionary/parts-of-speech",
   },
-  archive: {
-    list: "/archive",
-    view: (id: string) => `/archive/${id}`,
-    publish: `/archive/publish`,
-    add: "/archive/add",
-    update: (id: string) => `/archive/update/${id}`,
-    search: (query: string) => `/archive/search?term=${query}`,
-    edit: (id: string) => `/archive/${id}/edit`,
+  articles: {
+    list: "/article",
+    view: (slug: string) => `/article/${slug}`,
+    publish: `/article/publish`,
+    add: "/article/add",
+    update: (slug: string) => `/article/update/${slug}`,
+    search: (query: string) => `/article/search?term=${query}`,
+    edit: (slug: string) => `/article/${slug}/edit`,
   },
   auth: {
     login: "/auth/login",

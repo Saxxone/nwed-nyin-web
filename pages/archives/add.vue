@@ -2,7 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import { useTextSelection } from "@vueuse/core";
 import type { Article } from "~/types/article";
-import { useArchiveStore } from "~/store/archive";
+import { useArticleStore } from "~/store/articles";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -34,7 +34,7 @@ const parsed_article = ref({
   content: "",
 });
 
-const archive_store = useArchiveStore();
+const article_store = useArticleStore();
 
 const actions: FormatAction[] = [
   {
@@ -296,7 +296,7 @@ function handleKeyboard(event: KeyboardEvent) {
 const autoSave = debounce(async () => {
   if (article.value.id && article.value.content.trim()) {
     try {
-      await archive_store.updateArticle(article.value.id, article.value);
+      await article_store.updateArticle(article.value.id, article.value);
       toast({
         title: "Auto-saved",
         description: "Your changes have been saved",
@@ -316,7 +316,7 @@ async function publish() {
   if(!article.value.content.trim()) return
   console.log(article.value)
   try {
-      await archive_store.publishArticle(article.value);
+      await article_store.publishArticle(article.value);
       toast({
         title: "Published",
         description: "Your changes have been saved",
@@ -343,7 +343,7 @@ function debounce(fn: Function, ms: number) {
 onMounted(async () => {
   if (route.query.action === "edit" && route.query.article) {
     try {
-      article.value = await archive_store.fetchArticle(decodeURI(route.query.article as string));
+      article.value = await article_store.fetchArticle(decodeURI(route.query.article as string));
       addToHistory(article.value.content);
       nextTick(() => {
         editor.value?.focus();
@@ -378,6 +378,9 @@ watch(
 
     <div class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="rounded-lg lg:col-span-6 col-span-12">
+        <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
+          <Input v-model="article.title" placeholder="Title"/>
+        </div>
         <!-- Toolbar -->
         <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
           <TooltipProvider>
