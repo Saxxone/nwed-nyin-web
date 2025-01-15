@@ -3,6 +3,18 @@ import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, Me
 import LeftSideBar from "@/components/LeftSideBar.vue";
 import RightSideBar from "@/components/RightSideBar.vue";
 import routes from "../utils/routes";
+
+const pages = [
+  {
+    name: "Articles",
+    route: routes.articles.list,
+  },
+  {
+    name: "Dictionary",
+    route: routes.dictionary.list,
+  },
+  
+];
 </script>
 
 <template>
@@ -11,14 +23,10 @@ import routes from "../utils/routes";
 
     <section class="container mx-auto col-span-6">
       <Menubar>
-        <MenubarMenu class="flex justify-between">
-          <MenubarTrigger>
-            <NuxtLink :to="routes.articles">Articles</NuxtLink>
-          </MenubarTrigger>
-          <NuxtLink :to="routes.dictionary.list">Dictionary</NuxtLink>
-          <MenubarTrigger>Stories</MenubarTrigger>
-        </MenubarMenu>
-      </Menubar>
+          <MenubarMenu class="flex justify-between">
+            <NuxtLink :to="page.route" v-for="page in pages" :key="page.name" class="px-2">{{ page.name }}</NuxtLink>
+          </MenubarMenu>
+        </Menubar>
       <main class="my-4">
         <slot></slot>
       </main>

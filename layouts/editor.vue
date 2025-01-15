@@ -4,13 +4,13 @@ import { Menubar, MenubarMenu, MenubarTrigger } from "@/components/ui/menubar";
 import routes from "../utils/routes";
 
 const pages = [
+   {
+    name: "Articles",
+    route: routes.articles.list,
+  },
   {
     name: "Dictionary",
     route: routes.dictionary.list,
-  },
-  {
-    name: "Articles",
-    route: routes.articles.list,
   },
 ];
 </script>

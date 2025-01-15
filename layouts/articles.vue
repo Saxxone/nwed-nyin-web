@@ -6,13 +6,14 @@ import routes from "../utils/routes";
 
 const pages = [
   {
-    name: "Dictionary",
-    route: routes.dictionary.list,
-  },
-  {
     name: "Articles",
     route: routes.articles.list,
   },
+  {
+    name: "Dictionary",
+    route: routes.dictionary.list,
+  },
+  
 ];
 </script>
 
