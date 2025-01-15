@@ -10,10 +10,7 @@ export const useArticleStore = defineStore("articles", () => {
     pagination: Pagination = { cursor: "1", skip: 0, take: 10 }
   ) {
     try {
-      const response = await useApiConnect<
-        Partial<Article>,
-        { articles: Article[]; totalCount: number }
-      >(
+      const response = await useApiConnect<Partial<Article>, Article[]>(
         `${api_routes.articles.list}?cursor=${encodeURIComponent(
           pagination.cursor as string
         )}&skip=${encodeURIComponent(
