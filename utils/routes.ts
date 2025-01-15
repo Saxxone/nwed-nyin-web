@@ -1,14 +1,15 @@
 const app_routes = {
-  archives: {
-    list: "/archives",
-    view: (id: string) => `/archives/${id}`,
-    add: "/archives/add",
-    edit: (id: string) => `/archives/${id}/edit`,
+  articles: {
+    list: "/articles",
+    view: (slug: string) => `/articles/${slug}`,
+    add: "/articles/add",
+    edit: (slug: string) => `/articles/add?action=edit&article=${encodeURI(slug)}`,
   },
   dictionary: {
     list: "/dictionary",
     add: "/dictionary/add",
-    edit: (word: string) => `/dictionary/edit/${word}`,
+    edit: (word: string) =>
+      `/dictionary/add?action=edit&word=${encodeURI(word)}`,
     view: (word: string) => `/dictionary/${word}`,
   },
   auth: {

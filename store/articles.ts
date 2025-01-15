@@ -25,7 +25,7 @@ export const useArticleStore = defineStore("articles", () => {
       if ("message" in response) {
         throw new Error(response.message);
       } else {
-        last_article.value = response.articles[response.articles.length - 1];
+        last_article.value = response[response.length - 1];
         return response;
       }
     } catch (error) {
@@ -52,7 +52,24 @@ export const useArticleStore = defineStore("articles", () => {
     }
   }
 
-  async function publishArticle(article: Article) {
+  async function fetchMarkdown(path: string) {
+    try {
+      const response = await useApiConnect<string, Article>(
+        api_routes.articles.getMarkdown(path),
+        FetchMethod.GET
+      );
+
+      if (typeof response === "string") return response;
+      else if ("message" in response) {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+      throw error;
+    }
+  }
+
+  async function publishArticle(article: Article): Promise<Article> {
     try {
       const response = await useApiConnect<Article, Article>(
         api_routes.articles.publish,
@@ -130,6 +147,7 @@ export const useArticleStore = defineStore("articles", () => {
   return {
     fetchArticles,
     fetchArticle,
+    fetchMarkdown,
     createArticle,
     searchArticles,
     updateArticle,

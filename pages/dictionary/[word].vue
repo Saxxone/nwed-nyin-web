@@ -12,7 +12,7 @@ const dictStore = useDictStore();
 
 function gotoEdit() {
   if (!word.value) return;
-  navigateTo(`${app_routes.dictionary.add}?action=edit&word=${encodeURI(word.value.term)}`);
+  navigateTo(app_routes.dictionary.edit(encodeURI(word.value.term)));
 }
 
 onMounted(async () => {

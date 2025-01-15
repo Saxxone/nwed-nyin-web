@@ -10,6 +10,7 @@ const api_routes = {
   articles: {
     list: "/article",
     view: (slug: string) => `/article/${slug}`,
+    getMarkdown: (path: string) => `/article/markdown/${path}`,
     publish: `/article/publish`,
     add: "/article/add",
     update: (slug: string) => `/article/update/${slug}`,

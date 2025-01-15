@@ -27,7 +27,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function login(loginData: Partial<User>, to: string = app_routes.archives.list) {
+  async function login(loginData: Partial<User>, to: string = app_routes.articles.list) {
     const response = await useApiConnect<Partial<User>, User>(api_routes.auth.login, FetchMethod.POST, loginData);
     if ("status" in response || "statusCode" in response) {
       toast({
@@ -37,7 +37,7 @@ export const useAuthStore = defineStore("auth", () => {
       logout();
     } else {
       const route = useRoute();
-      saveTokens(response);
+      saveTokens(response, to);
       goTo((route.query.redirect as string) || to);
     }
   }
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function authWithGoogle(credential: { token: string }, to: string = app_routes.archives.list) {
+  async function authWithGoogle(credential: { token: string }, to: string = app_routes.articles.list) {
     const response = await useApiConnect<{ token: string }, User>(api_routes.auth.google_signup, FetchMethod.POST, credential);
     if ("status" in response || "statusCode" in response) {
       logout();
@@ -72,7 +72,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   function goTo(to: string) {
     const router = useRouter();
-    if (to.includes("/login") || to.includes("/signup")) router.push(app_routes.archives.list);
+    if (to.includes("/login") || to.includes("/signup")) router.push(app_routes.articles.list);
     else router.push(to);
   }
 

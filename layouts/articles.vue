@@ -10,8 +10,8 @@ const pages = [
     route: routes.dictionary.list,
   },
   {
-    name: "Archives",
-    route: routes.archives.list,
+    name: "Articles",
+    route: routes.articles.list,
   },
 ];
 </script>

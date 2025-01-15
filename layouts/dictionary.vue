@@ -13,7 +13,7 @@ import routes from "../utils/routes";
       <Menubar>
         <MenubarMenu class="flex justify-between">
           <MenubarTrigger>
-            <NuxtLink :to="routes.archive">Archives</NuxtLink>
+            <NuxtLink :to="routes.articles">Articles</NuxtLink>
           </MenubarTrigger>
           <NuxtLink :to="routes.dictionary.list">Dictionary</NuxtLink>
           <MenubarTrigger>Stories</MenubarTrigger>

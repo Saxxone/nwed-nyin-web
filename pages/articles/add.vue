@@ -5,19 +5,26 @@ import type { Article } from "~/types/article";
 import { useArticleStore } from "~/store/articles";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
+import app_routes from "~/utils/routes";
 import type { FormatAction } from "~/types/types";
 
 definePageMeta({
-  title: "Ñwed Nnyịn (Nwed Nyin) - Archive",
+  title: "Ñwed Nnyịn (Nwed Nyin) - Articles",
   layout: "editor",
 });
 
 const { toast } = useToast();
 const selection = useTextSelection();
 const route = useRoute();
+const router = useRouter();
+const is_loading = ref(false);
 const editor = ref<HTMLElement | null>(null);
 const is_editor_focused = ref(false);
 const editor_history = ref<string[]>([]);
@@ -34,7 +41,7 @@ const parsed_article = ref({
   content: "",
 });
 
-const article_store = useArticleStore();
+const articleStore = useArticleStore();
 
 const actions: FormatAction[] = [
   {
@@ -100,7 +107,10 @@ function getCaretPosition(is_start: boolean): number {
   const range = selection.getRangeAt(0);
   const preCaretRange = range.cloneRange();
   preCaretRange.selectNodeContents(editor.value!);
-  preCaretRange.setEnd(range[is_start ? "startContainer" : "endContainer"], range[is_start ? "startOffset" : "endOffset"]);
+  preCaretRange.setEnd(
+    range[is_start ? "startContainer" : "endContainer"],
+    range[is_start ? "startOffset" : "endOffset"]
+  );
   return preCaretRange.toString().length;
 }
 
@@ -111,7 +121,11 @@ function setCaretPosition(start: number, end?: number) {
   if (!sel || !editor.value) return;
 
   let charCount = 0;
-  const walker = document.createTreeWalker(editor.value, NodeFilter.SHOW_TEXT, null);
+  const walker = document.createTreeWalker(
+    editor.value,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
   let start_node: Node | null = null;
   let end_node: Node | null = null;
   let start_offset = 0;
@@ -155,9 +169,15 @@ function setCaretPosition(start: number, end?: number) {
 
 // Update the applyFormat function to maintain selection
 function applyFormat(evt: Event, action: FormatAction) {
-  if (!selections.value[selections.value.length - 1] || selections.value[selections.value.length - 1].length === 0) return;
+  if (
+    !selections.value[selections.value.length - 1] ||
+    selections.value[selections.value.length - 1].length === 0
+  )
+    return;
 
-  const text = selections.value[selections.value.length - 1] ?? selections.value[selections.value.length - 2];
+  const text =
+    selections.value[selections.value.length - 1] ??
+    selections.value[selections.value.length - 2];
   console.log(text);
   const content = article.value.content;
 
@@ -178,7 +198,10 @@ function applyFormat(evt: Event, action: FormatAction) {
     case "link":
       const url = prompt("Enter URL:", "https://");
       if (url) {
-        new_text = parsed_article.value.content.substring(0, start) + `[${text}](${url})` + parsed_article.value.content.substring(end);
+        new_text =
+          parsed_article.value.content.substring(0, start) +
+          `[${text}](${url})` +
+          parsed_article.value.content.substring(end);
         new_start = start + 1; // Position after '['
         new_end = start + text.length + 1; // Position before ']'
       }
@@ -187,7 +210,10 @@ function applyFormat(evt: Event, action: FormatAction) {
     case "heading":
     case "quote":
     case "list":
-      new_text = parsed_article.value.content.substring(0, start) + formatted_lines.join("\n") + parsed_article.value.content.substring(end);
+      new_text =
+        parsed_article.value.content.substring(0, start) +
+        formatted_lines.join("\n") +
+        parsed_article.value.content.substring(end);
       new_start = start + action.markdown.prefix.length;
       new_end = end + formatted_lines.length * action.markdown.prefix.length;
       break;
@@ -195,7 +221,12 @@ function applyFormat(evt: Event, action: FormatAction) {
     default:
       // Handle inline formatting
 
-      new_text = content.substring(0, start) + prefix + text + suffix + parsed_article.value.content.substring(end);
+      new_text =
+        content.substring(0, start) +
+        prefix +
+        text +
+        suffix +
+        parsed_article.value.content.substring(end);
       new_start = start + prefix.length;
       new_end = end + prefix.length;
 
@@ -296,7 +327,7 @@ function handleKeyboard(event: KeyboardEvent) {
 const autoSave = debounce(async () => {
   if (article.value.id && article.value.content.trim()) {
     try {
-      await article_store.updateArticle(article.value.id, article.value);
+      await articleStore.updateArticle(article.value.id, article.value);
       toast({
         title: "Auto-saved",
         description: "Your changes have been saved",
@@ -312,20 +343,28 @@ const autoSave = debounce(async () => {
 }, 2000);
 
 async function publish() {
-  if (!article.value.content.trim()) return;
-  console.log(article.value);
+  if (!article.value.content.trim() || !article.value.title.trim()) {
+    toast({
+      title: "Article content or title cannot be empty",
+      description: "Create a proper article before trying to publish",
+    });
+    return;
+  }
   try {
-    await article_store.publishArticle(article.value);
+    is_loading.value = true;
+    const res = await articleStore.publishArticle(article.value);
     toast({
       title: "Published",
       description: "Your changes have been saved",
     });
+    router.push(app_routes.articles.view(encodeURI(res.slug)));
   } catch (error) {
-    console.error("Failed to publish:", error);
     toast({
       title: "Publish failed",
       description: error as string,
     });
+  } finally {
+    is_loading.value = false;
   }
 }
 
@@ -337,28 +376,47 @@ function debounce(fn: Function, ms: number) {
   };
 }
 
-// Lifecycle hooks and watchers
+async function getArticleMeta(slug: string) {
+  try {
+    const res = await articleStore.fetchArticle(slug);
+    article.value = {...article.value, ...res}
+  } catch (error) {
+    toast({
+      title: "Error loading article",
+      description: error as string,
+    });
+  }
+}
+
+async function getMarkdownFile(path: string) {
+  try {
+    article.value.content = await articleStore.fetchMarkdown(path);
+    addToHistory(article.value.content);
+    nextTick(() => {
+      editor.value?.focus();
+    });
+  } catch (error) {
+    toast({
+      title: "Error loading article contents",
+      description: error as string,
+    });
+  }
+}
+
 onMounted(async () => {
   if (route.query.action === "edit" && route.query.article) {
-    try {
-      article.value = await article_store.fetchArticle(decodeURI(route.query.article as string));
-      addToHistory(article.value.content);
-      nextTick(() => {
-        editor.value?.focus();
-      });
-    } catch (error) {
-      toast({
-        title: "Error loading article",
-        description: error as string,
-      });
-    }
+    const slug = decodeURI(route.query.article as string);
+    await getArticleMeta(slug);
+    await getMarkdownFile(slug);
   }
 });
 
 watch(
   () => article.value.content,
   async (new_content) => {
-    parsed_article.value.content = DOMPurify.sanitize(await marked.parse(new_content, { breaks: true }));
+    parsed_article.value.content = DOMPurify.sanitize(
+      await marked.parse(new_content, { breaks: true })
+    );
     autoSave();
   }
 );
@@ -375,19 +433,33 @@ watch(
   <main>
     <div class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="rounded-lg lg:col-span-6 col-span-12">
-        <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
-          <Input v-model="article.title" placeholder="Title" required />
+        <div
+          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
+        >
+          <Input
+            v-model="article.title"
+            placeholder="Title"
+            required
+            :disabled="is_loading"
+          />
         </div>
         <!-- Toolbar -->
-        <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
+        <div
+          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
+        >
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div class="bg-base-white rounded p-2 cursor-pointer select-none" @click="applyFormat($event, action)">
+                <div
+                  class="bg-base-white rounded p-2 cursor-pointer select-none"
+                  @click="applyFormat($event, action)"
+                >
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />
-                  <IconsStrikethroughIcon v-if="action.icon === 'strikethrough'" />
+                  <IconsStrikethroughIcon
+                    v-if="action.icon === 'strikethrough'"
+                  />
                   <div v-if="action.icon === 'heading'">H</div>
                   <IconsLinkIcon v-if="action.icon === 'link'" />
                   <IconsQuoteIcon v-if="action.icon === 'quote'" />
@@ -397,17 +469,33 @@ watch(
               <TooltipContent>
                 <div>
                   <span>{{ action.label }}</span>
-                  <span v-if="action.shortcut" class="ml-2 text-xs">{{ action.shortcut }}</span>
+                  <span v-if="action.shortcut" class="ml-2 text-xs">{{
+                    action.shortcut
+                  }}</span>
                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
           <div class="ml-auto flex items-center gap-x-2">
-            <Button variant="ghost" size="sm" @click="undo" :disabled="history_index <= 0" class="tooltip-left" data-tooltip="Undo (Ctrl+Z)">
+            <Button
+              variant="ghost"
+              size="sm"
+              @click="undo"
+              :disabled="history_index <= 0"
+              class="tooltip-left"
+              data-tooltip="Undo (Ctrl+Z)"
+            >
               <i class="icon-undo"></i>
             </Button>
-            <Button variant="ghost" size="sm" @click="redo" :disabled="history_index >= editor_history.length - 1" class="tooltip-left" data-tooltip="Redo (Ctrl+Shift+Z)">
+            <Button
+              variant="ghost"
+              size="sm"
+              @click="redo"
+              :disabled="history_index >= editor_history.length - 1"
+              class="tooltip-left"
+              data-tooltip="Redo (Ctrl+Shift+Z)"
+            >
               <i class="icon-redo"></i>
             </Button>
           </div>
@@ -416,23 +504,33 @@ watch(
         <!-- Editor -->
         <div
           ref="editor"
-          contenteditable="true"
+          :aria-disabled="is_loading"
+          :disabled="is_loading"
+          :contenteditable="!is_loading"
           spellcheck="true"
           class="h-fit min-h-96 bg-base-light text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
           @input="handleInput"
           @keydown="handleKeyboard"
           @focus="is_editor_focused = true"
-          @blur="is_editor_focused = false"></div>
+          @blur="is_editor_focused = false"
+        >{{ article.content }}</div>
       </div>
 
       <!-- Preview -->
       <div class="lg:col-span-6 col-span-12">
-        <div>{{ selection.selection }}</div>
         <div class="flex items-center gap-x-2 mb-10 justify-end">
-          <Button @click="publish">Publish</Button>
+          <Button @click="publish" :disabled="is_loading">
+            <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
+            Publish</Button
+          >
         </div>
-        <h1 class="mb-4">{{ article.title }}</h1>
-        <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
+        <div>
+          <h1 class="mb-4">{{ article.title }}</h1>
+          <div
+            class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert"
+            v-html="parsed_article.content"
+          ></div>
+        </div>
       </div>
     </div>
   </main>
@@ -446,36 +544,5 @@ watch(
 
 .tooltip-left:hover::before {
   @apply opacity-100 visible;
-}
-
-.prose :deep(h1) {
-  @apply text-2xl font-bold mb-4;
-}
-.prose :deep(h2) {
-  @apply text-xl font-bold mb-3;
-}
-.prose :deep(h3) {
-  @apply text-lg font-bold mb-2;
-}
-.prose :deep(p) {
-  @apply mb-4;
-}
-.prose :deep(code) {
-  @apply bg-gray-100 rounded px-1 py-0.5 text-sm font-mono;
-}
-.prose :deep(pre) {
-  @apply bg-gray-100 rounded p-3 my-4 overflow-x-auto;
-}
-.prose :deep(blockquote) {
-  @apply border-l-4 border-gray-300 pl-4 italic my-4;
-}
-.prose :deep(ul) {
-  @apply list-disc list-inside mb-4 pl-4;
-}
-.prose :deep(ol) {
-  @apply list-decimal list-inside mb-4 pl-4;
-}
-.prose :deep(a) {
-  @apply text-blue-600 hover:underline;
 }
 </style>
