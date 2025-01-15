@@ -357,7 +357,7 @@ async function publish() {
       title: "Published",
       description: "Your changes have been saved",
     });
-    router.push(app_routes.articles.view(encodeURI(res.slug)));
+    if(res.slug) router.push(app_routes.articles.view(encodeURI(res.slug)));
   } catch (error) {
     toast({
       title: "Publish failed",

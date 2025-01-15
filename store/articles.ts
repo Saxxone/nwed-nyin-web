@@ -52,9 +52,9 @@ export const useArticleStore = defineStore("articles", () => {
     }
   }
 
-  async function fetchMarkdown(path: string) {
+  async function fetchMarkdown(path: string): Promise<string> {
     try {
-      const response = await useApiConnect<string, Article>(
+      const response = await useApiConnect<string, string>(
         api_routes.articles.getMarkdown(path),
         FetchMethod.GET
       );
@@ -62,7 +62,7 @@ export const useArticleStore = defineStore("articles", () => {
       if (typeof response === "string") return response;
       else if ("message" in response) {
         throw new Error(response.message);
-      }
+      } else return response;
     } catch (error) {
       console.error("Error fetching articles:", error);
       throw error;
