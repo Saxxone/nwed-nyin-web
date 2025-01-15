@@ -15,7 +15,7 @@ const route = useRoute();
 const articles = ref<Article[]>([]);
 const articleStore = useArticleStore();
 
-async function getArticles(slug: string) {
+async function getArticles() {
   try {
     articles.value = await articleStore.fetchArticles();
   } catch (error) {
@@ -43,13 +43,13 @@ onMounted(async () => {
     </div>
 
     <NuxtLink
-      :to="app_routes.articles.view(encodeURI(article.slug))"
+      :to="app_routes.articles.view(encodeURI(article.slug as string))"
       v-for="article in articles"
       :key="article.id"
       class="border block rounded-lg card text-sm word-wrap mb-4 break-words"
     >
       <h2>{{ article.title }}</h2>
-      <p v-html="DOMPurify.sanitize(marked.parse(article.summary, { breaks: true }))" class="text-xs text-muted"></p>
+      <p v-html="async() => DOMPurify.sanitize(await marked.parse('article.summary' + '...', { breaks: true }))" class="text-xs text-muted"></p>
     </NuxtLink>
   </main>
 </template>
