@@ -75,9 +75,9 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="lg:col-span-8 lg:p-6">
+    <div class="lg:col-span-8 lg:p-6 m-auto h-full">
       <div class="flex flex-col justify-center items-end h-full">
-        <div class="max-w-96 mx-auto">
+        <div class="max-w-96 m-auto">
           <div class="text-center">
             <h1 class="text-2xl font-semibold tracking-tight">Create an account or Login</h1>
             <p class="text-sm text-muted-foreground">Login or signup with</p>
