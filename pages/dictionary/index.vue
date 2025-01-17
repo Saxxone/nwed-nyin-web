@@ -37,9 +37,7 @@ async function getDictionaryItems() {
 }
 
 function handleScroll() {
-  const list = document.querySelector('#list')
-  if(!list) return
-  const bottom_of_window = window.innerHeight + window.scrollY >= list.scrollHeight;
+  const bottom_of_window = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight;
   if (bottom_of_window) {
     getDictionaryItems()
   }
@@ -129,7 +127,7 @@ definePageMeta({
       </div>
     </div>
 
-    <section id="list" :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }" >
+    <section :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }" >
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-'+i" />
       </div>
