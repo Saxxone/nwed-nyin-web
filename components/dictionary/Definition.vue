@@ -11,11 +11,11 @@ const props = defineProps<Props>();
 
 <template>
   <NuxtLink :to="`${routes.dictionary.view(encodeURI(props.word.term))}`" class="border block rounded-lg card text-sm word-wrap mb-4 break-words">
-    <h5 class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-1">
-      <div>{{ props.word.term }}</div>
+    <div class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-1">
+      <h5>{{ props.word.term }}</h5>
 
-      <div class="text-gray-500 text-sm font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</div>
-    </h5>
+      <h5 class="text-gray-500 text-sm font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</h5>
+    </div>
     <p class="mb-2 font-serif text-xs" v-if="props.word.pronunciation">
       {{ `${props.word.pronunciation?.startsWith("/") ? "" : "/"}${props.word.pronunciation}${props.word.pronunciation?.endsWith("/") ? "" : "/"}` }}
     </p>

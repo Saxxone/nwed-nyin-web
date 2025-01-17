@@ -4,9 +4,13 @@ import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
 import app_routes from "~/utils/routes";
 import { watchDebounced } from "@vueuse/core";
+import DefinitionSkeleton from "~/components/app/DefinitionSkeleton.vue";
 
 const words = ref<Word[]>([]);
+const is_loading = ref(false);
 const count = ref(0);
+const take = ref(10);
+const skip = ref(0);
 const query = ref("");
 const search_results = ref<Word[]>([]);
 const dictStore = useDictStore();
@@ -15,19 +19,42 @@ async function search() {
   search_results.value = await dictStore.searchWord(query.value);
 }
 
+async function getDictionaryItems(){
+  try {
+    is_loading.value = true
+    skip.value += take.value;
+    const { words: dictionary, totalCount } = await dictStore.fetchWords({
+      cursor: words.value[words.value.length -1]?.id, skip: skip.value, take: take.value
+    });
+    count.value = totalCount;
+    words.value = [...words.value, ...dictionary];
+  } finally {
+    is_loading.value = false
+  }
+}
+
+function handleScroll() {
+  const bottom_of_window = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight;
+  if (bottom_of_window) {
+    getDictionaryItems()
+  }
+}
+
 watchDebounced(
   () => query.value,
   () => {
-    console.log("query", query.value);
     search();
   },
   { debounce: 500, maxWait: 1000 }
 );
 
 onMounted(async () => {
-  const { words: dictionary, totalCount } = await dictStore.fetchWords();
-  count.value = totalCount;
-  words.value = dictionary;
+  window.addEventListener('scroll', handleScroll);
+  await getDictionaryItems();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll);
 });
 
 definePageMeta({
@@ -98,7 +125,11 @@ definePageMeta({
     </div>
 
     <section :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }">
+      <div v-if="is_loading && words.length < 1">
+        <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-'+i" />
+      </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
+      <IconsLoadingIcon v-if="is_loading" />
     </section>
   </main>
 </template>

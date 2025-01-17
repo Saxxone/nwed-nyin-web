@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import { useAuthStore } from "@/store/auth";
+import { useToast } from "@/components/ui/toast/use-toast";
 
 useHead({
   title: "Login",
 });
 
 const route = useRoute();
-
+const { toast } = useToast();
+const is_loading = ref(false);
 const oauth_2_endpoint = import.meta.env.VITE_GOOGLE_OAUTH_ENDPOINT;
 const client_id = import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID;
 
@@ -17,8 +19,18 @@ interface CredentialResponse {
 }
 
 function handleCredentialResponse(response: CredentialResponse) {
-  const authStore = useAuthStore();
-  authStore.authWithGoogle({ token: response.credential }, route.fullPath);
+  try {
+    is_loading.value = true;
+    const authStore = useAuthStore();
+    authStore.authWithGoogle({ token: response.credential }, route.fullPath);
+  } catch (error) {
+    toast({
+      title: "Authentication failed",
+      description: `Failed to authenticate with Google ${error}`,
+    });
+  } finally {
+    is_loading.value = false;
+  }
 }
 
 function loadGoogleScript() {
@@ -61,7 +73,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container h-dvh md:grid lg:grid-cols-12 mx-auto p-4">
+  <div class="container h-dvh md:grid lg:grid-cols-12 mx-auto p-4" :class="[is_loading ? 'pointer-events-none opacity-50 cursor-not-allowed' : '']">
     <div class="h-full bg-slate-900 rounded-lg flex-col p-6 text-white dark:border-r hidden lg:flex lg:col-span-4">
       <div class="flex items-center text-lg font-medium">
         <img src="/favicon-32x32.png" class="h-6 rounded-full mr-3" alt="nsibidi" />
@@ -83,7 +95,8 @@ onMounted(async () => {
             <p class="text-sm text-muted-foreground">Login or signup with</p>
           </div>
           <div class="my-4 flex items-center justify-center">
-            <div class="g_id_signin" />
+            <IconsLoadingIcon v-if="is_loading" width="40" height="40" />
+            <div v-else class="g_id_signin" />
           </div>
           <p class="px-8 text-center text-sm text-muted-foreground">
             By signing up, you agree to our
