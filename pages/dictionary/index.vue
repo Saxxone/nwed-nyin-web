@@ -38,7 +38,7 @@ async function search() {
 async function getDictionaryItems() {
   is_loading.value = true
   try {
-    skip.value += take.value;
+    if (skip.value > 0) skip.value += take.value;
     const { words: dictionary, totalCount } = await dictStore.fetchWords({
       cursor: words.value[words.value.length -1]?.id, skip: skip.value, take: take.value
     });
