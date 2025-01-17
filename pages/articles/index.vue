@@ -24,13 +24,13 @@ async function getArticles() {
     is_loading.value = true
     const items = await articleStore.fetchArticles();
     sanitized_content.value = await Promise.all(items.map(async (item) => ({ ...item, summary: await sanitizeContent(item.summary as string) })));
+    is_loading.value = false
   } catch (error) {
+    is_loading.value = false
     toast({
       title: "Error loading article",
       description: error as string,
     });
-  } finally {
-    is_loading.value = false
   }
 }
 

@@ -19,7 +19,7 @@ async function search() {
   search_results.value = await dictStore.searchWord(query.value);
 }
 
-async function getDictionaryItems(){
+async function getDictionaryItems() {
   try {
     is_loading.value = true
     skip.value += take.value;
@@ -28,7 +28,8 @@ async function getDictionaryItems(){
     });
     count.value = totalCount;
     words.value = [...words.value, ...dictionary];
-  } finally {
+    is_loading.value = false
+  } catch (error) {
     is_loading.value = false
   }
 }
@@ -58,7 +59,7 @@ onBeforeUnmount(() => {
 });
 
 definePageMeta({
-  title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
+  title: "Ñwed Nyịn (Nwed Nyin) - Dictionary",
   layout: "articles",
   meta: [
     {
@@ -129,7 +130,7 @@ definePageMeta({
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-'+i" />
       </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
-     <div class="absolute top-10 w-full  flex items-center justify-center shadow mx-auto" v-if="is_loading">
+     <div class="absolute top-10 w-full flex items-center justify-center shadow mx-auto" v-if="is_loading">
        <div class="w-10 mx-auto bg-base-light rounded-full p-2">
          <IconsLoadingIcon />
        </div>
