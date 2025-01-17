@@ -20,22 +20,26 @@ async function search() {
 }
 
 async function getDictionaryItems() {
+  is_loading.value = true
   try {
-    is_loading.value = true
     skip.value += take.value;
     const { words: dictionary, totalCount } = await dictStore.fetchWords({
       cursor: words.value[words.value.length -1]?.id, skip: skip.value, take: take.value
     });
     count.value = totalCount;
-    words.value = [...words.value, ...dictionary];
-    is_loading.value = false
+    words.value.push(...dictionary);
+    is_loading.value = false;
   } catch (error) {
-    is_loading.value = false
+    is_loading.value = false;
+  } finally {
+    is_loading.value = false;
   }
 }
 
 function handleScroll() {
-  const bottom_of_window = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight;
+  const list = document.querySelector('#list')
+  if(!list) return
+  const bottom_of_window = window.innerHeight + window.scrollY >= list.scrollHeight;
   if (bottom_of_window) {
     getDictionaryItems()
   }
@@ -101,7 +105,7 @@ definePageMeta({
 
 <template>
   <main>
-    <div class="flex items-start justify-between">
+    <div class="flex items-start justify-between relative">
       <div class="mb-4">
         <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
         <p class="text-sm text-muted" v-show="words.length">{{ count }} words in dictionary</p>
@@ -125,16 +129,16 @@ definePageMeta({
       </div>
     </div>
 
-    <section :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }" class="relative">
+    <section id="list" :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }" >
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-'+i" />
       </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
-     <div class="absolute top-10 w-full flex items-center justify-center shadow mx-auto" v-if="is_loading">
+      <div v-if="is_loading" class="fixed top-24 w-full flex items-center justify-center shadow py-10 mx-auto" >
        <div class="w-10 mx-auto bg-base-light rounded-full p-2">
          <IconsLoadingIcon />
        </div>
-     </div>
+      </div>
     </section>
   </main>
 </template>
