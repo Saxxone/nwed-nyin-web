@@ -124,12 +124,16 @@ definePageMeta({
       </div>
     </div>
 
-    <section :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }">
+    <section :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }" class="relative">
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-'+i" />
       </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
-      <IconsLoadingIcon v-if="is_loading" />
+     <div class="absolute top-10 w-full  flex items-center justify-center shadow mx-auto" v-if="is_loading">
+       <div class="w-10 mx-auto bg-base-light rounded-full p-2">
+         <IconsLoadingIcon />
+       </div>
+     </div>
     </section>
   </main>
 </template>
