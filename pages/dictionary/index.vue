@@ -133,7 +133,7 @@ definePageMeta({
       </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
       <div v-if="is_loading" class="fixed top-24 w-full flex items-center justify-center shadow py-10 mx-auto" >
-       <div class="w-10 mx-auto bg-base-light rounded-full p-2">
+       <div class="w-10 h-10 mx-auto bg-base-light rounded-full p-2">
          <IconsLoadingIcon />
        </div>
       </div>
