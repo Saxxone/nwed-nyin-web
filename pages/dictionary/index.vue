@@ -14,6 +14,22 @@ const skip = ref(0);
 const query = ref("");
 const search_results = ref<Word[]>([]);
 const dictStore = useDictStore();
+const target = ref<Element | null>(null)
+const options = {
+  root: null,
+  rootMargin: '0px',
+  threshold: 0.1,
+};
+const observer = ref<IntersectionObserver| null>(null)
+
+function handleIntersection(entries: any) {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      getDictionaryItems();
+    }
+  });
+}
+
 
 async function search() {
   search_results.value = await dictStore.searchWord(query.value);
@@ -36,12 +52,7 @@ async function getDictionaryItems() {
   }
 }
 
-function handleScroll() {
-  const bottom_of_window = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight;
-  if (bottom_of_window) {
-    getDictionaryItems()
-  }
-}
+
 
 watchDebounced(
   () => query.value,
@@ -52,13 +63,15 @@ watchDebounced(
 );
 
 onMounted(async () => {
-  window.addEventListener('scroll', handleScroll);
+  target.value = document.querySelector('#bottom-of-page')
+  observer.value = new IntersectionObserver(handleIntersection, options);
+  if (target.value) {
+    observer.value.observe(target.value);
+  }
   await getDictionaryItems();
 });
 
-onBeforeUnmount(() => {
-  window.removeEventListener('scroll', handleScroll);
-});
+
 
 definePageMeta({
   title: "Ñwed Nyịn (Nwed Nyin) - Dictionary",
@@ -132,6 +145,7 @@ definePageMeta({
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-'+i" />
       </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
+      <div id="bottom-of-page"></div>
       <div v-if="is_loading" class="fixed top-24 z-50 w-full flex items-center justify-center shadow py-10 -ml-8" >
        <div class="w-10 h-10 mx-auto bg-base-light rounded-full p-2">
          <IconsLoadingIcon />
