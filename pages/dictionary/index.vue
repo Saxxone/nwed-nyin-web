@@ -43,7 +43,7 @@ async function getDictionaryItems() {
       cursor: words.value[words.value.length -1]?.id, skip: skip.value, take: take.value
     });
     count.value = totalCount;
-    words.value.push(...dictionary);
+    words.value = [...words.value, ...dictionary];
     is_loading.value = false;
   } catch (error) {
     is_loading.value = false;
