@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Word } from "~/types/word";
 import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
-import app_routes from "~/utils/routes";
 import { watchDebounced } from "@vueuse/core";
 import DefinitionSkeleton from "~/components/app/DefinitionSkeleton.vue";
+import type { Word } from "~/types/word";
+import app_routes from "~/utils/routes";
 
 const words = ref<Word[]>([]);
 const is_loading = ref(false);
@@ -22,7 +22,7 @@ const options = {
 };
 const observer = ref<IntersectionObserver| null>(null)
 
-function handleIntersection(entries: any) {
+function handleIntersection(entries: IntersectionObserverEntry[]) {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       getDictionaryItems();
@@ -44,6 +44,7 @@ async function getDictionaryItems() {
     });
     count.value = totalCount;
     words.value = [...words.value, ...dictionary];
+    skip.value += take.value;
     is_loading.value = false;
   } catch (error) {
     is_loading.value = false;
