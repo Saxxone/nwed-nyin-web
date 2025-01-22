@@ -10,6 +10,8 @@ const app_routes = {
     add: "/dictionary/add",
     edit: (word: string) =>
       `/dictionary/add?action=edit&word=${encodeURI(word)}`,
+    add_sound: (word: string) =>
+      `/dictionary/audio?word=${encodeURI(word)}`,
     view: (word: string) => `/dictionary/${word}`,
   },
   auth: {

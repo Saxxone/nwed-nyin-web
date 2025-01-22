@@ -3,6 +3,7 @@ import type { User } from "@/types/user";
 
 export interface Word {
   id?: string;
+  sound?: string | null;
   term: string;
   pronunciation?: string | null;
   etymology?: string | null;

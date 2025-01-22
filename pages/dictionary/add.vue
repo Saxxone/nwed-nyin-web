@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { PartOfSpeech, Word } from "~/types/word";
-import { useDictStore } from "~/store/dictionary";
 import { useToast } from "@/components/ui/toast/use-toast";
+import { useDictStore } from "~/store/dictionary";
+import type { PartOfSpeech, Word } from "~/types/word";
 import app_routes from "~/utils/routes";
 
 definePageMeta({
@@ -221,11 +221,14 @@ function bindForm() {
   <main>
     <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="col-span-12 md:col-span-4">
-        <h2 class="mb-4 text-2xl font-medium tracking-tight">
-          Word <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
+        <h2 class="mb-4 text-2xl flex items-center font-medium tracking-tight">
+          Word
+          <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
+          <NuxtLink :to="app_routes.dictionary.add_sound(word.term)" v-if="!word.sound && word.id" class="p-2 inline-block"> 
+            <IconsMicrophoneIcon width="16" height="16" />
+          </NuxtLink>
         </h2>
         <div :name="field.label" v-for="field in form_fields" class="mb-4">
-          <label :for="field.name">{{ field.label }}</label>
           <input class="input" :id="field.name" type="text" v-model="(word[field.name] as string)" :placeholder="field.placeholder" />
         </div>
       </div>

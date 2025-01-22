@@ -1,10 +1,11 @@
-import { FetchMethod } from "~/types/types";
-import api_routes from "~/utils/api-routes";
-import type { PartOfSpeech, Word } from "~/types/word";
 import type { Pagination } from "~/types/types";
+import { FetchMethod } from "~/types/types";
+import type { PartOfSpeech, Word } from "~/types/word";
+import api_routes from "~/utils/api-routes";
 
 export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
+
   async function fetchWords(pagination: Pagination = { cursor: "1", skip: 0, take: 10 }) {
     try {
       const response = await useApiConnect<Partial<Word>, { words: Word[]; totalCount: number }>(
@@ -21,7 +22,6 @@ export const useDictStore = defineStore("dict", () => {
         return response;
       }
     } catch (error) {
-      console.error("Error fetching words:", error);
       throw error;
     }
   }
@@ -36,7 +36,6 @@ export const useDictStore = defineStore("dict", () => {
         return response;
       }
     } catch (error) {
-      console.error("Error fetching words:", error);
       throw error;
     }
   }
@@ -51,7 +50,6 @@ export const useDictStore = defineStore("dict", () => {
         return response;
       }
     } catch (error) {
-      console.error("Error fetching words:", error);
       throw error;
     }
   }
@@ -66,7 +64,6 @@ export const useDictStore = defineStore("dict", () => {
         return response;
       }
     } catch (error) {
-      console.error("Error fetching words:", error);
       throw error;
     }
   }
@@ -81,7 +78,6 @@ export const useDictStore = defineStore("dict", () => {
         return response;
       }
     } catch (error) {
-      console.error("Error fetching words:", error);
       throw error;
     }
   }
@@ -96,7 +92,20 @@ export const useDictStore = defineStore("dict", () => {
         return response;
       }
     } catch (error) {
-      console.error("Error fetching words:", error);
+      throw error;
+    }
+  }
+
+  async function saveSound(id: string, sound: Partial<Word>) {
+    try {
+      const response = await useApiConnect<Partial<Word>, Word>(api_routes.dictionary.updateSound(id), FetchMethod.PATCH, sound);
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
       throw error;
     }
   }
@@ -108,5 +117,6 @@ export const useDictStore = defineStore("dict", () => {
     fetchPartsOfSpeech,
     searchWord,
     updateWord,
+    saveSound,
   };
 });
