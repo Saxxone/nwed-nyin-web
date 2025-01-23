@@ -22,15 +22,6 @@ const audio_url = ref<string>();
 
 const dictStore = useDictStore();
 
-const form_fields = [
-  {
-    name: "sound",
-    label: "Sound",
-    type: "audio",
-    placeholder: "Sound out the word slowly and clearly",
-  },
-];
-
 const base_word: Partial<Word> = {
   sound: "",
 };
