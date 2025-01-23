@@ -7,7 +7,7 @@ import type { Article } from "~/types/article";
 import app_routes from "~/utils/routes";
 
 definePageMeta({
-  layout: "general",
+  layout: "generic",
 });
 
 const { toast } = useToast();

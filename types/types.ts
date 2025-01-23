@@ -73,3 +73,8 @@ export interface FormatAction {
 }
 
 export type FormatCommand = "bold" | "italic" | "underline" | "strikethrough" | "heading" | "link" | "code" | "quote" | "list";
+
+
+export interface FileInterface {
+  url: string,
+}

@@ -75,7 +75,7 @@ onMounted(async () => {
 
 definePageMeta({
   title: "Ñwed Nyịn (Nwed Nyin) - Dictionary",
-  layout: "general",
+  layout: "generic",
   meta: [
     {
       name: "description",

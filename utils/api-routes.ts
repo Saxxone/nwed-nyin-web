@@ -3,10 +3,11 @@ const api_routes = {
     list: "/dictionary",
     add: "/dictionary/add",
     update: (id: string) => `/dictionary/update/${id}`,
-    updateSound: (id: string) => `/dictionary/update-sound/${id}`,
+    updateSound: (id: string) => `/file/upload-sound/${id}`,
     view: (word: string) => `/dictionary/${word}`,
     search: (query: string) => `/dictionary/search?term=${query}`,
     parts_of_speech: "/dictionary/parts-of-speech",
+    getSound: (path: string) => `/dictionary/sound/?path=${path}`,
   },
   articles: {
     list: "/article",

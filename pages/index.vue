@@ -3,7 +3,7 @@ import app_routes from "~/utils/routes";
 
 definePageMeta({
   title: "Nwed Nyin",
-  layout: "general",
+  layout: "generic",
 });
 
 const router = useRouter();

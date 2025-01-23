@@ -1,9 +1,9 @@
-import type { DateString } from "./types";
 import type { User } from "@/types/user";
+import type { DateString, FileInterface } from "./types";
 
 export interface Word {
   id?: string;
-  sound?: string | null;
+  sound?: Blob | null;
   term: string;
   pronunciation?: string | null;
   etymology?: string | null;
@@ -15,6 +15,9 @@ export interface Word {
   contributors?: User[];
   related_from?: WordRelation[];
   related_to?: WordRelation[];
+  pronunciation_audios: {
+    file: FileInterface;
+  }[];
   [key: string]: any;
 }
 

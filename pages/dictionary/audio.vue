@@ -2,11 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { useDictStore } from "~/store/dictionary";
+import { useGlobalStore } from "~/store/global";
 import type { Word } from "~/types/word";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
-  layout: "general",
+  layout: "generic",
 });
 
 const { toast } = useToast();
@@ -16,17 +17,18 @@ const inputs = ref<NodeListOf<HTMLInputElement>>();
 const buttons = ref<NodeListOf<HTMLButtonElement>>();
 const form = ref<HTMLFormElement>();
 const mediaRecorder = ref<MediaRecorder>();
-const audio_chunks = ref<Blob[]>([]);
 const is_recording = ref(false);
 const audio_url = ref<string>();
+const audio_chunk = ref<BlobPart[]>([]);
 
 const dictStore = useDictStore();
+const globalStore = useGlobalStore();
 
 const base_word: Partial<Word> = {
-  sound: "",
+  sound: null,
 };
 const word = ref<Partial<Word>>({
-  sound: "",
+  sound: null,
 });
 
 async function startRecording() {
@@ -38,7 +40,7 @@ async function startRecording() {
 
     mediaRecorder.value.ondataavailable = (event) => {
       if (event.data.size > 0) {
-        audio_chunks.value.push(event.data);
+        audio_chunk.value = [event.data];
       }
     };
     mediaRecorder.value.start();
@@ -57,31 +59,33 @@ async function stopRecording(type: "STOP" | "CANCEL") {
     mediaRecorder.value.stop();
 
     mediaRecorder.value.onstop = () => {
-      if (type === "CANCEL") {
-        audio_chunks.value = [];
+      if (type === "CANCEL" && audio_url.value) {
+        audio_chunk.value = [];
+        URL.revokeObjectURL(audio_url.value);
+        audio_url.value = undefined;
         return;
       }
-      const audio_blob = new Blob(audio_chunks.value, { type: "audio/mpeg" });
+      if (!audio_chunk.value) return;
+
+      const filename = `${encodeURI(word.value.term?.trim() as string)}-${Date.now()}.mp3`; 
+      const audio_blob = new Blob(audio_chunk.value, { type: "audio/mpeg" });
+      word.value.sound = new File([audio_blob], filename, {
+        type: "audio/mpeg",
+        lastModified: Date.now(),
+      }); 
+      
       audio_url.value = URL.createObjectURL(audio_blob);
-      audio_chunks.value = [];
     };
-
     is_recording.value = false;
-  }
-}
-
-async function cancelRecording() {
-  await stopRecording("CANCEL");
-  if (audio_url.value) {
-    URL.revokeObjectURL(audio_url.value);
-    audio_url.value = undefined;
   }
 }
 
 async function onSubmit() {
   try {
+    if (!word.value.sound) return;
     disbaleForm();
-    await dictStore.saveSound(word.value.id as string, word.value);
+    const form_data = await globalStore.createFormData([word.value.sound]);
+    await dictStore.saveSound(word.value.id as string, form_data);
     toast({
       title: `${word.value.term} sound guide added to dictionary`,
       description: "You're doing a great job. Keeep it up! ❤️",
@@ -126,7 +130,9 @@ onBeforeMount(async () => {
 onMounted(async () => {
   bindForm();
   if (!route.query.word) return;
-  word.value = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
+  const { term, id } = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
+  word.value.term = term;
+  word.value.id = id;
 });
 
 function bindForm() {
@@ -145,25 +151,29 @@ function bindForm() {
         </h2>
         <div class="mb-4">
           <div class="flex items-center">
-            <div class="p-3 border rounded-full bg-base-light inline-flex cursor-pointer items-center" title="start recording" v-if="!is_recording" @click="startRecording">
+            <div
+              class="p-3 border rounded-full bg-base-light hover:dark:bg-white hover:dark:text-gray-800 hover:bg-gray-700 hover:text-gray-200 inline-flex cursor-pointer items-center transition-colors"
+              title="start recording"
+              v-if="!is_recording"
+              @click="startRecording">
               <IconsMicrophoneIcon width="18px" height="18px" />
             </div>
 
-            <div v-if="is_recording" class="flex items-center rounded-full px-4 py-2 border">
+            <div v-if="is_recording" class="flex items-center w-full md:w-[400px] rounded-full px-4 py-2 border">
               <div class="animate-pulse text-red-400">
                 <IconsStopIcon width="10px" height="10px" />
               </div>
               <div class="animate-pulse leading-1 ml-2 mr-4">Recording...</div>
-              <div class="p-2 border rounded-full text-indigo-500 cursor-pointer inline-flex items-center mx-4" title="stop recording" @click="stopRecording('STOP')">
+              <div class="p-2 border rounded-full text-indigo-500 cursor-pointer inline-flex items-center ml-auto mr-4" title="stop recording" @click="stopRecording('STOP')">
                 <IconsStopIcon width="18px" height="18px" />
               </div>
-              <div class="p-2 border rounded-full text-red-400 cursor-pointer inline-flex items-center" title="cancel recording" @click="cancelRecording">
+              <div class="p-2 border rounded-full text-red-400 cursor-pointer inline-flex items-center" title="cancel recording" @click="stopRecording('CANCEL')">
                 <IconsCloseIcon width="18px" height="18px" />
               </div>
             </div>
 
             <div>
-              <audio v-if="audio_url" :src="audio_url" controls class="w-[240px] h-10 block ml-4" />
+              <audio v-if="audio_url" :src="audio_url" controls controlslist="nodownload nofullscreen" class="w-[calc(w-screen - 40px)] md:w-[300px] h-10 block ml-4" />
             </div>
           </div>
         </div>

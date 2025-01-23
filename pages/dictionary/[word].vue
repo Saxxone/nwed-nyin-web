@@ -21,7 +21,7 @@ onMounted(async () => {
 
 definePageMeta({
   title: `${word.value?.term} Nnyịn (Nwed Nyin) - Dictionary"`,
-  layout: "general",
+  layout: "generic",
 
   meta: [
     {

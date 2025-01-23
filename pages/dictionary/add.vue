@@ -8,7 +8,7 @@ import app_routes from "~/utils/routes";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
-  layout: "general",
+  layout: "generic",
 });
 
 const { toast } = useToast();

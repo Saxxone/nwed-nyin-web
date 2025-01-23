@@ -96,9 +96,9 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
-  async function saveSound(id: string, sound: Partial<Word>) {
+  async function saveSound(id: string, sound: FormData) {
     try {
-      const response = await useApiConnect<Partial<Word>, Word>(api_routes.dictionary.updateSound(id), FetchMethod.PATCH, sound);
+      const response = await useApiConnect<Partial<Word>, Word>(api_routes.dictionary.updateSound(id), FetchMethod.POST, sound, 'multipart/form-data');
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -106,6 +106,24 @@ export const useDictStore = defineStore("dict", () => {
         return response;
       }
     } catch (error) {
+      throw error;
+    }
+  }
+
+
+  async function fetchSound(path: string): Promise<string> {
+    try {
+      const response = await useApiConnect<string, string>(
+        api_routes.dictionary.getSound(path),
+        FetchMethod.GET
+      );
+
+      if (typeof response === "string") return response;
+      else if ("message" in response) {
+        throw new Error(response.message);
+      } else return response;
+    } catch (error) {
+      console.error("Error fetching articles:", error);
       throw error;
     }
   }
@@ -118,5 +136,6 @@ export const useDictStore = defineStore("dict", () => {
     searchWord,
     updateWord,
     saveSound,
+    fetchSound
   };
 });
