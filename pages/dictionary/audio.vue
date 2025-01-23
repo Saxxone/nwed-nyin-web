@@ -11,6 +11,7 @@ definePageMeta({
 
 const { toast } = useToast();
 const route = useRoute();
+const router = useRouter();
 const inputs = ref<NodeListOf<HTMLInputElement>>();
 const buttons = ref<NodeListOf<HTMLButtonElement>>();
 const form = ref<HTMLFormElement>();
@@ -79,7 +80,7 @@ async function stopRecording(type: "STOP" | "CANCEL") {
 }
 
 async function cancelRecording() {
-  await stopRecording('CANCEL');
+  await stopRecording("CANCEL");
   if (audio_url.value) {
     URL.revokeObjectURL(audio_url.value);
     audio_url.value = undefined;
@@ -127,6 +128,10 @@ function enableForm() {
   });
 }
 
+onBeforeMount(async () => {
+  if (!route.query.word) router.go(-1);
+});
+
 onMounted(async () => {
   bindForm();
   if (!route.query.word) return;
@@ -147,13 +152,14 @@ function bindForm() {
         <h2 class="mb-4 text-2xl font-medium tracking-tight">
           Word <span v-if="word.term" class="text-main text-sub capitalize break-words"> - {{ word.term }}</span>
         </h2>
-        <div :name="field.label" v-for="field in form_fields" class="mb-4">
-          <div>
-            <div class="p-2 border rounded-full inline-flex cursor-pointer items-center" title="start recording" @click="startRecording" v-if="!is_recording">
+        <div class="mb-4">
+          <div class="flex items-center">
+            <div class="p-3 border rounded-full bg-base-light inline-flex cursor-pointer items-center" title="start recording" v-if="!is_recording" @click="startRecording">
               <IconsMicrophoneIcon width="18px" height="18px" />
             </div>
-            <div v-if="is_recording" class="flex items-end">
-              <div class="animate-pulse pb-1 text-red-400">
+
+            <div v-if="is_recording" class="flex items-center rounded-full px-4 py-2 border">
+              <div class="animate-pulse text-red-400">
                 <IconsStopIcon width="10px" height="10px" />
               </div>
               <div class="animate-pulse leading-1 ml-2 mr-4">Recording...</div>
@@ -164,16 +170,16 @@ function bindForm() {
                 <IconsCloseIcon width="18px" height="18px" />
               </div>
             </div>
-          </div>
 
-          <div>
-            <audio v-if="audio_url" :src="audio_url" controls class="w-full mt-4" />
+            <div>
+              <audio v-if="audio_url" :src="audio_url" controls class="w-[240px] h-10 block ml-4" />
+            </div>
           </div>
         </div>
       </div>
       <div class="col-span-12 md:col-span-8">
         <div class="flex justify-end mt-4">
-          <Button type="submit">Save</Button>
+          <Button type="submit" :disabled="!audio_url">Save</Button>
         </div>
       </div>
     </form>
