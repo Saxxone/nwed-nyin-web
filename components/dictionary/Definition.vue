@@ -61,7 +61,7 @@ async function downloadAndPlaySound(path: string) {
         <h5>{{ props.word.term }}</h5>
         <div v-if="props.word?.pronunciation_audios[0]?.file?.url" class="cursor-pointer">
           <IconsLoadingIcon v-if="is_loading" class="inline-block" />
-          <IconsVolumeIcon v-else class="inline-block" @click.prevent="downloadAndPlaySound(props.word.pronunciation_audios[0].file.url)" />
+          <IconsVolumeIcon v-else :class="[is_playing ? 'animate-pulse text-blue-500' : '']" class="inline-block" @click.prevent="downloadAndPlaySound(props.word.pronunciation_audios[0].file.url)" />
         </div>
       </div>
       <h5 class="text-gray-500 text-sm font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</h5>
