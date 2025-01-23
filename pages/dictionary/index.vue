@@ -9,7 +9,7 @@ import app_routes from "~/utils/routes";
 const words = ref<Word[]>([]);
 const is_loading = ref(false);
 const count = ref(0);
-const take = ref(10);
+const take = ref(50);
 const skip = ref(0);
 const query = ref("");
 const search_results = ref<Word[]>([]);
@@ -75,7 +75,7 @@ onMounted(async () => {
 
 definePageMeta({
   title: "Ñwed Nyịn (Nwed Nyin) - Dictionary",
-  layout: "articles",
+  layout: "general",
   meta: [
     {
       name: "description",

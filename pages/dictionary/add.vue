@@ -8,7 +8,7 @@ import app_routes from "~/utils/routes";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
-  layout: "articles",
+  layout: "general",
 });
 
 const { toast } = useToast();
@@ -224,7 +224,7 @@ function bindForm() {
         <h2 class="mb-4 text-2xl flex items-center font-medium tracking-tight">
           Word
           <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
-          <NuxtLink :to="app_routes.dictionary.add_sound(word.term)" v-if="!word.sound && word.id" class="p-2 inline-block"> 
+          <NuxtLink :to="app_routes.dictionary.add_sound(word.term)" v-if="!word.sound && word.id" class="p-2 mt-1 text-blue-500 inline-block"> 
             <IconsMicrophoneIcon width="16" height="16" />
           </NuxtLink>
         </h2>

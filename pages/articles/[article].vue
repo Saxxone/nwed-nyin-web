@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import app_routes from "~/utils/routes";
 import { useToast } from "@/components/ui/toast/use-toast";
-import type { Article } from "~/types/article";
-import { useArticleStore } from "~/store/articles";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
+import { useArticleStore } from "~/store/articles";
+import type { Article } from "~/types/article";
+import app_routes from "~/utils/routes";
 
 definePageMeta({
-  layout: "articles",
+  layout: "general",
 });
 
 const { toast } = useToast();

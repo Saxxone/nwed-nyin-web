@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import Definition from "@/components/dictionary/Definition.vue";
-import type { Word } from "@/types/word";
 import { useDictStore } from "@/store/dictionary";
-import app_routes from "~/utils/routes"
+import type { Word } from "@/types/word";
+import app_routes from "~/utils/routes";
 
 const word = ref<Word>();
 
@@ -21,7 +21,7 @@ onMounted(async () => {
 
 definePageMeta({
   title: `${word.value?.term} Nnyịn (Nwed Nyin) - Dictionary"`,
-  layout: "articles",
+  layout: "general",
 
   meta: [
     {

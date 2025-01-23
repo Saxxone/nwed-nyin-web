@@ -6,7 +6,7 @@ import api_routes from "~/utils/api-routes";
 export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
 
-  async function fetchWords(pagination: Pagination = { cursor: "1", skip: 0, take: 10 }) {
+  async function fetchWords(pagination: Pagination = { cursor: "1", skip: 0, take: 50 }) {
     try {
       const response = await useApiConnect<Partial<Word>, { words: Word[]; totalCount: number }>(
         `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(pagination.skip as number)}&take=${encodeURIComponent(

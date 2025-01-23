@@ -6,7 +6,7 @@ import type { Word } from "~/types/word";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
-  layout: "articles",
+  layout: "general",
 });
 
 const { toast } = useToast();
@@ -16,8 +16,8 @@ const buttons = ref<NodeListOf<HTMLButtonElement>>();
 const form = ref<HTMLFormElement>();
 const mediaRecorder = ref<MediaRecorder>();
 const audio_chunks = ref<Blob[]>([]);
-const audio_playback = ref<HTMLAudioElement>();
 const is_recording = ref(false);
+const audio_url = ref<string>();
 
 const dictStore = useDictStore();
 
@@ -40,6 +40,7 @@ const word = ref<Partial<Word>>({
 async function startRecording() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audio_url.value = undefined;
 
     mediaRecorder.value = new MediaRecorder(stream);
 
@@ -48,14 +49,6 @@ async function startRecording() {
         audio_chunks.value.push(event.data);
       }
     };
-
-    mediaRecorder.value.onstop = () => {
-      const audioBlob = new Blob(audio_chunks.value, { type: "audio/mpeg" });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      if (audio_playback.value) audio_playback.value.src = audioUrl;
-      audio_chunks.value = [];
-    };
-
     mediaRecorder.value.start();
     is_recording.value = true;
   } catch (error) {
@@ -66,10 +59,31 @@ async function startRecording() {
   }
 }
 
-async function stopRecording() {
-  if (!mediaRecorder.value) return;
-  mediaRecorder.value.stop();
-  is_recording.value = false;
+async function stopRecording(type: "STOP" | "CANCEL") {
+  if (mediaRecorder.value && mediaRecorder.value.state !== "inactive") {
+    mediaRecorder.value.stream.getTracks().forEach((track) => track.stop());
+    mediaRecorder.value.stop();
+
+    mediaRecorder.value.onstop = () => {
+      if (type === "CANCEL") {
+        audio_chunks.value = [];
+        return;
+      }
+      const audio_blob = new Blob(audio_chunks.value, { type: "audio/mpeg" });
+      audio_url.value = URL.createObjectURL(audio_blob);
+      audio_chunks.value = [];
+    };
+
+    is_recording.value = false;
+  }
+}
+
+async function cancelRecording() {
+  await stopRecording('CANCEL');
+  if (audio_url.value) {
+    URL.revokeObjectURL(audio_url.value);
+    audio_url.value = undefined;
+  }
 }
 
 async function onSubmit() {
@@ -114,8 +128,9 @@ function enableForm() {
 }
 
 onMounted(async () => {
-  word.value = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
   bindForm();
+  if (!route.query.word) return;
+  word.value = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
 });
 
 function bindForm() {
@@ -133,18 +148,26 @@ function bindForm() {
           Word <span v-if="word.term" class="text-main text-sub capitalize break-words"> - {{ word.term }}</span>
         </h2>
         <div :name="field.label" v-for="field in form_fields" class="mb-4">
-          <label :for="field.name">{{ field.label }}</label>
           <div>
-            <div class="p-2 border rounded-lg flex items-center" @click="startRecording" v-if="!is_recording">
-              <IconsMicrophoneIcon class="w-6 h-6 text-main" />
+            <div class="p-2 border rounded-full inline-flex cursor-pointer items-center" title="start recording" @click="startRecording" v-if="!is_recording">
+              <IconsMicrophoneIcon width="18px" height="18px" />
             </div>
-            <div class="p-2 border rounded-lg flex items-center" @click="stopRecording" v-if="is_recording">
-              <IconsMicrophoneDisabledIcon class="w-6 h-6 text-main" />
+            <div v-if="is_recording" class="flex items-end">
+              <div class="animate-pulse pb-1 text-red-400">
+                <IconsStopIcon width="10px" height="10px" />
+              </div>
+              <div class="animate-pulse leading-1 ml-2 mr-4">Recording...</div>
+              <div class="p-2 border rounded-full text-indigo-500 cursor-pointer inline-flex items-center mx-4" title="stop recording" @click="stopRecording('STOP')">
+                <IconsStopIcon width="18px" height="18px" />
+              </div>
+              <div class="p-2 border rounded-full text-red-400 cursor-pointer inline-flex items-center" title="cancel recording" @click="cancelRecording">
+                <IconsCloseIcon width="18px" height="18px" />
+              </div>
             </div>
           </div>
 
           <div>
-            <audio ref="audio_playback" controls class="w-full" />
+            <audio v-if="audio_url" :src="audio_url" controls class="w-full mt-4" />
           </div>
         </div>
       </div>
