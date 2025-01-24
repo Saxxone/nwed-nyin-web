@@ -162,7 +162,7 @@ function bindForm() {
               <IconsMicrophoneIcon width="18px" height="18px" />
             </div>
 
-            <div v-if="is_recording" class="flex items-center w-full md:w-[400px] rounded-full px-4 py-2 border">
+            <div v-if="is_recording" class="flex items-center w-[220px] md:w-[400px] rounded-full px-4 py-2 border">
               <div class="animate-pulse text-red-400">
                 <IconsStopIcon width="10px" height="10px" />
               </div>
