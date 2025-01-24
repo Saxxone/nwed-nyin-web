@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
+import { normalizeString } from "~/composables/useUtils";
 import { useDictStore } from "~/store/dictionary";
 import { useGlobalStore } from "~/store/global";
 import type { Word } from "~/types/word";
@@ -34,7 +35,9 @@ const word = ref<Partial<Word>>({
 async function startRecording() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+   if(audio_url.value) URL.revokeObjectURL(audio_url.value);
     audio_url.value = undefined;
+    audio_chunk.value = [];
 
     mediaRecorder.value = new MediaRecorder(stream);
 
@@ -67,7 +70,7 @@ async function stopRecording(type: "STOP" | "CANCEL") {
       }
       if (!audio_chunk.value) return;
 
-      const filename = `${encodeURI(word.value.term?.trim() as string)}-${Date.now()}.mp3`; 
+      const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.mp3`; 
       const audio_blob = new Blob(audio_chunk.value, { type: "audio/mpeg" });
       word.value.sound = new File([audio_blob], filename, {
         type: "audio/mpeg",
