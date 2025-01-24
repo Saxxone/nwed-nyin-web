@@ -90,13 +90,10 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function saveTokens(response: User, go: string) {
-    console.log(response);
     access_token.value = response.access_token;
     refresh_token.value = response.refresh_token;
     is_logged_in.value = true;
     user.value = response;
-
-    console.log(user.value);
     if (go) goTo(go);
   }
 
