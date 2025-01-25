@@ -7,7 +7,7 @@ import app_routes from "~/utils/routes";
 const word = ref<Word>();
 
 const route = useRoute();
-
+const router = useRouter();
 const dictStore = useDictStore();
 
 function gotoEdit() {
@@ -17,7 +17,7 @@ function gotoEdit() {
 
 onMounted(async () => {
   console.log(route.params.word, route.query.id);
-  if (!route.params.word || !route.query.id) return;
+  if (!route.params.word || !route.query.id) router.go(-1);
   word.value = await dictStore.fetchWord(decodeURI(route.params.word as string), decodeURI(route.query.id as string));
 });
 
