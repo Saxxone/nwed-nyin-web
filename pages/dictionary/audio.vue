@@ -40,6 +40,7 @@ async function startRecording() {
     audio_chunk.value = [];
 
     mediaRecorder.value = new MediaRecorder(stream);
+    console.log(mediaRecorder.value)
 
     mediaRecorder.value.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -70,10 +71,10 @@ async function stopRecording(type: "STOP" | "CANCEL") {
       }
       if (!audio_chunk.value) return;
 
-      const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.mp3`; 
-      const audio_blob = new Blob(audio_chunk.value, { type: "audio/mpeg" });
+      const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.webm`; 
+      const audio_blob = new Blob(audio_chunk.value, { type: "audio/webm" });
       word.value.sound = new File([audio_blob], filename, {
-        type: "audio/mpeg",
+        type: "audio/webm",
         lastModified: Date.now(),
       }); 
       
