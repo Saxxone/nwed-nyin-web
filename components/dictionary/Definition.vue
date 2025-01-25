@@ -55,7 +55,7 @@ async function downloadAndPlaySound(path: string) {
 </script>
 
 <template>
-  <NuxtLink :to="`${routes.dictionary.view(encodeURI(props.word.term))}`" class="border block rounded-lg card text-sm word-wrap mb-4 break-words">
+  <NuxtLink :to="`${routes.dictionary.view(encodeURI(props.word.term), encodeURI(props.word.id as string))}`" class="border block rounded-lg card text-sm word-wrap mb-4 break-words">
     <div class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-1">
       <div class="flex items-center space-x-3">
         <h5>{{ props.word.term }}</h5>
@@ -86,7 +86,7 @@ async function downloadAndPlaySound(path: string) {
               <h6 class="text-xs mt-2 text-muted">Synonyms:</h6>
               <div>
                 <NuxtLink
-                  :to="`${routes.dictionary.view(encodeURI(synonym.synonym))}`"
+                  :to="`${routes.dictionary.view(encodeURI(synonym.synonym), encodeURI(synonym.id as string))}`"
                   v-for="(synonym, index) in definition.synonyms"
                   :key="synonym.synonym + 'synonym'"
                   class="text-xs hover:underline"
@@ -97,7 +97,7 @@ async function downloadAndPlaySound(path: string) {
           </div>
 
           <div>
-            <NuxtLink v-for="link in props.word.related_to" :to="`${routes.dictionary.view(link.type)}`" class="text-blue-500 text-xs">{{ link }}</NuxtLink>
+            <NuxtLink v-for="link in props.word.related_to" :to="`${routes.dictionary.view(link.type, link.id)}`" class="text-blue-500 text-xs">{{ link }}</NuxtLink>
           </div>
         </div>
       </div>

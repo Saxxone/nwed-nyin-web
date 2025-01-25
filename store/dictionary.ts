@@ -26,9 +26,9 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
-  async function fetchWord(word: string) {
+  async function fetchWord(word: string, id: string) {
     try {
-      const response = await useApiConnect<string, Word>(api_routes.dictionary.view(word), FetchMethod.GET);
+      const response = id && id !== "" && id !== "null" && id !== "undefined" ? await useApiConnect<string, Word>(api_routes.dictionary.viewById(id), FetchMethod.GET) : await useApiConnect<string, Word>(api_routes.dictionary.view(word), FetchMethod.GET);
 
       if ("message" in response) {
         throw new Error(response.message);

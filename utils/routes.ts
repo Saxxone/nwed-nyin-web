@@ -8,11 +8,11 @@ const app_routes = {
   dictionary: {
     list: "/dictionary",
     add: "/dictionary/add",
-    edit: (word: string) =>
-      `/dictionary/add?action=edit&word=${encodeURI(word)}`,
-    add_sound: (word: string) =>
-      `/dictionary/audio?word=${encodeURI(word)}`,
-    view: (word: string) => `/dictionary/${word}`,
+    edit: (word: string, id: string) =>
+      `/dictionary/add?action=edit&word=${encodeURI(word)}${id ? `&id=${id}` : ""}`,
+    add_sound: (word: string, id: string) =>
+      `/dictionary/audio?word=${encodeURI(word)}&id=${id}`,
+    view: (word: string, id: string) => `/dictionary/${word}?id=${id}`,
   },
   auth: {
     login: "/auth/login",

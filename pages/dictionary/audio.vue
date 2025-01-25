@@ -5,6 +5,7 @@ import { normalizeString } from "~/composables/useUtils";
 import { useDictStore } from "~/store/dictionary";
 import { useGlobalStore } from "~/store/global";
 import type { Word } from "~/types/word";
+import app_routes from "~/utils/routes";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
@@ -19,6 +20,7 @@ const buttons = ref<NodeListOf<HTMLButtonElement>>();
 const form = ref<HTMLFormElement>();
 const mediaRecorder = ref<MediaRecorder>();
 const is_recording = ref(false);
+const is_loading = ref(false);
 const audio_url = ref<string>();
 const audio_chunk = ref<BlobPart[]>([]);
 
@@ -33,6 +35,7 @@ const word = ref<Partial<Word>>({
 });
 
 async function startRecording() {
+  is_loading.value = true;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
    if(audio_url.value) URL.revokeObjectURL(audio_url.value);
@@ -54,6 +57,9 @@ async function startRecording() {
       title: "An error occurred",
       description: "Error accessing microphone" + error,
     });
+  }
+  finally {
+    is_loading.value = false;
   }
 }
 
@@ -98,6 +104,7 @@ async function onSubmit() {
     form.value?.reset();
     word.value = base_word as Word;
     word.value = { ...base_word };
+    router.replace(app_routes.dictionary.view(encodeURI(word.value.term as string), encodeURI(word.value.id as string)));
   } catch (error) {
     toast({
       title: "An error occurred",
@@ -128,13 +135,13 @@ function enableForm() {
 }
 
 onBeforeMount(async () => {
-  if (!route.query.word) router.go(-1);
+  if (!route.query.word || !route.query.id) router.go(-1);
 });
 
 onMounted(async () => {
   bindForm();
-  if (!route.query.word) return;
-  const { term, id } = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
+  if (!route.query.word || !route.query.id) return;
+  const { term, id } = await dictStore.fetchWord(decodeURI(route.query.word as string), decodeURI(route.query.id as string));
   word.value.term = term;
   word.value.id = id;
 });
@@ -160,7 +167,8 @@ function bindForm() {
               title="start recording"
               v-if="!is_recording"
               @click="startRecording">
-              <IconsMicrophoneIcon width="18px" height="18px" />
+              <IconsLoadingIcon v-if="is_loading" class="animate-spin text-indigo-400" width="18px" height="18px" />
+              <IconsMicrophoneIcon v-else width="18px" height="18px" />
             </div>
 
             <div v-if="is_recording" class="flex items-center w-full md:w-[400px] rounded-full px-2 py-2 border">

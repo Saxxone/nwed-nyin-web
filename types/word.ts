@@ -15,7 +15,7 @@ export interface Word {
   contributors?: User[];
   related_from?: WordRelation[];
   related_to?: WordRelation[];
-  pronunciation_audios: {
+  pronunciation_audios?: {
     file: FileInterface;
   }[];
   [key: string]: any;

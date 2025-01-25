@@ -12,11 +12,13 @@ const dictStore = useDictStore();
 
 function gotoEdit() {
   if (!word.value) return;
-  navigateTo(app_routes.dictionary.edit(encodeURI(word.value.term)));
+  navigateTo(app_routes.dictionary.edit(encodeURI(word.value.term), encodeURI(word.value.id as string) as string));
 }
 
 onMounted(async () => {
-  word.value = await dictStore.fetchWord(decodeURI(route.params.word as string) as string);
+  console.log(route.params.word, route.query.id);
+  if (!route.params.word || !route.query.id) return;
+  word.value = await dictStore.fetchWord(decodeURI(route.params.word as string), decodeURI(route.query.id as string));
 });
 
 definePageMeta({

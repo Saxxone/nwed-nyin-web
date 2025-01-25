@@ -145,8 +145,8 @@ async function onSubmit() {
   try {
     disbaleForm();
     if (route.query.action === "edit" && route.query.word && word.value.id) {
-      await dictStore.updateWord(word.value.id, word.value);
-      router.replace(app_routes.dictionary.view(encodeURI(word.value.term) as string) as string);
+     const res = await dictStore.updateWord(word.value.id, word.value);
+      router.replace(app_routes.dictionary.view(encodeURI(word.value.term) as string, res.id as string));
     } else {
       await dictStore.makeWord(word.value);
       toast({
@@ -202,7 +202,7 @@ onMounted(async () => {
   parts_of_speech.value = await dictStore.fetchPartsOfSpeech();
   if (route.query.action === "edit" && route.query.word) {
     disbaleForm();
-    word.value = await dictStore.fetchWord(decodeURI(route.query.word as string) as string);
+    word.value = await dictStore.fetchWord(decodeURI(route.query.word as string), decodeURI(route.query.id as string));
     enableForm();
   }
   bindForm();
@@ -224,12 +224,12 @@ function bindForm() {
         <h2 class="mb-4 text-2xl flex items-center font-medium tracking-tight">
           Word
           <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
-          <NuxtLink :to="app_routes.dictionary.add_sound(word.term)" v-if="!word.sound && word.id" class="p-2 mt-1 text-blue-500 inline-block"> 
+          <NuxtLink :to="app_routes.dictionary.add_sound(encodeURI(word.term), encodeURI(word.id))" v-if="!word.sound && word.id" class="p-2 mt-1 text-blue-500 inline-block"> 
             <IconsMicrophoneIcon width="16" height="16" />
           </NuxtLink>
         </h2>
         <div :name="field.label" v-for="field in form_fields" class="mb-4">
-          <input class="input" :id="field.name" type="text" v-model="(word[field.name] as string)" :placeholder="field.placeholder" />
+          <input class="input" :id="field.name" type="text" v-model.trim="(word[field.name] as string)" :placeholder="field.placeholder" />
         </div>
       </div>
       <div class="col-span-12 md:col-span-8">
@@ -257,12 +257,12 @@ function bindForm() {
               <Input
                 v-if="definition.name !== 'examples' && definition.name !== 'synonyms' && definition.name !== 'part_of_speech'"
                 type="text"
-                v-model="word.definitions[definitionIndex][definition.name]"
+                v-model.trim="word.definitions[definitionIndex][definition.name]"
                 :placeholder="definition.placeholder"
                 class="mb-4" />
               <div v-if="definition.name === 'examples'">
                 <div v-for="(example, exampleIndex) in word.definitions[definitionIndex].examples" class="flex items-center mb-2">
-                  <input type="text" v-model="word.definitions[definitionIndex].examples[exampleIndex].sentence" placeholder="Example sentence" class="input mr-2" />
+                  <input type="text" v-model.trim="word.definitions[definitionIndex].examples[exampleIndex].sentence" placeholder="Example sentence" class="input mr-2" />
                   <button type="button" class="text-red-500 hover:text-red-700" @click="word.definitions[definitionIndex].examples.splice(exampleIndex, 1)">Remove</button>
                 </div>
                 <Button
@@ -278,7 +278,7 @@ function bindForm() {
               </div>
 
               <div v-if="definition.name === 'part_of_speech'">
-                <select v-model="word.definitions[definitionIndex].part_of_speech" class="input">
+                <select v-model.trim="word.definitions[definitionIndex].part_of_speech" class="input">
                   <option v-for="part_of_speech in parts_of_speech" :value="part_of_speech">
                     {{ part_of_speech.name }}
                   </option>
@@ -286,7 +286,7 @@ function bindForm() {
               </div>
               <div v-if="definition.name === 'synonyms'">
                 <div v-for="(synonym, synonymIndex) in word.definitions[definitionIndex].synonyms" class="flex items-center mb-2">
-                  <input class="input mr-2" type="text" v-model="word.definitions[definitionIndex].synonyms[synonymIndex].synonym" placeholder="Synonym" />
+                  <input class="input mr-2" type="text" v-model.trim="word.definitions[definitionIndex].synonyms[synonymIndex].synonym" placeholder="Synonym" />
                   <button type="button" class="text-red-500 hover:text-red-700" @click="word.definitions[definitionIndex].synonyms.splice(synonymIndex, 1)">Remove</button>
                 </div>
                 <Button
