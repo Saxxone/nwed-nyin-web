@@ -16,7 +16,6 @@ function gotoEdit() {
 }
 
 onMounted(async () => {
-  console.log(route.params.word, route.query.id);
   if (!route.params.word || !route.query.id) router.go(-1);
   word.value = await dictStore.fetchWord(decodeURI(route.params.word as string), decodeURI(route.query.id as string));
 });

@@ -24,7 +24,7 @@ const parts_of_speech = ref<PartOfSpeech[]>([]);
 const form_fields = [
   {
     name: "term",
-    label: "Term",
+    label: "Word",
     type: "text",
     placeholder: "Spelling without special characters",
   },
@@ -144,13 +144,14 @@ function removeDefinition(index: number) {
 async function onSubmit() {
   try {
     disbaleForm();
+    const form_data = { ...word.value, term: word.value.term.toLowerCase() };
     if (route.query.action === "edit" && route.query.word && word.value.id) {
-     const res = await dictStore.updateWord(word.value.id, word.value);
-      router.replace(app_routes.dictionary.view(encodeURI(word.value.term) as string, res.id as string));
+     const res = await dictStore.updateWord(word.value.id, form_data);
+      router.replace(app_routes.dictionary.view(encodeURI(form_data.term) as string, res.id as string));
     } else {
-      await dictStore.makeWord(word.value);
+      await dictStore.makeWord(form_data);
       toast({
-        title: `${word.value.term} added to dictionary`,
+        title: `${form_data.term} added to dictionary`,
         description: "You're doing a great job. Keeep it up! ❤️",
       });
     }
@@ -221,14 +222,15 @@ function bindForm() {
   <main>
     <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="col-span-12 md:col-span-4">
-        <h2 class="mb-4 text-2xl flex items-center font-medium tracking-tight">
-          Word
-          <span v-if="word.term" class="text-main text-sub capitalize break-words">- {{ word.term }}</span>
+        <h2 class="mb-4 text-2xl flex items-center font-medium tracking-tight capitalize">
+          <span v-if="word.value?.term && route.query.action === 'edit'">Edit {{word.value?.term.toLowerCase()}}</span>
+          <span v-else>Add a new word </span>
           <NuxtLink :to="app_routes.dictionary.add_sound(encodeURI(word.term), encodeURI(word.id))" v-if="!word.sound && word.id" class="p-2 mt-1 text-blue-500 inline-block"> 
             <IconsMicrophoneIcon width="16" height="16" />
           </NuxtLink>
         </h2>
         <div :name="field.label" v-for="field in form_fields" class="mb-4">
+          <label :for="field.name" class="mb-2">{{ field.label }}</label>
           <input class="input" :id="field.name" type="text" v-model.trim="(word[field.name] as string)" :placeholder="field.placeholder" />
         </div>
       </div>
