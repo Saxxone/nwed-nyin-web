@@ -21,6 +21,8 @@ const form = ref<HTMLFormElement>();
 const mediaRecorder = ref<MediaRecorder>();
 const is_recording = ref(false);
 const is_loading = ref(false);
+const is_fetching_word = ref(false);
+const is_updating_sound = ref(false);
 const audio_url = ref<string>();
 const audio_chunk = ref<BlobPart[]>([]);
 
@@ -38,12 +40,12 @@ async function startRecording() {
   is_loading.value = true;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-   if(audio_url.value) URL.revokeObjectURL(audio_url.value);
+    if (audio_url.value) URL.revokeObjectURL(audio_url.value);
     audio_url.value = undefined;
     audio_chunk.value = [];
 
     mediaRecorder.value = new MediaRecorder(stream);
-    console.log(mediaRecorder.value)
+    console.log(mediaRecorder.value);
 
     mediaRecorder.value.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -57,8 +59,7 @@ async function startRecording() {
       title: "An error occurred",
       description: "Error accessing microphone" + error,
     });
-  }
-  finally {
+  } finally {
     is_loading.value = false;
   }
 }
@@ -77,22 +78,37 @@ async function stopRecording(type: "STOP" | "CANCEL") {
       }
       if (!audio_chunk.value) return;
 
-      const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.webm`; 
+      const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.webm`;
       const audio_blob = new Blob(audio_chunk.value, { type: "audio/webm" });
       word.value.sound = new File([audio_blob], filename, {
         type: "audio/webm",
         lastModified: Date.now(),
-      }); 
-      
+      });
+
       audio_url.value = URL.createObjectURL(audio_blob);
     };
     is_recording.value = false;
   }
 }
-
+async function fetchWord() {
+  try {
+    is_fetching_word.value = true;
+    const { term, id } = await dictStore.fetchWord(decodeURI(route.query.word as string), decodeURI(route.query.id as string));
+    word.value.term = term;
+    word.value.id = id;
+  } catch (error) {
+    toast({
+      title: "An error occurred",
+      description: error as string,
+    });
+  } finally {
+    is_fetching_word.value = false;
+  }
+}
 async function onSubmit() {
   try {
     if (!word.value.sound) return;
+    is_updating_sound.value = true;
     disbaleForm();
     const form_data = await globalStore.createFormData([word.value.sound]);
     await dictStore.saveSound(word.value.id as string, form_data);
@@ -112,6 +128,7 @@ async function onSubmit() {
     });
     alert(error);
   } finally {
+    is_updating_sound.value = false;
     enableForm();
   }
 }
@@ -141,9 +158,7 @@ onBeforeMount(async () => {
 onMounted(async () => {
   bindForm();
   if (!route.query.word || !route.query.id) return;
-  const { term, id } = await dictStore.fetchWord(decodeURI(route.query.word as string), decodeURI(route.query.id as string));
-  word.value.term = term;
-  word.value.id = id;
+  await fetchWord();
 });
 
 function bindForm() {
@@ -161,7 +176,7 @@ function bindForm() {
           Word <span v-if="word.term" class="text-main text-sub capitalize break-words"> - {{ word.term }}</span>
         </h2>
         <div class="mb-4">
-          <div class="flex items-center">
+          <div class="flex items-center" v-if="word.term">
             <div
               class="p-3 border rounded-full bg-base-light hover:dark:bg-white hover:dark:text-gray-800 hover:bg-gray-700 hover:text-gray-200 inline-flex cursor-pointer items-center transition-colors"
               title="start recording"
@@ -192,7 +207,9 @@ function bindForm() {
       </div>
       <div class="col-span-12 md:col-span-8">
         <div class="flex justify-end mt-4">
-          <Button type="submit" :disabled="!audio_url">Save</Button>
+          <Button type="submit" :disabled="!audio_url">
+             <IconsLoadingIcon v-if="is_updating_sound" class="animate-spin text-indigo-400" width="18px" height="18px" />
+             Save</Button>
         </div>
       </div>
     </form>
