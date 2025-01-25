@@ -162,12 +162,12 @@ function bindForm() {
               <IconsMicrophoneIcon width="18px" height="18px" />
             </div>
 
-            <div v-if="is_recording" class="flex items-center w-[220px] md:w-[400px] rounded-full px-4 py-2 border">
-              <div class="animate-pulse text-red-400">
+            <div v-if="is_recording" class="flex items-center w-full md:w-[400px] rounded-full px-2 py-2 border">
+              <div class="animate-pulse text-red-400 pl-2">
                 <IconsStopIcon width="10px" height="10px" />
               </div>
               <div class="animate-pulse leading-1 ml-2 mr-4">Recording...</div>
-              <div class="p-2 border rounded-full text-indigo-500 cursor-pointer inline-flex items-center ml-auto mr-4" title="stop recording" @click="stopRecording('STOP')">
+              <div class="p-2 border rounded-full text-indigo-500 cursor-pointer inline-flex items-center ml-auto mr-3" title="stop recording" @click="stopRecording('STOP')">
                 <IconsStopIcon width="18px" height="18px" />
               </div>
               <div class="p-2 border rounded-full text-red-400 cursor-pointer inline-flex items-center" title="cancel recording" @click="stopRecording('CANCEL')">
@@ -176,7 +176,7 @@ function bindForm() {
             </div>
 
             <div>
-              <audio v-if="audio_url" :src="audio_url" controls controlslist="nodownload nofullscreen" class="w-[calc(w-screen - 40px)] md:w-[300px] h-10 block ml-4" />
+              <audio v-if="audio_url" :src="audio_url" controls controlslist="nodownload nofullscreen" class="w-[calc(100vw-8rem)] md:w-[300px] h-10 block ml-4" />
             </div>
           </div>
         </div>
