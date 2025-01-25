@@ -76,6 +76,7 @@ async function stopRecording(type: "STOP" | "CANCEL") {
         audio_url.value = undefined;
         return;
       }
+      
       if (!audio_chunk.value) return;
 
       const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.webm`;
