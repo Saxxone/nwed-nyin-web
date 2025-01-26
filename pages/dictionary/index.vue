@@ -126,7 +126,7 @@ definePageMeta({
     <div class="flex justify-end gap-4 z-20 relative">
       <div class="">
         <form @submit.prevent="search">
-          <input class="input" type="search" v-model="query" placeholder="Search..." @keydown.enter="search" />
+          <input class="input" type="search" v-model="query" placeholder="Search..." />
         </form>
         <div class="absolute w-72 right-0 bg-base-white shadow-lg rounded-lg" v-if="search_results.length > 0">
           <div></div>
