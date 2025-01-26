@@ -51,7 +51,6 @@ async function getDictionaryItems() {
   }
 }
 
-
 onMounted(async () => {
   target.value = document.querySelector('#bottom-of-page')
   observer.value = new IntersectionObserver(handleIntersection, options);
