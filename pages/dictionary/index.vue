@@ -13,34 +13,20 @@ const skip = ref(0);
 const query = ref("");
 const search_results = ref<Word[]>([]);
 const dictStore = useDictStore();
-const target = ref<Element | null>(null)
-const options = {
-  root: null,
-  rootMargin: '0px',
-  threshold: 0.1,
-};
-const observer = ref<IntersectionObserver| null>(null)
-
-function handleIntersection(entries: IntersectionObserverEntry[]) {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      getDictionaryItems();
-    }
-  });
-}
-
 
 async function search() {
   search_results.value = await dictStore.searchWord(query.value);
 }
 
 async function getDictionaryItems() {
-  is_loading.value = true
+  is_loading.value = true;
   try {
-    const { words: dictionary, totalCount } = await dictStore.fetchWords({
-      cursor: words.value[words.value.length -1]?.id, skip: skip.value, take: take.value
+    const { words: dictionary, totalCount: total_count } = await dictStore.fetchWords({
+      cursor: words.value[words.value.length - 1]?.id,
+      skip: skip.value,
+      take: take.value,
     });
-    count.value = totalCount;
+    count.value = total_count;
     words.value = [...words.value, ...dictionary];
     skip.value += take.value;
     is_loading.value = false;
@@ -50,17 +36,6 @@ async function getDictionaryItems() {
     is_loading.value = false;
   }
 }
-
-onMounted(async () => {
-  target.value = document.querySelector('#bottom-of-page')
-  observer.value = new IntersectionObserver(handleIntersection, options);
-  if (target.value) {
-    observer.value.observe(target.value);
-  }
-  await getDictionaryItems();
-});
-
-
 
 definePageMeta({
   title: "Ñwed Nyịn (Nwed Nyin) - Dictionary",
@@ -119,7 +94,11 @@ definePageMeta({
         </form>
         <div class="absolute w-72 right-0 bg-base-white shadow-lg rounded-lg" v-if="search_results.length > 0">
           <div></div>
-          <NuxtLink v-for="word in search_results" :key="word.id + 'search'" :to="`${routes.dictionary.view(encodeURI(word.term), encodeURI(word.id as string))}`" class="p-4 block">
+          <NuxtLink
+            v-for="word in search_results"
+            :key="word.id + 'search'"
+            :to="`${routes.dictionary.view(encodeURI(word.term), encodeURI(word.id as string))}`"
+            class="p-4 block">
             <div>{{ word.term }}</div>
             <div class="w-40 text-sm text-muted">
               <p class="truncate">{{ word.definitions[0].meaning }}</p>
@@ -129,16 +108,16 @@ definePageMeta({
       </div>
     </div>
 
-    <section :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }" >
+    <section :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }">
       <div v-if="is_loading && words.length < 1">
-        <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-'+i" />
+        <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-' + i" />
       </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
-      <div id="bottom-of-page"></div>
-      <div v-if="is_loading" class="fixed top-24 z-50 w-full flex items-center justify-center py-10 -ml-8" >
-       <div class="w-10 h-10 mx-auto shadow-lg bg-base-light rounded-full p-2">
-         <IconsLoadingIcon />
-       </div>
+      <AppInfiniteScroll @refresh="getDictionaryItems" />
+      <div v-if="is_loading" class="fixed top-24 z-50 w-full flex items-center justify-center py-10 -ml-8">
+        <div class="w-10 h-10 mx-auto shadow-lg bg-base-light rounded-full p-2">
+          <IconsLoadingIcon />
+        </div>
       </div>
     </section>
   </main>
