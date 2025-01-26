@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
-import { watchDebounced } from "@vueuse/core";
 import DefinitionSkeleton from "~/components/app/DefinitionSkeleton.vue";
 import type { Word } from "~/types/word";
 import app_routes from "~/utils/routes";
@@ -52,15 +51,6 @@ async function getDictionaryItems() {
   }
 }
 
-
-
-watchDebounced(
-  () => query.value,
-  () => {
-    search();
-  },
-  { debounce: 500, maxWait: 1000 }
-);
 
 onMounted(async () => {
   target.value = document.querySelector('#bottom-of-page')
@@ -126,7 +116,7 @@ definePageMeta({
     <div class="flex justify-end gap-4 z-20 relative">
       <div class="">
         <form @submit.prevent="search">
-          <input class="input" type="search" v-model="query" placeholder="Search..." />
+          <input class="input" type="search" v-model="query" placeholder="Search..." @keydown.enter="search" />
         </form>
         <div class="absolute w-72 right-0 bg-base-white shadow-lg rounded-lg" v-if="search_results.length > 0">
           <div></div>
