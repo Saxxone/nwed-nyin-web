@@ -223,7 +223,7 @@ function bindForm() {
     <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="col-span-12 md:col-span-4">
         <h2 class="mb-4 text-2xl flex items-center font-medium tracking-tight capitalize">
-          <span v-if="word.value?.term && route.query.action === 'edit'">Edit {{word.value?.term.toLowerCase()}}</span>
+          <span v-if="word?.term && route.query.action === 'edit'">Edit: {{word?.term.toLowerCase()}}</span>
           <span v-else>Add a new word </span>
           <NuxtLink :to="app_routes.dictionary.add_sound(encodeURI(word.term), encodeURI(word.id))" v-if="!word.sound && word.id" class="p-2 mt-1 text-blue-500 inline-block"> 
             <IconsMicrophoneIcon width="16" height="16" />
