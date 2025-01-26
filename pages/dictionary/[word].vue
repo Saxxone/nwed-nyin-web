@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Definition from "@/components/dictionary/Definition.vue";
+import DefinitionSkeleton from "@/components/app/DefinitionSkeleton.vue";
 import { useDictStore } from "@/store/dictionary";
 import type { Word } from "@/types/word";
 import app_routes from "~/utils/routes";
@@ -9,15 +10,26 @@ const word = ref<Word>();
 const route = useRoute();
 const router = useRouter();
 const dictStore = useDictStore();
+const is_loading = ref(false);
 
 function gotoEdit() {
   if (!word.value) return;
   navigateTo(app_routes.dictionary.edit(encodeURI(word.value.term), encodeURI(word.value.id as string) as string));
 }
 
-onMounted(async () => {
-  if (!route.params.word || !route.query.id) router.go(-1);
-  word.value = await dictStore.fetchWord(decodeURI(route.params.word as string), decodeURI(route.query.id as string));
+async function fetchWord() {
+  try {
+    is_loading.value = true;
+    word.value = await dictStore.fetchWord(decodeURI(route.params.word as string), decodeURI(route.query.id as string));
+  } catch (error) {
+    console.error(error);
+  } finally {
+    is_loading.value = false;
+  }
+}
+
+onMounted(() => {
+  fetchWord();
 });
 
 definePageMeta({
@@ -69,6 +81,7 @@ definePageMeta({
         <IconsEditIcon width="16" height="16" />
       </div>
     </div>
-    <Definition v-if="word" :word="word" :more="true" />
+    <DefinitionSkeleton v-if="is_loading" />
+    <Definition v-else-if="word" :word="word" :more="true" />
   </main>
 </template>
