@@ -7,6 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write '**/*.{js,vue,ts}'",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
@@ -36,6 +39,12 @@
   "packageManager": "pnpm@8.12.1+sha1.aa961ffce9b6eaa56307d9b5ff7e984f25b7eb58",
   "devDependencies": {
     "@nuxtjs/tailwindcss": "6.12.2",
+    "prettier": "3.3.3",
     "typescript": "^5.7.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run precommit"
+    }
   }
 }
