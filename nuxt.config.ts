@@ -10,35 +10,38 @@ export default defineNuxtConfig({
       cert: "./example.com+5.pem",
     },
   },
-  app: {
-    head: {
-      title: "Ñwed Nnyịn (Nwed Nyin)",
-      meta: [
-        { charset: "utf-8" },
-        { name: "viewport", content: "width=device-width, initial-scale=1" },
-        { hid: "description", name: "description", content: "Nwed Nyin" },
-        {
-          content: "same-origin-allow-popups",
-          "http-equiv": "Cross-Origin-Opener-Policy",
-        },
-      ],
-      script: [
-        {
-          async: true,
-          src: 'https://www.googletagmanager.com/gtag/js?id=G-ZMKY8C7KWE'
-        },
-        {
-          hid: 'gtag',
-          innerHTML: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-ZMKY8C7KWE');
-          `,
-          type: 'text/javascript',
-        }
-      ],
-      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+  $production: {
+    // Production-specific config
+    app: {
+      head: {
+        title: "Ñwed Nnyịn (Nwed Nyin)",
+        meta: [
+          { charset: "utf-8" },
+          { name: "viewport", content: "width=device-width, initial-scale=1" },
+          { hid: "description", name: "description", content: "Nwed Nyin" },
+          {
+            content: "same-origin-allow-popups",
+            "http-equiv": "Cross-Origin-Opener-Policy",
+          },
+        ],
+        script: [
+          {
+            async: true,
+            src: 'https://www.googletagmanager.com/gtag/js?id=G-ZMKY8C7KWE'
+          },
+          {
+            hid: 'gtag',
+            innerHTML: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-ZMKY8C7KWE');
+            `,
+            type: 'text/javascript',
+          }
+        ],
+        link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+      },
     },
   },
   css: ["~/assets/css/components.css"],

@@ -9,7 +9,11 @@ import { Analytics } from '@vercel/analytics/nuxt'
     <NuxtLayout>
       <Toaster />
       <NuxtPage></NuxtPage>
-      <Analytics/>
+      <ClientOnly>
+        <template v-if="$nuxt.isProduction">
+          <Analytics/>
+        </template>
+      </ClientOnly>
     </NuxtLayout>
   </div>
 </template>
