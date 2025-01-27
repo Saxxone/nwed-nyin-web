@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-
-const emit = defineEmits(['refresh'])
+const emit = defineEmits(["refresh"]);
 
 const target = ref<Element | null>(null);
 const options = {
@@ -10,11 +9,10 @@ const options = {
 };
 const observer = ref<IntersectionObserver | null>(null);
 
-
 function handleIntersection(entries: IntersectionObserverEntry[]) {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
-      emit('refresh');
+      emit("refresh");
     }
   });
 }
@@ -27,12 +25,10 @@ function startObserver() {
   }
 }
 
-
 onMounted(async () => {
   startObserver();
 });
 </script>
-
 
 <template>
   <div id="bottom-of-page"></div>

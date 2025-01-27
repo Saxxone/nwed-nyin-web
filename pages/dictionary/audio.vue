@@ -75,7 +75,7 @@ async function stopRecording(type: "STOP" | "CANCEL") {
         audio_url.value = undefined;
         return;
       }
-      
+
       if (!audio_chunk.value) return;
 
       const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.webm`;
@@ -93,7 +93,10 @@ async function stopRecording(type: "STOP" | "CANCEL") {
 async function fetchWord() {
   try {
     is_fetching_word.value = true;
-    word.value = await dictStore.fetchWord(decodeURI(route.query.word as string), decodeURI(route.query.id as string));
+    word.value = await dictStore.fetchWord(
+      decodeURI(route.query.word as string),
+      decodeURI(route.query.id as string),
+    );
   } catch (error) {
     toast({
       title: "An error occurred",
@@ -114,11 +117,15 @@ async function onSubmit() {
       title: `${word.value.term} sound guide added to dictionary`,
       description: "You're doing a great job. Keeep it up! ❤️",
     });
-    router.replace(app_routes.dictionary.view(encodeURI(word.value.term as string), encodeURI(word.value.id as string)));
+    router.replace(
+      app_routes.dictionary.view(
+        encodeURI(word.value.term as string),
+        encodeURI(word.value.id as string),
+      ),
+    );
     form.value?.reset();
     word.value = base_word as Word;
     word.value = { ...base_word };
-   
   } catch (error) {
     toast({
       title: "An error occurred",
@@ -168,10 +175,21 @@ function bindForm() {
 
 <template>
   <main>
-    <form ref="form" id="add-form" @submit.prevent="onSubmit" class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
+    <form
+      ref="form"
+      id="add-form"
+      @submit.prevent="onSubmit"
+      class="grid card grid-cols-12 gap-4 rounded-lg border p-4"
+    >
       <div class="col-span-12 md:col-span-4">
         <h2 class="mb-4 text-2xl font-medium tracking-tight">
-          Word <span v-if="word.term" class="text-main text-sub capitalize break-words"> - {{ word.term }}</span>
+          Word
+          <span
+            v-if="word.term"
+            class="text-main text-sub capitalize break-words"
+          >
+            - {{ word.term }}</span
+          >
         </h2>
         <div class="mb-4">
           <div class="flex items-center" v-if="word.term">
@@ -179,26 +197,49 @@ function bindForm() {
               class="p-3 border rounded-full bg-base-light hover:dark:bg-white hover:dark:text-gray-800 hover:bg-gray-700 hover:text-gray-200 inline-flex cursor-pointer items-center transition-colors"
               title="start recording"
               v-if="!is_recording"
-              @click="startRecording">
-              <IconsLoadingIcon v-if="is_loading" class="animate-spin text-indigo-400" width="18px" height="18px" />
+              @click="startRecording"
+            >
+              <IconsLoadingIcon
+                v-if="is_loading"
+                class="animate-spin text-indigo-400"
+                width="18px"
+                height="18px"
+              />
               <IconsMicrophoneIcon v-else width="18px" height="18px" />
             </div>
 
-            <div v-if="is_recording" class="flex items-center w-full md:w-[400px] rounded-full px-2 py-2 border">
+            <div
+              v-if="is_recording"
+              class="flex items-center w-full md:w-[400px] rounded-full px-2 py-2 border"
+            >
               <div class="animate-pulse text-red-400 pl-2">
                 <IconsStopIcon width="10px" height="10px" />
               </div>
               <div class="animate-pulse leading-1 ml-2 mr-4">Recording...</div>
-              <div class="p-2 border rounded-full text-indigo-500 cursor-pointer inline-flex items-center ml-auto mr-3" title="stop recording" @click="stopRecording('STOP')">
+              <div
+                class="p-2 border rounded-full text-indigo-500 cursor-pointer inline-flex items-center ml-auto mr-3"
+                title="stop recording"
+                @click="stopRecording('STOP')"
+              >
                 <IconsStopIcon width="18px" height="18px" />
               </div>
-              <div class="p-2 border rounded-full text-red-400 cursor-pointer inline-flex items-center" title="cancel recording" @click="stopRecording('CANCEL')">
+              <div
+                class="p-2 border rounded-full text-red-400 cursor-pointer inline-flex items-center"
+                title="cancel recording"
+                @click="stopRecording('CANCEL')"
+              >
                 <IconsCloseIcon width="18px" height="18px" />
               </div>
             </div>
 
             <div>
-              <audio v-if="audio_url" :src="audio_url" controls controlslist="nodownload nofullscreen" class="w-[calc(100vw-8rem)] md:w-[300px] h-10 block ml-4" />
+              <audio
+                v-if="audio_url"
+                :src="audio_url"
+                controls
+                controlslist="nodownload nofullscreen"
+                class="w-[calc(100vw-8rem)] md:w-[300px] h-10 block ml-4"
+              />
             </div>
           </div>
         </div>
@@ -206,8 +247,14 @@ function bindForm() {
       <div class="col-span-12 md:col-span-8">
         <div class="flex justify-end mt-4">
           <Button type="submit" :disabled="!audio_url">
-             <IconsLoadingIcon v-if="is_updating_sound" class="animate-spin text-indigo-400" width="18px" height="18px" />
-             Save</Button>
+            <IconsLoadingIcon
+              v-if="is_updating_sound"
+              class="animate-spin text-indigo-400"
+              width="18px"
+              height="18px"
+            />
+            Save</Button
+          >
         </div>
       </div>
     </form>

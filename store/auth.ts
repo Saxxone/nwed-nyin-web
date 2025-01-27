@@ -15,7 +15,11 @@ export const useAuthStore = defineStore("auth", () => {
   });
 
   async function signup(userData: Partial<User>) {
-    const response = await useApiConnect<Partial<User>, User>(api_routes.auth.register, FetchMethod.POST, userData);
+    const response = await useApiConnect<Partial<User>, User>(
+      api_routes.auth.register,
+      FetchMethod.POST,
+      userData,
+    );
     if ("status" in response || "statusCode" in response) {
       toast({
         title: response.message,
@@ -27,8 +31,15 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function login(loginData: Partial<User>, to: string = app_routes.articles.list) {
-    const response = await useApiConnect<Partial<User>, User>(api_routes.auth.login, FetchMethod.POST, loginData);
+  async function login(
+    loginData: Partial<User>,
+    to: string = app_routes.articles.list,
+  ) {
+    const response = await useApiConnect<Partial<User>, User>(
+      api_routes.auth.login,
+      FetchMethod.POST,
+      loginData,
+    );
     if ("status" in response || "statusCode" in response) {
       toast({
         title: response.message,
@@ -43,7 +54,10 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function getAuthUserProfile() {
-    const response = await useApiConnect<string, User>(api_routes.auth.profile, FetchMethod.GET);
+    const response = await useApiConnect<string, User>(
+      api_routes.auth.profile,
+      FetchMethod.GET,
+    );
 
     if ("status" in response || "statusCode" in response) {
       toast({
@@ -57,8 +71,15 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function authWithGoogle(credential: { token: string }, to: string = app_routes.articles.list) {
-    const response = await useApiConnect<{ token: string }, User>(api_routes.auth.google_signup, FetchMethod.POST, credential);
+  async function authWithGoogle(
+    credential: { token: string },
+    to: string = app_routes.articles.list,
+  ) {
+    const response = await useApiConnect<{ token: string }, User>(
+      api_routes.auth.google_signup,
+      FetchMethod.POST,
+      credential,
+    );
     if ("status" in response || "statusCode" in response) {
       logout();
       toast({
@@ -72,7 +93,8 @@ export const useAuthStore = defineStore("auth", () => {
 
   function goTo(to: string) {
     const router = useRouter();
-    if (to.includes("/login") || to.includes("/signup")) router.push(app_routes.articles.list);
+    if (to.includes("/login") || to.includes("/signup"))
+      router.push(app_routes.articles.list);
     else router.push(to);
   }
 
@@ -82,7 +104,9 @@ export const useAuthStore = defineStore("auth", () => {
     access_token.value = "";
     refresh_token.value = "";
     const router = useRouter();
-    window.location.replace(`${app_routes.auth.login}?redirect=${encodeURIComponent(router.currentRoute.value.fullPath)}`);
+    window.location.replace(
+      `${app_routes.auth.login}?redirect=${encodeURIComponent(router.currentRoute.value.fullPath)}`,
+    );
     toast({
       title: "Unauthorized",
       description: "Sorry, you need an account to continue",

@@ -38,7 +38,8 @@ function loadGoogleScript() {
     const script = document.createElement("script");
     script.src = oauth_2_endpoint;
     script.onload = () => resolve(script);
-    script.onerror = () => reject(new Error("Failed to load Google API script"));
+    script.onerror = () =>
+      reject(new Error("Failed to load Google API script"));
     document.head.appendChild(script);
   });
 }
@@ -55,16 +56,21 @@ onMounted(async () => {
         cancel_on_tap_outside: true,
       });
 
-      window.google.accounts.id.renderButton(document.querySelector(".g_id_signin")!, {
-        type: "standard",
-        shape: "rectangular",
-        theme: "outline",
-        text: "signin_with",
-        size: "large",
-        logo_alignment: "left",
-      });
+      window.google.accounts.id.renderButton(
+        document.querySelector(".g_id_signin")!,
+        {
+          type: "standard",
+          shape: "rectangular",
+          theme: "outline",
+          text: "signin_with",
+          size: "large",
+          logo_alignment: "left",
+        },
+      );
     } else {
-      console.error("Google API script loaded but google object is not defined");
+      console.error(
+        "Google API script loaded but google object is not defined",
+      );
     }
   } catch (error) {
     console.error("Failed to load Google API script", error);
@@ -73,15 +79,29 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container h-dvh md:grid lg:grid-cols-12 mx-auto p-4" :class="[is_loading ? 'pointer-events-none opacity-50 cursor-not-allowed' : '']">
-    <div class="h-full bg-slate-900 rounded-lg flex-col p-6 text-white dark:border-r hidden lg:flex lg:col-span-4">
+  <div
+    class="container h-dvh md:grid lg:grid-cols-12 mx-auto p-4"
+    :class="[
+      is_loading ? 'pointer-events-none opacity-50 cursor-not-allowed' : '',
+    ]"
+  >
+    <div
+      class="h-full bg-slate-900 rounded-lg flex-col p-6 text-white dark:border-r hidden lg:flex lg:col-span-4"
+    >
       <div class="flex items-center text-lg font-medium">
-        <img src="/favicon-32x32.png" class="h-6 rounded-full mr-3" alt="nsibidi" />
+        <img
+          src="/favicon-32x32.png"
+          class="h-6 rounded-full mr-3"
+          alt="nsibidi"
+        />
         Ñwed Nnyịn
       </div>
       <div class="mt-auto">
         <blockquote class="space-y-2">
-          <p class="text-lg">&ldquo;Help us create, archive and standardise information on the web.&rdquo;</p>
+          <p class="text-lg">
+            &ldquo;Help us create, archive and standardise information on the
+            web.&rdquo;
+          </p>
           <footer class="text-sm">Stephen Udoekpo</footer>
         </blockquote>
       </div>
@@ -91,7 +111,9 @@ onMounted(async () => {
       <div class="flex flex-col justify-center items-end h-full">
         <div class="max-w-96 m-auto">
           <div class="text-center">
-            <h1 class="text-2xl font-semibold tracking-tight">Create an account or Login</h1>
+            <h1 class="text-2xl font-semibold tracking-tight">
+              Create an account or Login
+            </h1>
             <p class="text-sm text-muted-foreground">Login or signup with</p>
           </div>
           <div class="my-4 flex items-center justify-center">
@@ -100,9 +122,19 @@ onMounted(async () => {
           </div>
           <p class="px-8 text-center text-sm text-muted-foreground">
             By signing up, you agree to our
-            <a href="/terms" class="underline underline-offset-4 hover:text-primary"> Terms of Service </a>
+            <a
+              href="/terms"
+              class="underline underline-offset-4 hover:text-primary"
+            >
+              Terms of Service
+            </a>
             and
-            <a href="/privacy" class="underline underline-offset-4 hover:text-primary"> Privacy Policy </a>
+            <a
+              href="/privacy"
+              class="underline underline-offset-4 hover:text-primary"
+            >
+              Privacy Policy
+            </a>
             .
           </p>
         </div>

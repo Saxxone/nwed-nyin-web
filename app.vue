@@ -1,7 +1,6 @@
-
 <script>
 import { Toaster } from "@/components/ui/toast";
-import { Analytics } from '@vercel/analytics/nuxt'
+import { Analytics } from "@vercel/analytics/nuxt";
 </script>
 
 <template>
@@ -11,7 +10,7 @@ import { Analytics } from '@vercel/analytics/nuxt'
       <NuxtPage></NuxtPage>
       <ClientOnly>
         <template v-if="$nuxt.isProduction">
-          <Analytics/>
+          <Analytics />
         </template>
       </ClientOnly>
     </NuxtLayout>

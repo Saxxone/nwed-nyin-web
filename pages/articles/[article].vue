@@ -15,7 +15,7 @@ const route = useRoute();
 const slug = ref(decodeURI(route.params.article as string));
 const article = ref<Article>({
   content: "",
-  title: ""
+  title: "",
 });
 const markdown = ref();
 const parsed_article = ref();
@@ -45,14 +45,16 @@ async function getMarkdownFile(path: string) {
 
 onMounted(async () => {
   await getArticleMeta(slug.value);
-  await getMarkdownFile(slug.value + '.md');
+  await getMarkdownFile(slug.value + ".md");
 });
 
 watch(
   () => markdown.value,
   async (new_content) => {
-    parsed_article.value = DOMPurify.sanitize(await marked.parse(new_content, { breaks: true }));
-  }
+    parsed_article.value = DOMPurify.sanitize(
+      await marked.parse(new_content, { breaks: true }),
+    );
+  },
 );
 
 useSeoMeta({
@@ -63,7 +65,10 @@ useSeoMeta({
 <template>
   <main>
     <div class="flex items-start mb-4 justify-between">
-      <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl" v-if="article?.title">
+      <h1
+        class="text-4xl font-extrabold tracking-tight lg:text-2xl"
+        v-if="article?.title"
+      >
         {{ article.title }}
       </h1>
       <NuxtLink :to="app_routes.articles.edit(encodeURI(slug))" class="ml-auto">
@@ -71,6 +76,10 @@ useSeoMeta({
       </NuxtLink>
     </div>
 
-    <div v-if="parsed_article" class="bg-base-light prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article"></div>
+    <div
+      v-if="parsed_article"
+      class="bg-base-light prose prose-sm max-w-none dark:prose-invert"
+      v-html="parsed_article"
+    ></div>
   </main>
 </template>

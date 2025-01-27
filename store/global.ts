@@ -5,11 +5,10 @@ export const useGlobalStore = defineStore("global", () => {
   const api_loading = ref(false);
   const page_title = ref("");
 
-
   async function createFormData(files: File[] | Blob[]): Promise<FormData> {
     const form_data = new FormData();
     files.forEach((file) => {
-      form_data.append(file instanceof File ? file.name : 'file', file);
+      form_data.append(file instanceof File ? file.name : "file", file);
     });
 
     return form_data;
@@ -22,7 +21,7 @@ export const useGlobalStore = defineStore("global", () => {
       api_routes.files.upload,
       FetchMethod.POST,
       form_data,
-      "multipart/form-data"
+      "multipart/form-data",
     );
 
     if ("message" in response) {

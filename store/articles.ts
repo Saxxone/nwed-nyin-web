@@ -7,16 +7,16 @@ import { useApiConnect } from "~/composables/useApiConnect";
 export const useArticleStore = defineStore("articles", () => {
   const last_article = ref<Article | null>(null);
   async function fetchArticles(
-    pagination: Pagination = { cursor: "1", skip: 0, take: 10 }
+    pagination: Pagination = { cursor: "1", skip: 0, take: 10 },
   ) {
     try {
       const response = await useApiConnect<Partial<Article>, Article[]>(
         `${api_routes.articles.list}?cursor=${encodeURIComponent(
-          pagination.cursor as string
+          pagination.cursor as string,
         )}&skip=${encodeURIComponent(
-          pagination.skip as number
+          pagination.skip as number,
         )}&take=${encodeURIComponent(pagination.take as number)}`,
-        FetchMethod.GET
+        FetchMethod.GET,
       );
 
       if ("message" in response) {
@@ -35,7 +35,7 @@ export const useArticleStore = defineStore("articles", () => {
     try {
       const response = await useApiConnect<string, Article>(
         api_routes.articles.view(slug),
-        FetchMethod.GET
+        FetchMethod.GET,
       );
 
       if ("message" in response) {
@@ -53,7 +53,7 @@ export const useArticleStore = defineStore("articles", () => {
     try {
       const response = await useApiConnect<string, string>(
         api_routes.articles.getMarkdown(path),
-        FetchMethod.GET
+        FetchMethod.GET,
       );
 
       if (typeof response === "string") return response;
@@ -71,7 +71,7 @@ export const useArticleStore = defineStore("articles", () => {
       const response = await useApiConnect<Article, Article>(
         api_routes.articles.publish,
         FetchMethod.POST,
-        article
+        article,
       );
 
       if ("message" in response) {
@@ -90,7 +90,7 @@ export const useArticleStore = defineStore("articles", () => {
       const response = await useApiConnect<Article, Article>(
         api_routes.articles.update(id),
         FetchMethod.PATCH,
-        article
+        article,
       );
 
       if ("message" in response) {
@@ -108,7 +108,7 @@ export const useArticleStore = defineStore("articles", () => {
     try {
       const response = await useApiConnect<string, Article[]>(
         api_routes.articles.search(query),
-        FetchMethod.GET
+        FetchMethod.GET,
       );
 
       if ("message" in response) {
@@ -127,7 +127,7 @@ export const useArticleStore = defineStore("articles", () => {
       const response = await useApiConnect<Article, Article>(
         api_routes.articles.add,
         FetchMethod.POST,
-        article
+        article,
       );
 
       if ("message" in response) {

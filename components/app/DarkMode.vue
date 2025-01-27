@@ -29,11 +29,20 @@ watch(isDarkMode, (newValue) => {
 
 <template>
   <div class="flex justify-end items-center mb-2">
-    <div class="flex justify-end gap-x-1 items-center rounded-full" @click="toggleDarkMode">
-      <div class="cursor-pointer rounded-full p-2" :class="{ 'bg-base-white': !isDarkMode }">
+    <div
+      class="flex justify-end gap-x-1 items-center rounded-full"
+      @click="toggleDarkMode"
+    >
+      <div
+        class="cursor-pointer rounded-full p-2"
+        :class="{ 'bg-base-white': !isDarkMode }"
+      >
         <IconsSunIcon width="12" height="12" />
       </div>
-      <div class="cursor-pointer rounded-full p-2" :class="{ 'bg-base-white': isDarkMode }">
+      <div
+        class="cursor-pointer rounded-full p-2"
+        :class="{ 'bg-base-white': isDarkMode }"
+      >
         <IconsMoonIcon width="12" height="12" />
       </div>
     </div>

@@ -22,7 +22,7 @@ export async function useApiConnect<Body, Res>(
   method: FetchMethod = FetchMethod.GET,
   body?: Body,
   content_type: string = "application/json",
-  cache: RequestCache = "no-cache"
+  cache: RequestCache = "no-cache",
 ): Promise<Res | Error> {
   const api_url = import.meta.env.VITE_API_BASE_URL;
   const authStore = useAuthStore();
@@ -61,7 +61,10 @@ export async function useApiConnect<Body, Res>(
     async onRequestError({ response }) {
       // handle error
       err = {
-        message: response?._data?.message || response?.statusText || "An unknown error occurred",
+        message:
+          response?._data?.message ||
+          response?.statusText ||
+          "An unknown error occurred",
         status: response?.status ?? response?._data?.statusCode ?? 500,
         type: "error",
       };

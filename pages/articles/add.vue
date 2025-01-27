@@ -110,7 +110,7 @@ function getCaretPosition(is_start: boolean): number {
   preCaretRange.selectNodeContents(editor.value!);
   preCaretRange.setEnd(
     range[is_start ? "startContainer" : "endContainer"],
-    range[is_start ? "startOffset" : "endOffset"]
+    range[is_start ? "startOffset" : "endOffset"],
   );
   return preCaretRange.toString().length;
 }
@@ -125,7 +125,7 @@ function setCaretPosition(start: number, end?: number) {
   const walker = document.createTreeWalker(
     editor.value,
     NodeFilter.SHOW_TEXT,
-    null
+    null,
   );
   let start_node: Node | null = null;
   let end_node: Node | null = null;
@@ -358,7 +358,7 @@ async function publish() {
       title: "Published",
       description: "Your changes have been saved",
     });
-    if(res.slug) router.push(app_routes.articles.view(encodeURI(res.slug)));
+    if (res.slug) router.push(app_routes.articles.view(encodeURI(res.slug)));
   } catch (error) {
     toast({
       title: "Publish failed",
@@ -380,7 +380,7 @@ function debounce(fn: Function, ms: number) {
 async function getArticleMeta(slug: string) {
   try {
     const res = await articleStore.fetchArticle(slug);
-    article.value = {...article.value, ...res}
+    article.value = { ...article.value, ...res };
   } catch (error) {
     toast({
       title: "Error loading article",
@@ -408,7 +408,7 @@ onMounted(async () => {
   if (route.query.action === "edit" && route.query.article) {
     const slug = decodeURI(route.query.article as string);
     await getArticleMeta(slug);
-    await getMarkdownFile(slug + '.md');
+    await getMarkdownFile(slug + ".md");
   }
 });
 
@@ -416,21 +416,21 @@ watch(
   () => article.value.content,
   async (new_content) => {
     parsed_article.value.content = DOMPurify.sanitize(
-      await marked.parse(new_content, { breaks: true })
+      await marked.parse(new_content, { breaks: true }),
     );
-     if (is_first_call && route.query.action === 'edit') {
+    if (is_first_call && route.query.action === "edit") {
       is_first_call = false;
       return;
     }
     autoSave();
-  }
+  },
 );
 
 watch(
   () => selection.text.value,
   (new_selection) => {
     selections.value.push(new_selection);
-  }
+  },
 );
 </script>
 
@@ -518,7 +518,9 @@ watch(
           @keydown="handleKeyboard"
           @focus="is_editor_focused = true"
           @blur="is_editor_focused = false"
-        >{{ article.content }}</div>
+        >
+          {{ article.content }}
+        </div>
       </div>
 
       <!-- Preview -->

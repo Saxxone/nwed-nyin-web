@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import LeftSideBar from "@/components/LeftSideBar.vue";
 import RightSideBar from "@/components/RightSideBar.vue";
-
 </script>
 
 <template>
@@ -9,7 +8,7 @@ import RightSideBar from "@/components/RightSideBar.vue";
     <LeftSideBar class="col-span-2" />
 
     <section class="container mx-auto col-span-6">
-      <AppTopBar/>
+      <AppTopBar />
       <main class="my-4">
         <slot></slot>
       </main>

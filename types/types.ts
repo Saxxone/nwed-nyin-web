@@ -52,7 +52,8 @@ export enum Status {
   REJECTED = "REJECTED",
 }
 
-export type DateString = `${number}-${number}-${number}T${number}:${number}:${number}Z`;
+export type DateString =
+  `${number}-${number}-${number}T${number}:${number}:${number}Z`;
 
 export interface Pagination {
   take?: number;
@@ -72,9 +73,17 @@ export interface FormatAction {
   };
 }
 
-export type FormatCommand = "bold" | "italic" | "underline" | "strikethrough" | "heading" | "link" | "code" | "quote" | "list";
-
+export type FormatCommand =
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough"
+  | "heading"
+  | "link"
+  | "code"
+  | "quote"
+  | "list";
 
 export interface FileInterface {
-  url: string,
+  url: string;
 }

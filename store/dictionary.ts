@@ -6,13 +6,18 @@ import api_routes from "~/utils/api-routes";
 export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
 
-  async function fetchWords(pagination: Pagination = { cursor: "1", skip: 0, take: 50 }) {
+  async function fetchWords(
+    pagination: Pagination = { cursor: "1", skip: 0, take: 50 },
+  ) {
     try {
-      const response = await useApiConnect<Partial<Word>, { words: Word[]; totalCount: number }>(
+      const response = await useApiConnect<
+        Partial<Word>,
+        { words: Word[]; totalCount: number }
+      >(
         `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(pagination.skip as number)}&take=${encodeURIComponent(
-          pagination.take as number
+          pagination.take as number,
         )}`,
-        FetchMethod.GET
+        FetchMethod.GET,
       );
 
       if ("message" in response) {
@@ -28,7 +33,16 @@ export const useDictStore = defineStore("dict", () => {
 
   async function fetchWord(word: string, id: string) {
     try {
-      const response = id && id !== "" && id !== "null" && id !== "undefined" ? await useApiConnect<string, Word>(api_routes.dictionary.viewById(id), FetchMethod.GET) : await useApiConnect<string, Word>(api_routes.dictionary.view(word), FetchMethod.GET);
+      const response =
+        id && id !== "" && id !== "null" && id !== "undefined"
+          ? await useApiConnect<string, Word>(
+              api_routes.dictionary.viewById(id),
+              FetchMethod.GET,
+            )
+          : await useApiConnect<string, Word>(
+              api_routes.dictionary.view(word),
+              FetchMethod.GET,
+            );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -42,7 +56,10 @@ export const useDictStore = defineStore("dict", () => {
 
   async function searchWord(word: string) {
     try {
-      const response = await useApiConnect<string, Word[]>(api_routes.dictionary.search(word), FetchMethod.GET);
+      const response = await useApiConnect<string, Word[]>(
+        api_routes.dictionary.search(word),
+        FetchMethod.GET,
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -56,7 +73,10 @@ export const useDictStore = defineStore("dict", () => {
 
   async function fetchPartsOfSpeech() {
     try {
-      const response = await useApiConnect<null, PartOfSpeech[]>(api_routes.dictionary.parts_of_speech, FetchMethod.GET);
+      const response = await useApiConnect<null, PartOfSpeech[]>(
+        api_routes.dictionary.parts_of_speech,
+        FetchMethod.GET,
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -70,7 +90,11 @@ export const useDictStore = defineStore("dict", () => {
 
   async function makeWord(word: Word) {
     try {
-      const response = await useApiConnect<Word, Word>(api_routes.dictionary.add, FetchMethod.POST, word);
+      const response = await useApiConnect<Word, Word>(
+        api_routes.dictionary.add,
+        FetchMethod.POST,
+        word,
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -84,7 +108,11 @@ export const useDictStore = defineStore("dict", () => {
 
   async function updateWord(id: string, word: Word) {
     try {
-      const response = await useApiConnect<Word, Word>(api_routes.dictionary.update(id), FetchMethod.PATCH, word);
+      const response = await useApiConnect<Word, Word>(
+        api_routes.dictionary.update(id),
+        FetchMethod.PATCH,
+        word,
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -98,7 +126,12 @@ export const useDictStore = defineStore("dict", () => {
 
   async function saveSound(id: string, sound: FormData) {
     try {
-      const response = await useApiConnect<Partial<Word>, Word>(api_routes.dictionary.updateSound(id), FetchMethod.POST, sound, 'multipart/form-data');
+      const response = await useApiConnect<Partial<Word>, Word>(
+        api_routes.dictionary.updateSound(id),
+        FetchMethod.POST,
+        sound,
+        "multipart/form-data",
+      );
 
       if ("message" in response) {
         throw new Error(response.message);
@@ -110,12 +143,11 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
-
   async function fetchSound(path: string): Promise<string> {
     try {
       const response = await useApiConnect<string, string>(
         api_routes.dictionary.getSound(path),
-        FetchMethod.GET
+        FetchMethod.GET,
       );
 
       if (typeof response === "string") return response;
@@ -136,6 +168,6 @@ export const useDictStore = defineStore("dict", () => {
     searchWord,
     updateWord,
     saveSound,
-    fetchSound
+    fetchSound,
   };
 });

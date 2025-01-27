@@ -9,7 +9,7 @@ import RightSideBar from "@/components/RightSideBar.vue";
 
     <section class="col-span-12 lg:col-span-8">
       <div class="container px-4 mx-auto">
-        <AppTopBar/>
+        <AppTopBar />
         <main class="my-4">
           <slot></slot>
         </main>

@@ -11,22 +11,29 @@ definePageMeta({
 });
 
 const { toast } = useToast();
-const is_loading = ref(false)
+const is_loading = ref(false);
 const articleStore = useArticleStore();
 const sanitized_content = ref<Article[]>([]);
 
 async function sanitizeContent(content: string) {
-  return DOMPurify.sanitize(await marked.parse(`${content} ...`, { breaks: true }));
+  return DOMPurify.sanitize(
+    await marked.parse(`${content} ...`, { breaks: true }),
+  );
 }
 
 async function getArticles() {
   try {
-    is_loading.value = true
+    is_loading.value = true;
     const items = await articleStore.fetchArticles();
-    sanitized_content.value = await Promise.all(items.map(async (item) => ({ ...item, summary: await sanitizeContent(item.summary as string) })));
-    is_loading.value = false
+    sanitized_content.value = await Promise.all(
+      items.map(async (item) => ({
+        ...item,
+        summary: await sanitizeContent(item.summary as string),
+      })),
+    );
+    is_loading.value = false;
   } catch (error) {
-    is_loading.value = false
+    is_loading.value = false;
     toast({
       title: "Error loading article",
       description: error as string,
@@ -42,16 +49,21 @@ onMounted(async () => {
 <template>
   <main>
     <div class="flex items-start mb-4 justify-between">
-      <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">Articles</h1>
-      <NuxtLink :to="app_routes.articles.add" class="ml-auto"> Contribute </NuxtLink>
+      <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">
+        Articles
+      </h1>
+      <NuxtLink :to="app_routes.articles.add" class="ml-auto">
+        Contribute
+      </NuxtLink>
     </div>
 
-    <IconsLoadingIcon v-if="is_loading"/>
+    <IconsLoadingIcon v-if="is_loading" />
     <NuxtLink
       :to="app_routes.articles.view(encodeURI(article.slug as string))"
       v-for="article in sanitized_content"
       :key="article.id"
-      class="border block rounded-lg card text-sm word-wrap mb-4 break-words">
+      class="border block rounded-lg card text-sm word-wrap mb-4 break-words"
+    >
       <h2>{{ article.title }}</h2>
       <p v-html="article.summary" class="text-xs text-muted"></p>
     </NuxtLink>

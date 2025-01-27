@@ -14,13 +14,21 @@ const is_loading = ref(false);
 
 function gotoEdit() {
   if (!word.value) return;
-  navigateTo(app_routes.dictionary.edit(encodeURI(word.value.term), encodeURI(word.value.id as string) as string));
+  navigateTo(
+    app_routes.dictionary.edit(
+      encodeURI(word.value.term),
+      encodeURI(word.value.id as string) as string,
+    ),
+  );
 }
 
 async function fetchWord() {
   try {
     is_loading.value = true;
-    word.value = await dictStore.fetchWord(decodeURI(route.params.word as string), decodeURI(route.query.id as string));
+    word.value = await dictStore.fetchWord(
+      decodeURI(route.params.word as string),
+      decodeURI(route.query.id as string),
+    );
   } catch (error) {
     console.error(error);
   } finally {

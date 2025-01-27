@@ -3,7 +3,8 @@ const app_routes = {
     list: "/articles",
     view: (slug: string) => `/articles/${slug}`,
     add: "/articles/add",
-    edit: (slug: string) => `/articles/add?action=edit&article=${encodeURI(slug)}`,
+    edit: (slug: string) =>
+      `/articles/add?action=edit&article=${encodeURI(slug)}`,
   },
   dictionary: {
     list: "/dictionary",

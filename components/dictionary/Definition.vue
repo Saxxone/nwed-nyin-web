@@ -55,31 +55,57 @@ async function downloadAndPlaySound(path: string) {
 </script>
 
 <template>
-  <NuxtLink :to="`${routes.dictionary.view(encodeURI(props.word.term), encodeURI(props.word.id as string))}`" class="border block rounded-lg card text-sm word-wrap mb-4 break-words">
-    <div class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-1">
+  <NuxtLink
+    :to="`${routes.dictionary.view(encodeURI(props.word.term), encodeURI(props.word.id as string))}`"
+    class="border block rounded-lg card text-sm word-wrap mb-4 break-words"
+  >
+    <div
+      class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-1"
+    >
       <div class="flex items-center space-x-3">
         <h5>{{ props.word.term }}</h5>
-        <div v-if="props.word?.pronunciation_audios?.[0]?.file?.url" class="cursor-pointer">
+        <div
+          v-if="props.word?.pronunciation_audios?.[0]?.file?.url"
+          class="cursor-pointer"
+        >
           <IconsLoadingIcon v-if="is_loading" class="inline-block" />
-          <IconsVolumeIcon v-else :class="[is_playing ? 'animate-pulse text-blue-500' : '']" class="inline-block" @click.prevent="downloadAndPlaySound(props.word.pronunciation_audios[0].file.url)" />
+          <IconsVolumeIcon
+            v-else
+            :class="[is_playing ? 'animate-pulse text-blue-500' : '']"
+            class="inline-block"
+            @click.prevent="
+              downloadAndPlaySound(props.word.pronunciation_audios[0].file.url)
+            "
+          />
         </div>
       </div>
-      <h5 class="text-gray-500 text-sm font-medium block" v-if="props.word.alt_spelling">({{ props.word.alt_spelling }})</h5>
+      <h5
+        class="text-gray-500 text-sm font-medium block"
+        v-if="props.word.alt_spelling"
+      >
+        ({{ props.word.alt_spelling }})
+      </h5>
     </div>
     <p class="mb-2 font-serif text-xs" v-if="props.word.pronunciation">
-      {{ `${props.word.pronunciation?.startsWith("/") ? "" : "/"}${props.word.pronunciation}${props.word.pronunciation?.endsWith("/") ? "" : "/"}` }}
+      {{
+        `${props.word.pronunciation?.startsWith("/") ? "" : "/"}${props.word.pronunciation}${props.word.pronunciation?.endsWith("/") ? "" : "/"}`
+      }}
     </p>
 
     <div>
       <div v-for="(definition, index) in props.word.definitions" class="mb-4">
         <div v-if="props.more || index === 0">
-          <p class="text-xs italic text-muted">{{ index + 1 }}. {{ definition.part_of_speech.name }}</p>
+          <p class="text-xs italic text-muted">
+            {{ index + 1 }}. {{ definition.part_of_speech.name }}
+          </p>
           <p>{{ definition.meaning }}</p>
           <div class="my-1" v-if="definition.examples.length > 0">
             <h6 class="text-xs mt-2 text-muted">Examples:</h6>
 
             <div>
-              <p v-for="example in definition.examples" class="text-xs">{{ example.sentence }}</p>
+              <p v-for="example in definition.examples" class="text-xs">
+                {{ example.sentence }}
+              </p>
             </div>
 
             <div v-if="definition.synonyms.length > 0">
@@ -90,14 +116,22 @@ async function downloadAndPlaySound(path: string) {
                   v-for="(synonym, index) in definition.synonyms"
                   :key="synonym.synonym + 'synonym'"
                   class="text-xs hover:underline"
-                  >{{ synonym.synonym }}{{ `${index < definition.synonyms.length - 1 ? ", " : ""}` }}
+                  >{{ synonym.synonym
+                  }}{{
+                    `${index < definition.synonyms.length - 1 ? ", " : ""}`
+                  }}
                 </NuxtLink>
               </div>
             </div>
           </div>
 
           <div>
-            <NuxtLink v-for="link in props.word.related_to" :to="`${routes.dictionary.view(link.type, link.id)}`" class="text-blue-500 text-xs">{{ link }}</NuxtLink>
+            <NuxtLink
+              v-for="link in props.word.related_to"
+              :to="`${routes.dictionary.view(link.type, link.id)}`"
+              class="text-blue-500 text-xs"
+              >{{ link }}</NuxtLink
+            >
           </div>
         </div>
       </div>

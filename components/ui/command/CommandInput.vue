@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { cn } from "@/lib/utils";
 import { MagnifyingGlassIcon } from "@radix-icons/vue";
-import { ComboboxInput, type ComboboxInputProps, useForwardProps } from "radix-vue";
+import {
+  ComboboxInput,
+  type ComboboxInputProps,
+  useForwardProps,
+} from "radix-vue";
 import { computed, type HTMLAttributes } from "vue";
 
 defineOptions({
@@ -30,7 +34,11 @@ const forwardedProps = useForwardProps(delegatedProps);
       v-bind="{ ...forwardedProps, ...$attrs }"
       auto-focus
       :class="
-        cn('flex h-10 w-full rounded-lg bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50', props.class)
-      " />
+        cn(
+          'flex h-10 w-full rounded-lg bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+          props.class,
+        )
+      "
+    />
   </div>
 </template>

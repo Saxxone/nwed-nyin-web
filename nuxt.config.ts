@@ -27,18 +27,18 @@ export default defineNuxtConfig({
         script: [
           {
             async: true,
-            src: 'https://www.googletagmanager.com/gtag/js?id=G-ZMKY8C7KWE'
+            src: "https://www.googletagmanager.com/gtag/js?id=G-ZMKY8C7KWE",
           },
           {
-            hid: 'gtag',
+            hid: "gtag",
             innerHTML: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-ZMKY8C7KWE');
             `,
-            type: 'text/javascript',
-          }
+            type: "text/javascript",
+          },
         ],
         link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
       },
