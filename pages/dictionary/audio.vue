@@ -45,7 +45,6 @@ async function startRecording() {
     audio_chunk.value = [];
 
     mediaRecorder.value = new MediaRecorder(stream);
-    console.log(mediaRecorder.value);
 
     mediaRecorder.value.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -94,9 +93,7 @@ async function stopRecording(type: "STOP" | "CANCEL") {
 async function fetchWord() {
   try {
     is_fetching_word.value = true;
-    const { term, id } = await dictStore.fetchWord(decodeURI(route.query.word as string), decodeURI(route.query.id as string));
-    word.value.term = term;
-    word.value.id = id;
+    word.value = await dictStore.fetchWord(decodeURI(route.query.word as string), decodeURI(route.query.id as string));
   } catch (error) {
     toast({
       title: "An error occurred",
@@ -117,11 +114,11 @@ async function onSubmit() {
       title: `${word.value.term} sound guide added to dictionary`,
       description: "You're doing a great job. Keeep it up! ❤️",
     });
-
+    router.replace(app_routes.dictionary.view(encodeURI(word.value.term as string), encodeURI(word.value.id as string)));
     form.value?.reset();
     word.value = base_word as Word;
     word.value = { ...base_word };
-    router.replace(app_routes.dictionary.view(encodeURI(word.value.term as string), encodeURI(word.value.id as string)));
+   
   } catch (error) {
     toast({
       title: "An error occurred",

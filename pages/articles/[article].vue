@@ -45,7 +45,7 @@ async function getMarkdownFile(path: string) {
 
 onMounted(async () => {
   await getArticleMeta(slug.value);
-  await getMarkdownFile(slug.value);
+  await getMarkdownFile(slug.value + '.md');
 });
 
 watch(

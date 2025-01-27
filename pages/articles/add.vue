@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
-import { useTextSelection } from "@vueuse/core";
-import type { Article } from "~/types/article";
-import { useArticleStore } from "~/store/articles";
-import { useToast } from "@/components/ui/toast/use-toast";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast/use-toast";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTextSelection } from "@vueuse/core";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import app_routes from "~/utils/routes";
+import { onMounted, ref, watch } from "vue";
+import { useArticleStore } from "~/store/articles";
+import type { Article } from "~/types/article";
 import type { FormatAction } from "~/types/types";
+import app_routes from "~/utils/routes";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Articles",
@@ -31,6 +31,7 @@ const editor_history = ref<string[]>([]);
 const history_index = ref(-1);
 const last_caret_position = ref<number>(0);
 const selections = ref<string[]>([]);
+let is_first_call = true;
 
 const article = ref<Article>({
   content: "",
@@ -407,7 +408,7 @@ onMounted(async () => {
   if (route.query.action === "edit" && route.query.article) {
     const slug = decodeURI(route.query.article as string);
     await getArticleMeta(slug);
-    await getMarkdownFile(slug);
+    await getMarkdownFile(slug + '.md');
   }
 });
 
@@ -417,6 +418,10 @@ watch(
     parsed_article.value.content = DOMPurify.sanitize(
       await marked.parse(new_content, { breaks: true })
     );
+     if (is_first_call && route.query.action === 'edit') {
+      is_first_call = false;
+      return;
+    }
     autoSave();
   }
 );
