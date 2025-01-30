@@ -9,7 +9,7 @@ definePageMeta({
 const router = useRouter();
 
 onBeforeMount(() => {
-  router.push(app_routes.articles.list);
+  router.push(app_routes.dictionary.list);
 });
 </script>
 
