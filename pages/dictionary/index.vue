@@ -25,7 +25,6 @@ async function getDictionaryItems() {
     const { words: dictionary, totalCount: total_count } =
       await dictStore.fetchWords({
         cursor: words.value[words.value.length - 1]?.id,
-        skip: skip.value,
         take: take.value,
       });
     count.value = total_count;
@@ -43,21 +42,21 @@ async function jumpToAlphabet(alphabet:string) {
    is_loading.value = true;
    try {
     const { words: dictionary, totalCount: total_count } =
-      await dictStore.fetchWords({
-        cursor: words.value[words.value.length - 1]?.id,
-        skip: skip.value,
-        take: take.value,
-      });
+      await dictStore.jumpToAlphabet(alphabet);
     count.value = total_count;
-    words.value = [...words.value, ...dictionary];
+    words.value = dictionary;
     skip.value += take.value;
     is_loading.value = false;
+    scrollToTop();
   } catch (error) {
     is_loading.value = false;
   } finally {
     is_loading.value = false;
   }
-  alert(alphabet);
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 definePageMeta({

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
-import { normalizeString } from "~/composables/useUtils";
+import { useNormalizeString } from "~/composables/useUtils";
 import { useDictStore } from "~/store/dictionary";
 import { useGlobalStore } from "~/store/global";
 import type { Word } from "~/types/word";
@@ -78,7 +78,7 @@ async function stopRecording(type: "STOP" | "CANCEL") {
 
       if (!audio_chunk.value) return;
 
-      const filename = `${normalizeString(word.value.term as string)}-${Date.now()}.webm`;
+      const filename = `${useNormalizeString(word.value.term as string)}-${Date.now()}.webm`;
       const audio_blob = new Blob(audio_chunk.value, { type: "audio/webm" });
       word.value.sound = new File([audio_blob], filename, {
         type: "audio/webm",

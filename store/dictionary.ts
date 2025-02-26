@@ -7,14 +7,14 @@ export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
 
   async function fetchWords(
-    pagination: Pagination = { cursor: "1", skip: 0, take: 50 },
+    pagination: Pagination = { cursor: undefined, take: 50 },
   ) {
     try {
       const response = await useApiConnect<
         Partial<Word>,
         { words: Word[]; totalCount: number }
       >(
-        `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(pagination.skip as number)}&take=${encodeURIComponent(
+        `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&take=${encodeURIComponent(
           pagination.take as number,
         )}`,
         FetchMethod.GET,
@@ -71,10 +71,12 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
-  async function jumpToAlphabet(alphabet: string) {
+  async function jumpToAlphabet(alphabet: string, pagination: Pagination = { cursor: undefined, take: 50 },) {
     try {
       const response = await useApiConnect<string, Word[]>(
-        api_routes.dictionary.jump(alphabet),
+        `${api_routes.dictionary.jump}?alphabet=${alphabet}&cursor=${encodeURIComponent(pagination.cursor as string)}&take=${encodeURIComponent(
+          pagination.take as number,
+        )}`,
         FetchMethod.GET,
       );
 
@@ -186,5 +188,6 @@ export const useDictStore = defineStore("dict", () => {
     updateWord,
     saveSound,
     fetchSound,
+    jumpToAlphabet,
   };
 });

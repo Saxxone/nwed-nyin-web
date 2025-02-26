@@ -1,4 +1,4 @@
-export function normalizeString(str: string) {
+export function useNormalizeString(str: string) {
   return str
     .normalize("NFD") // Normalize for diacritics
     .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
