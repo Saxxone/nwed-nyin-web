@@ -2,6 +2,7 @@
 import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
 import DefinitionSkeleton from "~/components/app/DefinitionSkeleton.vue";
+import WayPoints from "~/components/dictionary/WayPoints.vue";
 import type { Word } from "~/types/word";
 import app_routes from "~/utils/routes";
 
@@ -36,6 +37,27 @@ async function getDictionaryItems() {
   } finally {
     is_loading.value = false;
   }
+}
+
+async function jumpToAlphabet(alphabet:string) {
+   is_loading.value = true;
+   try {
+    const { words: dictionary, totalCount: total_count } =
+      await dictStore.fetchWords({
+        cursor: words.value[words.value.length - 1]?.id,
+        skip: skip.value,
+        take: take.value,
+      });
+    count.value = total_count;
+    words.value = [...words.value, ...dictionary];
+    skip.value += take.value;
+    is_loading.value = false;
+  } catch (error) {
+    is_loading.value = false;
+  } finally {
+    is_loading.value = false;
+  }
+  alert(alphabet);
 }
 
 definePageMeta({
@@ -123,13 +145,14 @@ definePageMeta({
       </div>
     </div>
 
-    <section
+    <section class="relative"
       :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }"
     >
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-' + i" />
       </div>
       <Definition :word="word" v-for="word in words" :key="word.id" />
+      <WayPoints @jump="jumpToAlphabet" />
       <AppInfiniteScroll @refresh="getDictionaryItems" />
       <div
         v-if="is_loading"

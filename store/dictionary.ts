@@ -71,6 +71,23 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
+  async function jumpToAlphabet(alphabet: string) {
+    try {
+      const response = await useApiConnect<string, Word[]>(
+        api_routes.dictionary.jump(alphabet),
+        FetchMethod.GET,
+      );
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async function fetchPartsOfSpeech() {
     try {
       const response = await useApiConnect<null, PartOfSpeech[]>(
