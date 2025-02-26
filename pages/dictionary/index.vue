@@ -7,10 +7,11 @@ import type { Word } from "~/types/word";
 import app_routes from "~/utils/routes";
 
 const words = ref<Word[]>([]);
+const router = useRouter();
+const route = useRoute();
 const is_loading = ref(false);
 const count = ref(0);
 const take = ref(50);
-const skip = ref(0);
 const query = ref("");
 const search_results = ref<Word[]>([]);
 const dictStore = useDictStore();
@@ -19,12 +20,17 @@ async function search() {
   search_results.value = await dictStore.searchWord(query.value);
 }
 
+function setCursor(cursor: string) {
+  router.push({ query: { cursor } });
+}
+
 async function getDictionaryItems() {
   is_loading.value = true;
   try {
     const { words: dictionary, totalCount: total_count } =
       await dictStore.fetchWords({
-        cursor: words.value[words.value.length - 1]?.id,
+        cursor: route.query.cursor ?? words.value[words.value.length - 1]?.id,
+        skip: route.query.cursor ? 0 : 1,
         take: take.value,
       });
     count.value = total_count;
@@ -150,7 +156,7 @@ definePageMeta({
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-' + i" />
       </div>
-      <Definition :word="word" v-for="word in words" :key="word.id" />
+      <Definition @cursor="setCursor" :word="word" v-for="word in words" :key="word.id" />
       <WayPoints @jump="jumpToAlphabet" />
       <AppInfiniteScroll @refresh="getDictionaryItems" />
       <div

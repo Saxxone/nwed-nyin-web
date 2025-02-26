@@ -7,14 +7,16 @@ export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
 
   async function fetchWords(
-    pagination: Pagination = { cursor: undefined, take: 50 },
+    pagination: Pagination = { cursor: undefined, take: 50, skip: 0 },
   ) {
     try {
       const response = await useApiConnect<
         Partial<Word>,
         { words: Word[]; totalCount: number }
       >(
-        `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&take=${encodeURIComponent(
+        `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(
+          pagination.skip as number,
+        )}&take=${encodeURIComponent(
           pagination.take as number,
         )}`,
         FetchMethod.GET,
