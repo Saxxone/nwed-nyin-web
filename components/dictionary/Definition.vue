@@ -112,7 +112,7 @@ onMounted(async () => {
         </div>
       </div>
       <h5
-        class="text-gray-500 text-sm font-medium block"
+        class="text-gray-500 text-sm capitalize font-medium block"
         v-if="props.word.alt_spelling"
       >
         ({{ props.word.alt_spelling }})

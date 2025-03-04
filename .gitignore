@@ -25,3 +25,12 @@ logs
 
 # local pem files
 *.pem
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+*/._
+*/*._
+**/.*/*._
