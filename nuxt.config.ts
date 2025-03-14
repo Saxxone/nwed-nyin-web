@@ -18,7 +18,7 @@ export default defineNuxtConfig({
         meta: [
           { charset: "utf-8" },
           { name: "viewport", content: "width=device-width, initial-scale=1" },
-          { hid: "description", name: "description", content: "Nwed Nyin" },
+          { name: "description", content: "Nwed Nyin" },
           {
             content: "same-origin-allow-popups",
             "http-equiv": "Cross-Origin-Opener-Policy",
@@ -30,7 +30,6 @@ export default defineNuxtConfig({
             src: "https://www.googletagmanager.com/gtag/js?id=G-ZMKY8C7KWE",
           },
           {
-            hid: "gtag",
             innerHTML: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}

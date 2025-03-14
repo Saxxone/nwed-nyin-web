@@ -29,13 +29,12 @@ async function getDictionaryItems() {
   try {
     const { words: dictionary, totalCount: total_count } =
       await dictStore.fetchWords({
-        cursor: route.query.cursor ?? words.value[words.value.length - 1]?.id,
+        cursor: route.query.cursor as string ?? words.value[words.value.length - 1]?.id,
         skip: route.query.cursor ? 0 : 1,
         take: take.value,
       });
     count.value = total_count;
     words.value = [...words.value, ...dictionary];
-    skip.value += take.value;
     is_loading.value = false;
   } catch (error) {
     is_loading.value = false;
@@ -51,7 +50,6 @@ async function jumpToAlphabet(alphabet:string) {
       await dictStore.jumpToAlphabet(alphabet);
     count.value = total_count;
     words.value = dictionary;
-    skip.value += take.value;
     is_loading.value = false;
     scrollToTop();
   } catch (error) {

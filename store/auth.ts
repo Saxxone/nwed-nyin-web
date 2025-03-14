@@ -1,8 +1,8 @@
+import { useToast } from "@/components/ui/toast/use-toast";
 import { useStorage } from "@vueuse/core";
 import { FetchMethod } from "~/types/types";
 import type { User } from "~/types/user";
 import api_routes from "~/utils/api-routes";
-import { useToast } from "@/components/ui/toast/use-toast";
 import app_routes from "~/utils/routes";
 
 export const useAuthStore = defineStore("auth", () => {
@@ -20,7 +20,7 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       userData,
     );
-    if ("status" in response || "statusCode" in response) {
+    if (("status" in response || "statusCode" in response) && "message" in response) {
       toast({
         title: response.message,
         description: "Invalid credentials",
@@ -40,7 +40,7 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       loginData,
     );
-    if ("status" in response || "statusCode" in response) {
+    if (("status" in response || "statusCode" in response) && "message" in response) {
       toast({
         title: response.message,
         description: "Invalid credentials",
@@ -59,7 +59,7 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.GET,
     );
 
-    if ("status" in response || "statusCode" in response) {
+    if (("status" in response || "statusCode" in response) && "message" in response) {
       toast({
         title: response.message,
         description: "User not found",
@@ -80,7 +80,7 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       credential,
     );
-    if ("status" in response || "statusCode" in response) {
+    if (("status" in response || "statusCode" in response) && "message" in response) {
       logout();
       toast({
         title: response.message,

@@ -3,7 +3,11 @@ import { Menubar, MenubarMenu } from "@/components/ui/menubar";
 import routes from "@/utils/routes";
 import { useAuthStore } from "~/store/auth";
 
-let authStore;
+const authStore = ref<ReturnType<typeof useAuthStore>>();
+
+onMounted(() => {
+  authStore.value = useAuthStore();
+});
 
 const pages = [
   {
@@ -16,9 +20,7 @@ const pages = [
   },
 ];
 
-onMounted(() => {
-  authStore = useAuthStore();
-});
+
 </script>
 
 <template>
@@ -26,8 +28,8 @@ onMounted(() => {
     <div>
       <AppDarkMode />
       <ClientOnly fallbackTag="span">
-        <div v-if="authStore.user?.img">
-          <img :src="'api.nwednyin.org/public/'+authStore.user.img" alt="" />
+        <div v-if="authStore?.user?.img">
+          <img :src="'api.nwednyin.org/public/'+authStore?.user.img" alt="" />
         </div>
       </ClientOnly>
     </div>

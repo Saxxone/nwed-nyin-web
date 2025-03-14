@@ -73,9 +73,15 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
-  async function jumpToAlphabet(alphabet: string, pagination: Pagination = { cursor: undefined, take: 50 },) {
+  async function jumpToAlphabet(alphabet: string, pagination: Pagination = { cursor: undefined, take: 50 }): Promise<{
+    words: Word[];
+    totalCount: number;
+  }> {
     try {
-      const response = await useApiConnect<string, Word[]>(
+      const response = await useApiConnect<string, {
+        words: Word[];
+        totalCount: number;
+      }>(
         `${api_routes.dictionary.jump}?alphabet=${alphabet}&cursor=${encodeURIComponent(pagination.cursor as string)}&take=${encodeURIComponent(
           pagination.take as number,
         )}`,
