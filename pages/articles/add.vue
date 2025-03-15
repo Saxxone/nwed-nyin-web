@@ -236,7 +236,6 @@ function applyFormat(evt: Event, action: FormatAction) {
 
 // Content update handler
 function handleInput(event: Event) {
-  console.log("Input", event);
   const target = event.target as HTMLElement;
   const start = getCaretPosition(true);
   const end = getCaretPosition(false);
@@ -270,7 +269,6 @@ function addToHistory(content: string) {
 
 function undo() {
   if (history_index.value > 0) {
-    console.log("Undo");
     history_index.value--;
     const content = editor_history.value[history_index.value];
     updateContent(content);
