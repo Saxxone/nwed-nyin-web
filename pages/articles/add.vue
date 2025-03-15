@@ -448,7 +448,7 @@ onUnmounted(() => {
         <div
           class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
           :class="{
-            'mx-4 border backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
+            'mx-4 border backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
             'w-full bg-base-light': !is_scrolled,
           }">
           <TooltipProvider>
