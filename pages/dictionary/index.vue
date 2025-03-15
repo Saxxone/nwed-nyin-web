@@ -28,12 +28,17 @@ function setCursor(cursor: string) {
 async function getDictionaryItems() {
   is_loading.value = true;
   try {
-    const { words: dictionary, totalCount: total_count, audioCount: audio_count } = await dictStore.fetchWords({
+    const {
+      words: dictionary,
+      totalCount: total_count,
+      audioCount: audio_count_data,
+    } = await dictStore.fetchWords({
       cursor: (route.query.cursor as string) ?? words.value[words.value.length - 1]?.id,
       skip: 0,
       take: take.value,
     });
     count.value = total_count;
+    audio_count.value = audio_count_data;
     words.value = [...words.value, ...dictionary];
     is_loading.value = false;
   } catch (error) {
@@ -46,8 +51,9 @@ async function getDictionaryItems() {
 async function jumpToAlphabet(alphabet: string) {
   is_loading.value = true;
   try {
-    const { words: dictionary, totalCount: total_count } = await dictStore.jumpToAlphabet(alphabet);
+    const { words: dictionary, totalCount: total_count, audioCount: audio_count_data } = await dictStore.jumpToAlphabet(alphabet);
     count.value = total_count;
+    audio_count.value = audio_count_data;
     words.value = dictionary;
     is_loading.value = false;
     scrollToTop();
@@ -109,7 +115,7 @@ definePageMeta({
       <div class="mb-4">
         <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
         <p class="text-sm text-muted" v-show="words.length">{{ count }} words in dictionary</p>
-        <p class="text-sm text-muted" v-show="words.length">{{ audio_count }} pronunciations in dictionary</p>
+        <p class="text-sm text-muted" v-show="audio_count.length">{{ audio_count }} pronunciations in dictionary</p>
       </div>
       <NuxtLink :to="app_routes.dictionary.add">Contribute</NuxtLink>
     </div>
