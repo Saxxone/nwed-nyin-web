@@ -58,14 +58,14 @@ const actions: FormatAction[] = [
     shortcut: "Ctrl+I",
     markdown: { prefix: "_", suffix: "_" },
   },
-  {
-    label: "Underline",
-    icon: "underline",
-    formatting: "font-underline",
-    command: "underline",
-    shortcut: "Ctrl+U",
-    markdown: { prefix: "_", suffix: "_" },
-  },
+  // {
+  //   label: "Underline",
+  //   icon: "underline",
+  //   formatting: "font-underline",
+  //   command: "underline",
+  //   shortcut: "Ctrl+U",
+  //   markdown: { prefix: "_", suffix: "_" },
+  // },
   {
     label: "Heading",
     icon: "heading",
@@ -313,13 +313,9 @@ function handleKeyboard(event: KeyboardEvent) {
         event.preventDefault();
         applyFormat(event, actions[1]); // Italic
         break;
-      case "u":
-        event.preventDefault();
-        applyFormat(event, actions[2]); // Underline
-        break;
       case "k":
         event.preventDefault();
-        applyFormat(event, actions[4]); // Link
+        applyFormat(event, actions[3]); // Link
         break;
     }
   }
@@ -465,14 +461,14 @@ onUnmounted(() => {
                     'bg-base-white': !is_scrolled,
                   }"
                   @click="applyFormat($event, action)">
-                  <IconsBoldIcon v-if="action.icon === 'bold'" />
-                  <IconsItalicsIcon v-if="action.icon === 'italic'" />
-                  <IconsUnderlineIcon v-if="action.icon === 'underline'" />
-                  <IconsStrikethroughIcon v-if="action.icon === 'strikethrough'" />
+                  <IconsBoldIcon v-if="action.icon === 'bold'" width="20" />
+                  <IconsItalicsIcon v-if="action.icon === 'italic'"  width="20" />
+                  <IconsUnderlineIcon v-if="action.icon === 'underline'" width="20" />
+                  <IconsStrikethroughIcon v-if="action.icon === 'strikethrough'" width="20" />
                   <div v-if="action.icon === 'heading'">H</div>
-                  <IconsLinkIcon v-if="action.icon === 'link'" />
-                  <IconsQuoteIcon v-if="action.icon === 'quote'" />
-                  <IconsListIcon v-if="action.icon === 'list'" />
+                  <IconsLinkIcon v-if="action.icon === 'link'" width="20" />
+                  <IconsQuoteIcon v-if="action.icon === 'quote'" width="20" />
+                  <IconsListIcon v-if="action.icon === 'list'" width="20" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -495,8 +491,8 @@ onUnmounted(() => {
                       'bg-base-white': !is_scrolled,
                     }"
                     @click="action.command">
-                    <IconsUndoIcon v-if="action.icon === 'undo'" />
-                    <IconsRedoIcon v-if="action.icon === 'redo'" />
+                    <IconsUndoIcon v-if="action.icon === 'undo'" width="20" />
+                    <IconsRedoIcon v-if="action.icon === 'redo'" width="20" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
