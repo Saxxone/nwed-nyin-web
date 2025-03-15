@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   ssr: true,
   devtools: { enabled: true },
   devServer: {
-    port: 5000,
+    port: 4000,
     https: {
       key: "./example.com+5-key.pem",
       cert: "./example.com+5.pem",
@@ -30,6 +30,7 @@ export default defineNuxtConfig({
             src: "https://www.googletagmanager.com/gtag/js?id=G-ZMKY8C7KWE",
           },
           {
+            hid: "gtag",
             innerHTML: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
