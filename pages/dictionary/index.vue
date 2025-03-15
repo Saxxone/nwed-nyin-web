@@ -31,14 +31,15 @@ async function getDictionaryItems() {
     const {
       words: dictionary,
       totalCount: total_count,
-      audioCount: audio_count_data,
+      audioCount,
     } = await dictStore.fetchWords({
       cursor: (route.query.cursor as string) ?? words.value[words.value.length - 1]?.id,
       skip: 0,
       take: take.value,
     });
+    console.log(audioCount);
     count.value = total_count;
-    audio_count.value = audio_count_data;
+    audio_count.value = audioCount;
     words.value = [...words.value, ...dictionary];
     is_loading.value = false;
   } catch (error) {
@@ -51,9 +52,10 @@ async function getDictionaryItems() {
 async function jumpToAlphabet(alphabet: string) {
   is_loading.value = true;
   try {
-    const { words: dictionary, totalCount: total_count, audioCount: audio_count_data } = await dictStore.jumpToAlphabet(alphabet);
+    const { words: dictionary, totalCount: total_count, audioCount } = await dictStore.jumpToAlphabet(alphabet);
+    console.log(audioCount);
     count.value = total_count;
-    audio_count.value = audio_count_data;
+    audio_count.value = audioCount;
     words.value = dictionary;
     is_loading.value = false;
     scrollToTop();
