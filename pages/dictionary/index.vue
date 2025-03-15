@@ -37,7 +37,6 @@ async function getDictionaryItems() {
       skip: 0,
       take: take.value,
     });
-    console.log(audioCount);
     count.value = total_count;
     audio_count.value = audioCount;
     words.value = [...words.value, ...dictionary];
@@ -53,7 +52,6 @@ async function jumpToAlphabet(alphabet: string) {
   is_loading.value = true;
   try {
     const { words: dictionary, totalCount: total_count, audioCount } = await dictStore.jumpToAlphabet(alphabet);
-    console.log(audioCount);
     count.value = total_count;
     audio_count.value = audioCount;
     words.value = dictionary;
@@ -117,7 +115,7 @@ definePageMeta({
       <div class="mb-4">
         <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">Dictionary</h1>
         <p class="text-sm text-muted" v-show="words.length">{{ count }} words in dictionary</p>
-        <p class="text-sm text-muted" v-show="audio_count.length">{{ audio_count }} pronunciations in dictionary</p>
+        <p class="text-sm text-muted" v-show="audio_count">{{ audio_count }} pronunciations in dictionary</p>
       </div>
       <NuxtLink :to="app_routes.dictionary.add">Contribute</NuxtLink>
     </div>
