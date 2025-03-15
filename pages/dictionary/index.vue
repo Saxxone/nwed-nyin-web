@@ -30,7 +30,7 @@ async function getDictionaryItems() {
     const { words: dictionary, totalCount: total_count } =
       await dictStore.fetchWords({
         cursor: route.query.cursor as string ?? words.value[words.value.length - 1]?.id,
-        skip: route.query.cursor ? 0 : 1,
+        skip: 0,
         take: take.value,
       });
     count.value = total_count;

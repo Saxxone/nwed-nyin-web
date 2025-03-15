@@ -227,9 +227,11 @@ function applyFormat(evt: Event, action: FormatAction) {
         prefix +
         text +
         suffix +
-        parsed_article.value.content.substring(end);
+        article.value.content.substring(end);
       new_start = start + prefix.length;
       new_end = end + prefix.length;
+
+      console.log(new_text);
 
       break;
   }
