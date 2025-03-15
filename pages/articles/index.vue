@@ -51,7 +51,7 @@ onMounted(async () => {
       <NuxtLink :to="app_routes.articles.add" class="ml-auto"> Contribute </NuxtLink>
     </div>
 
-    <div class="flex items-center justify-center py-6">
+    <div v-if="is_loading" class="flex items-center justify-center py-6">
        <div class="w-10 h-10 mx-auto shadow-lg bg-base-light rounded-full p-2">
           <IconsLoadingIcon />
         </div>

@@ -12,7 +12,7 @@ export const useDictStore = defineStore("dict", () => {
     try {
       const response = await useApiConnect<
         Partial<Word>,
-        { words: Word[]; totalCount: number }
+        { words: Word[]; totalCount: number, audioCount: number }
       >(
         `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(
           pagination.skip as number,
@@ -76,11 +76,13 @@ export const useDictStore = defineStore("dict", () => {
   async function jumpToAlphabet(alphabet: string, pagination: Pagination = { cursor: undefined, take: 50 }): Promise<{
     words: Word[];
     totalCount: number;
+    audioCount: number;
   }> {
     try {
       const response = await useApiConnect<string, {
         words: Word[];
         totalCount: number;
+        audioCount: number;
       }>(
         `${api_routes.dictionary.jump}?alphabet=${alphabet}&cursor=${encodeURIComponent(pagination.cursor as string)}&take=${encodeURIComponent(
           pagination.take as number,
