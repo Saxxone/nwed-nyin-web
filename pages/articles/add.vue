@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useDebounceFn, useTextSelection } from "@vueuse/core";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import { onMounted, ref, watch } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 import { useArticleStore } from "~/store/articles";
 import type { Article } from "~/types/article";
 import type { FormatAction } from "~/types/types";
@@ -17,6 +17,7 @@ definePageMeta({
 });
 
 const { toast } = useToast();
+const is_scrolled = ref(false);
 const selection = useTextSelection();
 const route = useRoute();
 const router = useRouter();
@@ -27,7 +28,7 @@ const editor_history = ref<string[]>([]);
 const history_index = ref(-1);
 const last_caret_position = ref<number>(0);
 const selections = ref<string[]>([]);
-let is_first_call = true;
+const is_first_call = ref(true);
 
 const article = ref<Article>({
   content: "",
@@ -87,29 +88,33 @@ const actions: FormatAction[] = [
     command: "quote",
     markdown: { prefix: "> " },
   },
-  {
-    label: "List",
-    icon: "list",
-    formatting: "font-list",
-    command: "list",
-    markdown: { prefix: "- " },
-  },
+  // {
+  //   label: "List",
+  //   icon: "list",
+  //   formatting: "font-list",
+  //   command: "list",
+  //   markdown: { prefix: "- " },
+  // },
 ];
 
 const non_formatting_actions = [
   {
     label: "Undo",
-    command: undo(),
+    command: undo,
     icon: "undo",
     shortcut: "Ctrl+Z",
   },
   {
     label: "Redo",
-    command: redo(),
+    command: redo,
     icon: "redo",
     shortcut: "Ctrl+Shift+Z",
   },
 ];
+
+function toggleIsScrolled() {
+  is_scrolled.value = window.scrollY > 120;
+}
 
 // Get caret position
 function getCaretPosition(is_start: boolean): number {
@@ -231,9 +236,18 @@ function applyFormat(evt: Event, action: FormatAction) {
 
 // Content update handler
 function handleInput(event: Event) {
+  console.log("Input", event);
   const target = event.target as HTMLElement;
+  const start = getCaretPosition(true);
+  const end = getCaretPosition(false);
   const new_content = target.innerText;
   updateContent(new_content);
+  nextTick(() => {
+    // jump to next line if enter is pressed
+    if (event instanceof InputEvent && !event.data) {
+      setCaretPosition(start + 2, end + 2);
+    }
+  });
 }
 
 // Update content with proper sync
@@ -251,7 +265,7 @@ const debouncedAddToHistory = useDebounceFn((content: string) => {
 
 // History management
 function addToHistory(content: string) {
-  debouncedAddToHistory(content); 
+  debouncedAddToHistory(content);
 }
 
 function undo() {
@@ -277,10 +291,6 @@ function redo() {
       setCaretPosition(last_caret_position.value);
     });
   }
-}
-
-function handleNonFormattingAction(action: { command: string }) {
-  document.execCommand(action.command);
 }
 
 function handleKeyboard(event: KeyboardEvent) {
@@ -409,8 +419,8 @@ watch(
   () => article.value.content,
   async (new_content) => {
     parsed_article.value.content = DOMPurify.sanitize(await marked.parse(new_content, { breaks: true }));
-    if (is_first_call && route.query.action === "edit") {
-      is_first_call = false;
+    if (is_first_call.value && route.query.action === "edit") {
+      is_first_call.value = false;
       return;
     }
     autoSave();
@@ -423,6 +433,14 @@ watch(
     selections.value.push(new_selection);
   }
 );
+
+onMounted(() => {
+  window.addEventListener("scroll", toggleIsScrolled);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", toggleIsScrolled);
+});
 </script>
 
 <template>
@@ -433,11 +451,16 @@ watch(
           <Input v-model="article.title" placeholder="Title" required :disabled="is_loading" />
         </div>
         <!-- Toolbar -->
-        <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
+        <div
+          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
+          :class="{
+            'mx-4 border backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 bg-transparent': is_scrolled,
+            'w-full': !is_scrolled,
+          }">
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div class="bg-base-white rounded p-2 cursor-pointer select-none" @click="applyFormat($event, action)">
+                <div class="bg-base-white rounded p-1 lg:p-2 cursor-pointer select-none" @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />
@@ -461,7 +484,7 @@ watch(
             <TooltipProvider>
               <Tooltip v-for="action in non_formatting_actions" :key="action.label">
                 <TooltipTrigger as-child>
-                  <div class="bg-base-white rounded p-2 cursor-pointer select-none" @click="action.command">
+                  <div class="bg-base-white rounded p-1 lg:p-2 cursor-pointer select-none" @click="action.command">
                     <IconsUndoIcon v-if="action.icon === 'undo'" />
                     <IconsRedoIcon v-if="action.icon === 'redo'" />
                   </div>
