@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useTextSelection } from "@vueuse/core";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDebounceFn, useTextSelection } from "@vueuse/core";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { onMounted, ref, watch } from "vue";
@@ -100,6 +96,21 @@ const actions: FormatAction[] = [
   },
 ];
 
+const non_formatting_actions = [
+  {
+    label: "Undo",
+    command: undo(),
+    icon: "undo",
+    shortcut: "Ctrl+Z",
+  },
+  {
+    label: "Redo",
+    command: redo(),
+    icon: "redo",
+    shortcut: "Ctrl+Shift+Z",
+  },
+];
+
 // Get caret position
 function getCaretPosition(is_start: boolean): number {
   const selection = window.getSelection();
@@ -108,10 +119,7 @@ function getCaretPosition(is_start: boolean): number {
   const range = selection.getRangeAt(0);
   const preCaretRange = range.cloneRange();
   preCaretRange.selectNodeContents(editor.value!);
-  preCaretRange.setEnd(
-    range[is_start ? "startContainer" : "endContainer"],
-    range[is_start ? "startOffset" : "endOffset"],
-  );
+  preCaretRange.setEnd(range[is_start ? "startContainer" : "endContainer"], range[is_start ? "startOffset" : "endOffset"]);
   return preCaretRange.toString().length;
 }
 
@@ -122,11 +130,7 @@ function setCaretPosition(start: number, end?: number) {
   if (!sel || !editor.value) return;
 
   let charCount = 0;
-  const walker = document.createTreeWalker(
-    editor.value,
-    NodeFilter.SHOW_TEXT,
-    null,
-  );
+  const walker = document.createTreeWalker(editor.value, NodeFilter.SHOW_TEXT, null);
   let start_node: Node | null = null;
   let end_node: Node | null = null;
   let start_offset = 0;
@@ -170,16 +174,9 @@ function setCaretPosition(start: number, end?: number) {
 
 // Update the applyFormat function to maintain selection
 function applyFormat(evt: Event, action: FormatAction) {
-  if (
-    !selections.value[selections.value.length - 1] ||
-    selections.value[selections.value.length - 1].length === 0
-  )
-    return;
+  if (!selections.value[selections.value.length - 1] || selections.value[selections.value.length - 1].length === 0) return;
 
-  const text =
-    selections.value[selections.value.length - 1] ??
-    selections.value[selections.value.length - 2];
-  console.log(text);
+  const text = selections.value[selections.value.length - 1] ?? selections.value[selections.value.length - 2];
   const content = article.value.content;
 
   let new_text = "";
@@ -188,7 +185,6 @@ function applyFormat(evt: Event, action: FormatAction) {
 
   const start = getCaretPosition(true);
   const end = getCaretPosition(false);
-  console.log(start, end, text);
 
   const lines = text.split("\n");
   const formatted_lines = lines.map((line) => action.markdown.prefix + line);
@@ -199,10 +195,7 @@ function applyFormat(evt: Event, action: FormatAction) {
     case "link":
       const url = prompt("Enter URL:", "https://");
       if (url) {
-        new_text =
-          parsed_article.value.content.substring(0, start) +
-          `[${text}](${url})` +
-          parsed_article.value.content.substring(end);
+        new_text = article.value.content.substring(0, start) + `[${text}](${url})` + article.value.content.substring(end);
         new_start = start + 1; // Position after '['
         new_end = start + text.length + 1; // Position before ']'
       }
@@ -211,34 +204,22 @@ function applyFormat(evt: Event, action: FormatAction) {
     case "heading":
     case "quote":
     case "list":
-      new_text =
-        parsed_article.value.content.substring(0, start) +
-        formatted_lines.join("\n") +
-        parsed_article.value.content.substring(end);
+      new_text = article.value.content.substring(0, start) + formatted_lines.join("\n") + article.value.content.substring(end);
       new_start = start + action.markdown.prefix.length;
       new_end = end + formatted_lines.length * action.markdown.prefix.length;
       break;
 
     default:
       // Handle inline formatting
-
-      new_text =
-        content.substring(0, start) +
-        prefix +
-        text +
-        suffix +
-        article.value.content.substring(end);
+      new_text = content.substring(0, start) + prefix + text + suffix + article.value.content.substring(end);
       new_start = start + prefix.length;
       new_end = end + prefix.length;
-
-      console.log(new_text);
 
       break;
   }
 
   // Update content and history
   updateContent(new_text);
-  addToHistory(new_text);
 
   // Restore focus and selection
   nextTick(() => {
@@ -259,17 +240,23 @@ function handleInput(event: Event) {
 function updateContent(new_content: string) {
   article.value.content = new_content;
   last_caret_position.value = getCaretPosition(false);
+  addToHistory(new_content);
 }
 
-// History management
-function addToHistory(content: string) {
+const debouncedAddToHistory = useDebounceFn((content: string) => {
   history_index.value++;
   editor_history.value = editor_history.value.slice(0, history_index.value);
   editor_history.value.push(content);
+}, 1000);
+
+// History management
+function addToHistory(content: string) {
+  debouncedAddToHistory(content); 
 }
 
 function undo() {
   if (history_index.value > 0) {
+    console.log("Undo");
     history_index.value--;
     const content = editor_history.value[history_index.value];
     updateContent(content);
@@ -290,6 +277,10 @@ function redo() {
       setCaretPosition(last_caret_position.value);
     });
   }
+}
+
+function handleNonFormattingAction(action: { command: string }) {
+  document.execCommand(action.command);
 }
 
 function handleKeyboard(event: KeyboardEvent) {
@@ -417,22 +408,20 @@ onMounted(async () => {
 watch(
   () => article.value.content,
   async (new_content) => {
-    parsed_article.value.content = DOMPurify.sanitize(
-      await marked.parse(new_content, { breaks: true }),
-    );
+    parsed_article.value.content = DOMPurify.sanitize(await marked.parse(new_content, { breaks: true }));
     if (is_first_call && route.query.action === "edit") {
       is_first_call = false;
       return;
     }
     autoSave();
-  },
+  }
 );
 
 watch(
   () => selection.text.value,
   (new_selection) => {
     selections.value.push(new_selection);
-  },
+  }
 );
 </script>
 
@@ -440,33 +429,19 @@ watch(
   <main>
     <div class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="rounded-lg lg:col-span-6 col-span-12">
-        <div
-          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
-        >
-          <Input
-            v-model="article.title"
-            placeholder="Title"
-            required
-            :disabled="is_loading"
-          />
+        <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
+          <Input v-model="article.title" placeholder="Title" required :disabled="is_loading" />
         </div>
         <!-- Toolbar -->
-        <div
-          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
-        >
+        <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div
-                  class="bg-base-white rounded p-2 cursor-pointer select-none"
-                  @click="applyFormat($event, action)"
-                >
+                <div class="bg-base-white rounded p-2 cursor-pointer select-none" @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />
-                  <IconsStrikethroughIcon
-                    v-if="action.icon === 'strikethrough'"
-                  />
+                  <IconsStrikethroughIcon v-if="action.icon === 'strikethrough'" />
                   <div v-if="action.icon === 'heading'">H</div>
                   <IconsLinkIcon v-if="action.icon === 'link'" />
                   <IconsQuoteIcon v-if="action.icon === 'quote'" />
@@ -476,35 +451,29 @@ watch(
               <TooltipContent>
                 <div>
                   <span>{{ action.label }}</span>
-                  <span v-if="action.shortcut" class="ml-2 text-xs">{{
-                    action.shortcut
-                  }}</span>
+                  <span v-if="action.shortcut" class="ml-2 text-xs">{{ action.shortcut }}</span>
                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
           <div class="ml-auto flex items-center gap-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              @click="undo"
-              :disabled="history_index <= 0"
-              class="tooltip-left"
-              data-tooltip="Undo (Ctrl+Z)"
-            >
-              <i class="icon-undo"></i>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              @click="redo"
-              :disabled="history_index >= editor_history.length - 1"
-              class="tooltip-left"
-              data-tooltip="Redo (Ctrl+Shift+Z)"
-            >
-              <i class="icon-redo"></i>
-            </Button>
+            <TooltipProvider>
+              <Tooltip v-for="action in non_formatting_actions" :key="action.label">
+                <TooltipTrigger as-child>
+                  <div class="bg-base-white rounded p-2 cursor-pointer select-none" @click="action.command">
+                    <IconsUndoIcon v-if="action.icon === 'undo'" />
+                    <IconsRedoIcon v-if="action.icon === 'redo'" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div>
+                    <span>{{ action.label }}</span>
+                    <span v-if="action.shortcut" class="ml-2 text-xs">{{ action.shortcut }}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
@@ -519,8 +488,7 @@ watch(
           @input="handleInput"
           @keydown="handleKeyboard"
           @focus="is_editor_focused = true"
-          @blur="is_editor_focused = false"
-        >
+          @blur="is_editor_focused = false">
           {{ article.content }}
         </div>
       </div>
@@ -535,10 +503,7 @@ watch(
         </div>
         <div>
           <h1 class="mb-4">{{ article.title }}</h1>
-          <div
-            class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert"
-            v-html="parsed_article.content"
-          ></div>
+          <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
         </div>
       </div>
     </div>
