@@ -450,15 +450,21 @@ onUnmounted(() => {
         </div>
         <!-- Toolbar -->
         <div
-          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
+          class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
           :class="{
-            'mx-4 border backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 bg-transparent': is_scrolled,
-            'w-full': !is_scrolled,
+            'mx-4 border backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
+            'w-full bg-base-light': !is_scrolled,
           }">
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div class="bg-base-white rounded p-1 lg:p-2 cursor-pointer select-none" @click="applyFormat($event, action)">
+                <div
+                  class="rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
+                  :class="{
+                    'bg-base-light': is_scrolled,
+                    'bg-base-white': !is_scrolled,
+                  }"
+                  @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" />
@@ -482,7 +488,13 @@ onUnmounted(() => {
             <TooltipProvider>
               <Tooltip v-for="action in non_formatting_actions" :key="action.label">
                 <TooltipTrigger as-child>
-                  <div class="bg-base-white rounded p-1 lg:p-2 cursor-pointer select-none" @click="action.command">
+                  <div
+                    class="bg-base-white rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
+                    :class="{
+                      'bg-base-light': is_scrolled,
+                      'bg-base-white': !is_scrolled,
+                    }"
+                    @click="action.command">
                     <IconsUndoIcon v-if="action.icon === 'undo'" />
                     <IconsRedoIcon v-if="action.icon === 'redo'" />
                   </div>
