@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useDebounceFn, useTextSelection } from "@vueuse/core";
+import { useDebounceFn, useFileDialog, useTextSelection } from "@vueuse/core";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { nextTick, onMounted, ref, watch } from "vue";
@@ -29,6 +29,8 @@ const history_index = ref(-1);
 const last_caret_position = ref<number>(0);
 const selections = ref<string[]>([]);
 const is_first_call = ref(true);
+const show_file_upload_dialog = ref(false);
+const raw_file = ref<File | null>(null);
 
 const article = ref<Article>({
   content: "",
@@ -97,7 +99,17 @@ const actions: FormatAction[] = [
   // },
 ];
 
+const { files, open, reset, onCancel, onChange } = useFileDialog({
+  accept: 'image/*, video/*',
+})
+
 const non_formatting_actions = [
+  {
+    label: "Upload media",
+    command: open,
+    icon: "media",
+    shortcut: "Ctrl+O",
+  },
   {
     label: "Undo",
     command: undo,
@@ -111,6 +123,20 @@ const non_formatting_actions = [
     shortcut: "Ctrl+Shift+Z",
   },
 ];
+
+
+
+onChange((files) => {
+  if (!files) return;
+  show_file_upload_dialog.value = true;
+  raw_file.value = files[0];
+})
+
+onCancel(() => {
+  raw_file.value = null;
+  show_file_upload_dialog.value = false;
+  reset()
+})
 
 function toggleIsScrolled() {
   is_scrolled.value = window.scrollY > 120;
@@ -291,6 +317,18 @@ function redo() {
   }
 }
 
+function discardFile() {
+  show_file_upload_dialog.value = false;
+  raw_file.value = null;
+  reset();
+}
+
+function fileSaved(data: { url: string, description: string, name: string }) {
+  const inject_content =  ` ![${data.description}](${data.url}) ` 
+  article.value.content += inject_content;
+  show_file_upload_dialog.value = false;
+}
+
 function handleKeyboard(event: KeyboardEvent) {
   const is_mac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
   const modifier = is_mac ? event.metaKey : event.ctrlKey;
@@ -316,6 +354,10 @@ function handleKeyboard(event: KeyboardEvent) {
       case "k":
         event.preventDefault();
         applyFormat(event, actions[3]); // Link
+        break;
+      case "u":
+        event.preventDefault();
+        open();
         break;
     }
   }
@@ -445,8 +487,7 @@ onUnmounted(() => {
           <Input v-model="article.title" placeholder="Title" required :disabled="is_loading" />
         </div>
         <!-- Toolbar -->
-        <div
-          class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
+        <div class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
           :class="{
             'mx-4 border border-gray-200 dark:border-gray-700 backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
             'w-full bg-base-light': !is_scrolled,
@@ -454,15 +495,13 @@ onUnmounted(() => {
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div
-                  class="rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
+                <div class="rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
                   :class="{
                     'bg-base-light': is_scrolled,
                     'bg-base-white': !is_scrolled,
-                  }"
-                  @click="applyFormat($event, action)">
+                  }" @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" width="20" />
-                  <IconsItalicsIcon v-if="action.icon === 'italic'"  width="20" />
+                  <IconsItalicsIcon v-if="action.icon === 'italic'" width="20" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" width="20" />
                   <IconsStrikethroughIcon v-if="action.icon === 'strikethrough'" width="20" />
                   <div v-if="action.icon === 'heading'">H</div>
@@ -489,10 +528,10 @@ onUnmounted(() => {
                     :class="{
                       'bg-base-light': is_scrolled,
                       'bg-base-white': !is_scrolled,
-                    }"
-                    @click="action.command">
+                    }" @click="action.command">
                     <IconsUndoIcon v-if="action.icon === 'undo'" width="20" />
                     <IconsRedoIcon v-if="action.icon === 'redo'" width="20" />
+                    <IconsMediaIcon v-if="action.icon === 'media'" width="20" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -507,19 +546,16 @@ onUnmounted(() => {
         </div>
 
         <!-- Editor -->
-        <div
-          ref="editor"
-          :aria-disabled="is_loading"
-          :disabled="is_loading"
-          :contenteditable="!is_loading"
+        <div ref="editor" :aria-disabled="is_loading" :disabled="is_loading" :contenteditable="!is_loading"
           spellcheck="true"
           class="h-fit min-h-96 bg-base-light text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
-          @input="handleInput"
-          @keydown="handleKeyboard"
-          @focus="is_editor_focused = true"
+          @input="handleInput" @keydown="handleKeyboard" @focus="is_editor_focused = true"
           @blur="is_editor_focused = false">
           {{ article.content }}
         </div>
+
+        <ArticleFileUploadDialog v-if="show_file_upload_dialog && raw_file" @close="discardFile" @uploaded="fileSaved"
+          :file="raw_file" />
       </div>
 
       <!-- Preview -->
@@ -527,12 +563,13 @@ onUnmounted(() => {
         <div class="flex items-center gap-x-2 mb-10 justify-end">
           <Button @click="publish" :disabled="is_loading">
             <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
-            Publish</Button
-          >
+            Publish
+          </Button>
         </div>
         <div>
           <h1 class="mb-4">{{ article.title }}</h1>
-          <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
+          <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert"
+            v-html="parsed_article.content"></div>
         </div>
       </div>
     </div>

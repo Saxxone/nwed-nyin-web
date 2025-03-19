@@ -115,7 +115,7 @@ async function onSubmit() {
     await dictStore.saveSound(word.value.id as string, form_data);
     toast({
       title: `${word.value.term} sound guide added to dictionary`,
-      description: "You're doing a great job. Keeep it up! ❤️",
+      description: "Keep going 📝",
     });
     router.replace(
       app_routes.dictionary.view(

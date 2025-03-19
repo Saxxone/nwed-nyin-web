@@ -157,7 +157,7 @@ async function onSubmit() {
       await dictStore.makeWord(form_data);
       toast({
         title: `${form_data.term} added to dictionary`,
-        description: "You're doing a great job. Keeep it up! ❤️",
+        description: "Keep going 📝",
       });
     }
     form.value?.reset();
