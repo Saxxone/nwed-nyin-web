@@ -61,7 +61,7 @@ onMounted(async () => {
       v-for="article in sanitized_content"
       :key="article.id"
       class="border block rounded-lg card text-sm word-wrap mb-4 break-words">
-      <h2>{{ article.title }}</h2>
+      <h2 class="capitalize">{{ article.title.toLowerCase() }}</h2>
       <p v-html="article.summary" class="text-xs text-muted"></p>
     </NuxtLink>
   </main>
