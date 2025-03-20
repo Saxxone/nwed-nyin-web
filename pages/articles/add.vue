@@ -599,7 +599,7 @@ onUnmounted(() => {
           </Button>
         </div>
         <div>
-          <h1 class="mb-4 capitalize">{{ article.title.toLowerCase() }}</h1>
+          <h1 class="mb-4 text-xl capitalize">{{ article.title.toLowerCase() }}</h1>
           <div class="min-h-96 bg-base-light outfit-400 rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
         </div>
       </div>

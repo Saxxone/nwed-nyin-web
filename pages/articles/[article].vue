@@ -66,7 +66,7 @@ useSeoMeta({
   <main>
     <div class="flex items-start mb-4 justify-between">
       <h1
-        class="text-4xl font-extrabold tracking-tight lg:text-2xl capitalize"
+        class="font-extrabold tracking-tight text-xl lg:text-2xl capitalize"
         v-if="article?.title"
       >
         {{ article.title.toLowerCase() }}
