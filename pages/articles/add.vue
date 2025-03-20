@@ -363,23 +363,26 @@ function handleKeyboard(event: KeyboardEvent) {
   }
 }
 
-// Debounced auto-save
-const autoSave = debounce(async () => {
+async function update(label: string = "Updated") {
   if (article.value.id && article.value.content.trim()) {
     try {
       await articleStore.updateArticle(article.value.id, article.value);
       toast({
-        title: "Auto-saved",
+        title: label,
         description: "Your changes have been saved",
       });
     } catch (error) {
-      console.error("Auto-save failed:", error);
       toast({
-        title: "Auto-save failed",
+        title:  `${label} failed`,
         description: error as string,
       });
     }
   }
+}
+
+// Debounced auto-save
+const autoSave = debounce(async () => {
+  await update("Auto-saved");
 }, 60000);
 
 async function publish() {
@@ -561,7 +564,11 @@ onUnmounted(() => {
       <!-- Preview -->
       <div class="lg:col-span-6 col-span-12">
         <div class="flex items-center gap-x-2 mb-10 justify-end">
-          <Button @click="publish" :disabled="is_loading">
+          <Button v-if="!article.id" @click="publish" :disabled="is_loading">
+            <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
+            Publish
+          </Button>
+          <Button v-else @click="update" :disabled="is_loading">
             <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
             Publish
           </Button>
