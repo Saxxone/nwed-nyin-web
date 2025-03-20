@@ -100,8 +100,8 @@ const actions: FormatAction[] = [
 ];
 
 const { files, open, reset, onCancel, onChange } = useFileDialog({
-  accept: 'image/*, video/*',
-})
+  accept: "image/*, video/*",
+});
 
 const non_formatting_actions = [
   {
@@ -124,19 +124,17 @@ const non_formatting_actions = [
   },
 ];
 
-
-
 onChange((files) => {
   if (!files) return;
   show_file_upload_dialog.value = true;
   raw_file.value = files[0];
-})
+});
 
 onCancel(() => {
   raw_file.value = null;
   show_file_upload_dialog.value = false;
-  reset()
-})
+  reset();
+});
 
 function toggleIsScrolled() {
   is_scrolled.value = window.scrollY > 120;
@@ -323,8 +321,8 @@ function discardFile() {
   reset();
 }
 
-function fileSaved(data: { url: string, description: string, name: string }) {
-  const inject_content =  ` ![${data.description}](${data.url}) ` 
+function fileSaved(data: { url: string; description: string; name: string }) {
+  const inject_content = ` ![${data.description}](${data.url}) `;
   article.value.content += inject_content;
   show_file_upload_dialog.value = false;
 }
@@ -363,17 +361,18 @@ function handleKeyboard(event: KeyboardEvent) {
   }
 }
 
-async function update(label: string = "Updated") {
+async function update(evt: any, label: string = "Updated") {
   if (article.value.id && article.value.content.trim()) {
     try {
-      await articleStore.updateArticle(article.value.id, article.value);
+      const res = await articleStore.updateArticle(article.value.id, article.value);
       toast({
         title: label,
         description: "Your changes have been saved",
       });
+      if (res.slug && label.toLowerCase() === "updated") router.push(app_routes.articles.view(encodeURI(res.slug)));
     } catch (error) {
       toast({
-        title:  `${label} failed`,
+        title: `${label} failed`,
         description: error as string,
       });
     }
@@ -382,7 +381,7 @@ async function update(label: string = "Updated") {
 
 // Debounced auto-save
 const autoSave = debounce(async () => {
-  await update("Auto-saved");
+  await update({}, "Auto-saved");
 }, 60000);
 
 async function publish() {
@@ -490,7 +489,8 @@ onUnmounted(() => {
           <Input v-model="article.title" placeholder="Title" required :disabled="is_loading" />
         </div>
         <!-- Toolbar -->
-        <div class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
+        <div
+          class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
           :class="{
             'mx-4 border border-gray-200 dark:border-gray-700 backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
             'w-full bg-base-light': !is_scrolled,
@@ -498,11 +498,13 @@ onUnmounted(() => {
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
-                <div class="rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
+                <div
+                  class="rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
                   :class="{
                     'bg-base-light': is_scrolled,
                     'bg-base-white': !is_scrolled,
-                  }" @click="applyFormat($event, action)">
+                  }"
+                  @click="applyFormat($event, action)">
                   <IconsBoldIcon v-if="action.icon === 'bold'" width="20" />
                   <IconsItalicsIcon v-if="action.icon === 'italic'" width="20" />
                   <IconsUnderlineIcon v-if="action.icon === 'underline'" width="20" />
@@ -531,7 +533,8 @@ onUnmounted(() => {
                     :class="{
                       'bg-base-light': is_scrolled,
                       'bg-base-white': !is_scrolled,
-                    }" @click="action.command">
+                    }"
+                    @click="action.command">
                     <IconsUndoIcon v-if="action.icon === 'undo'" width="20" />
                     <IconsRedoIcon v-if="action.icon === 'redo'" width="20" />
                     <IconsMediaIcon v-if="action.icon === 'media'" width="20" />
@@ -549,16 +552,21 @@ onUnmounted(() => {
         </div>
 
         <!-- Editor -->
-        <div ref="editor" :aria-disabled="is_loading" :disabled="is_loading" :contenteditable="!is_loading"
+        <div
+          ref="editor"
+          :aria-disabled="is_loading"
+          :disabled="is_loading"
+          :contenteditable="!is_loading"
           spellcheck="true"
           class="h-fit min-h-96 bg-base-light text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
-          @input="handleInput" @keydown="handleKeyboard" @focus="is_editor_focused = true"
+          @input="handleInput"
+          @keydown="handleKeyboard"
+          @focus="is_editor_focused = true"
           @blur="is_editor_focused = false">
           {{ article.content }}
         </div>
 
-        <ArticleFileUploadDialog v-if="show_file_upload_dialog && raw_file" @close="discardFile" @uploaded="fileSaved"
-          :file="raw_file" />
+        <ArticleFileUploadDialog v-if="show_file_upload_dialog && raw_file" @close="discardFile" @uploaded="fileSaved" :file="raw_file" />
       </div>
 
       <!-- Preview -->
@@ -570,13 +578,12 @@ onUnmounted(() => {
           </Button>
           <Button v-else @click="update" :disabled="is_loading">
             <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
-            Publish
+            Update
           </Button>
         </div>
         <div>
           <h1 class="mb-4 capitalize">{{ article.title.toLowerCase() }}</h1>
-          <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert"
-            v-html="parsed_article.content"></div>
+          <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
         </div>
       </div>
     </div>
