@@ -66,10 +66,10 @@ useSeoMeta({
   <main>
     <div class="flex items-start mb-4 justify-between">
       <h1
-        class="text-4xl font-extrabold tracking-tight lg:text-2xl"
+        class="text-4xl font-extrabold tracking-tight lg:text-2xl capitalize"
         v-if="article?.title"
       >
-        {{ article.title }}
+        {{ article.title.toLowerCase() }}
       </h1>
       <NuxtLink :to="app_routes.articles.edit(encodeURI(slug))" class="ml-auto">
         <IconsEditIcon />
