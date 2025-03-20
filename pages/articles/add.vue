@@ -380,7 +380,7 @@ const autoSave = debounce(async () => {
       });
     }
   }
-}, 2000);
+}, 60000);
 
 async function publish() {
   if (!article.value.content.trim() || !article.value.title.trim()) {
