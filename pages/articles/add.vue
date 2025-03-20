@@ -263,7 +263,8 @@ function handleInput(event: Event) {
   const target = event.target as HTMLElement;
   const start = getCaretPosition(true);
   const end = getCaretPosition(false);
-  const new_content = target.innerText;
+  // const new_content = target.innerText;
+  setCaretPosition(start + 1, end + 1);
   // updateContent(new_content);
 }
 
