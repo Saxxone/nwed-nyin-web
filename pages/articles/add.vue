@@ -263,9 +263,13 @@ function handleInput(event: Event) {
   const target = event.target as HTMLElement;
   const start = getCaretPosition(true);
   const end = getCaretPosition(false);
-  // const new_content = target.innerText;
-  setCaretPosition(start + 1, end + 1);
-  // updateContent(new_content);
+  const new_content = target.innerText;
+  if (event instanceof InputEvent && event.data) {
+    updateContent(new_content);
+  }
+  nextTick(() => {
+    setCaretPosition(start + 1, end + 1);
+  });
 }
 
 function handleEnter(event: Event) {
@@ -273,9 +277,9 @@ function handleEnter(event: Event) {
   const start = getCaretPosition(true);
   const end = getCaretPosition(false);
   const new_content = target.innerText;
-  updateContent(new_content);
+
   nextTick(() => {
-    // jump to next line if enter is pressed
+    updateContent(new_content);
     setCaretPosition(start + 1, end + 1);
   });
 }
