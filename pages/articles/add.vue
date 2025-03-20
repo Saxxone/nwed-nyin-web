@@ -381,7 +381,8 @@ async function update(evt: any, label: string = "Updated") {
 
 // Debounced auto-save
 const autoSave = debounce(async () => {
-  await update({}, "Auto-saved");
+  //Temporarily disable autosave to reign in resource usage
+  // await update({}, "Auto-saved");
 }, 60000);
 
 async function publish() {
