@@ -264,12 +264,18 @@ function handleInput(event: Event) {
   const start = getCaretPosition(true);
   const end = getCaretPosition(false);
   const new_content = target.innerText;
+  // updateContent(new_content);
+}
+
+function handleEnter(event: Event) {
+  const target = event.target as HTMLElement;
+  const start = getCaretPosition(true);
+  const end = getCaretPosition(false);
+  const new_content = target.innerText;
   updateContent(new_content);
   nextTick(() => {
     // jump to next line if enter is pressed
-    if (event instanceof InputEvent && !event.data) {
-      setCaretPosition(start + 2, end + 2);
-    }
+    setCaretPosition(start + 1, end + 1);
   });
 }
 
@@ -330,6 +336,11 @@ function fileSaved(data: { url: string; description: string; name: string }) {
 function handleKeyboard(event: KeyboardEvent) {
   const is_mac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
   const modifier = is_mac ? event.metaKey : event.ctrlKey;
+
+  if (event.key === "Enter") {
+    handleEnter(event);
+    return;
+  }
 
   if (modifier) {
     switch (event.key.toLowerCase()) {
