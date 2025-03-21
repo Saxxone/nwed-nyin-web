@@ -385,7 +385,7 @@ async function update(evt: any, label: string = "Updated") {
         title: label,
         description: "Your changes have been saved",
       });
-      if (res.slug && label.toLowerCase() === "updated") router.push(app_routes.articles.view(encodeURI(res.slug)));
+      if (res.slug && label.toLowerCase() === "updated") await router.push(app_routes.articles.view(encodeURI(res.slug)));
     } catch (error) {
       toast({
         title: `${label} failed`,
@@ -416,7 +416,7 @@ async function publish() {
       title: "Published",
       description: "Your changes have been saved",
     });
-    if (res.slug) router.push(app_routes.articles.view(encodeURI(res.slug)));
+    if (res.slug) await router.push(app_routes.articles.view(encodeURI(res.slug)));
   } catch (error) {
     toast({
       title: "Publish failed",

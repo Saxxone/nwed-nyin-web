@@ -2,7 +2,7 @@ import { FetchMethod } from "~/types/types";
 import api_routes from "~/utils/api-routes";
 import type { Article } from "~/types/article";
 import type { Pagination } from "~/types/types";
-import { useApiConnect } from "~/composables/useApiConnect";
+import { useApiConnect } from "~/composables/useApiconnect";
 
 export const useArticleStore = defineStore("articles", () => {
   const last_article = ref<Article | null>(null);

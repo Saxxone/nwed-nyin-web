@@ -72,7 +72,7 @@ useSeoMeta({
         {{ article.title.toLowerCase() }}
       </h1>
       <NuxtLink :to="app_routes.articles.edit(encodeURI(slug))" class="ml-auto">
-        <IconsEditIcon />
+        <IconsEditIcon /> 
       </NuxtLink>
     </div>
 
