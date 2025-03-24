@@ -17,7 +17,6 @@ const form = ref({
   description: "",
 });
 
-
 async function upload() {
   if (!form.value.name) return;
 
@@ -43,7 +42,7 @@ async function getFileUrls(ids: string[]) {
   try {
     const response = await globalStore.getFileUrls(ids);
     const api_url = import.meta.env.VITE_API_BASE_URL;
-    const url = `${api_url}${api_url.endsWith("/") ? "" : "/"}${response[0].url}`;
+    const url = `${api_url.endsWith("/") ? api_url.slice(0, -1) : api_url}${response[0].url}`;
 
     emit("uploaded", {
       name: form.value.name,
