@@ -272,7 +272,8 @@ function handleInput(event: Event) {
   });
 }
 
-function handleEnter(event: Event) {
+function handleEnter(event: KeyboardEvent) {
+  if (event.key !== "Enter") return;
   const target = event.target as HTMLElement;
   const start = getCaretPosition(true);
   const end = getCaretPosition(false);
