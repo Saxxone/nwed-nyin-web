@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
-import { useNormalizeString } from "~/composables/usetils";
+import { useNormalizeString } from "~/composables/useUtils";
 import { useDictStore } from "~/store/dictionary";
 import { useGlobalStore } from "~/store/global";
 import type { Word } from "~/types/word";
 import app_routes from "~/utils/routes";
+import { disbaleForm, enableForm } from "~/composables/useUtils";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Dictionary",
@@ -15,8 +16,6 @@ definePageMeta({
 const { toast } = useToast();
 const route = useRoute();
 const router = useRouter();
-const inputs = ref<NodeListOf<HTMLInputElement>>();
-const buttons = ref<NodeListOf<HTMLButtonElement>>();
 const form = ref<HTMLFormElement>();
 const mediaRecorder = ref<MediaRecorder>();
 const is_recording = ref(false);
@@ -138,39 +137,14 @@ async function onSubmit() {
   }
 }
 
-function disbaleForm() {
-  inputs.value?.forEach((input) => {
-    input.disabled = true;
-  });
-  buttons.value?.forEach((button) => {
-    button.disabled = true;
-  });
-}
-
-function enableForm() {
-  inputs.value?.forEach((input) => {
-    input.disabled = false;
-  });
-  buttons.value?.forEach((button) => {
-    button.disabled = false;
-  });
-}
-
 onBeforeMount(async () => {
   if (!route.query.word || !route.query.id) router.go(-1);
 });
 
 onMounted(async () => {
-  bindForm();
   if (!route.query.word || !route.query.id) return;
   await fetchWord();
 });
-
-function bindForm() {
-  inputs.value = document.querySelectorAll("input");
-  buttons.value = document.querySelectorAll("button");
-  form.value = document.getElementById("add-form") as HTMLFormElement;
-}
 </script>
 
 <template>

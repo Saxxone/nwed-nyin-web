@@ -31,10 +31,32 @@ export const useGlobalStore = defineStore("global", () => {
     }
   }
 
+  async function getFileUrls(ids: string[]): Promise<{
+    id: string;
+    url: string;
+  }[]> {
+
+    const response = await useApiConnect<string[], {
+      id: string;
+      url: string;
+    }[]>(
+      api_routes.files.getUrls,
+      FetchMethod.POST,
+      ids,
+    );
+
+    if ("message" in response) {
+      throw new Error(response.message);
+    } else {
+      return response;
+    }
+  }
+
   return {
     api_loading,
     page_title,
     uploadFiles,
     createFormData,
+    getFileUrls,
   };
 });

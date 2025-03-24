@@ -30,8 +30,9 @@ const api_routes = {
     profile: "/auth/profile",
   },
   files: {
-    upload: "/files/upload",
-    download: (filename: string) => `/files/download/${filename}`,
+    upload: "/file/upload",
+    getUrls: "/file/file-urls",
+    download: (filename: string) => `/file/download/${filename}`,
   },
 };
 
