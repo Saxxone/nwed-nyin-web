@@ -268,7 +268,7 @@ function handleInput(event: Event) {
     updateContent(new_content);
   }
   nextTick(() => {
-    setCaretPosition(start + 1, end + 1);
+    setCaretPosition(start, end);
   });
 }
 
