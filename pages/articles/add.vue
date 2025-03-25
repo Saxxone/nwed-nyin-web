@@ -101,6 +101,7 @@ const actions: FormatAction[] = [
 
 const { files, open, reset, onCancel, onChange } = useFileDialog({
   accept: "image/*, video/*",
+  multiple: false,
 });
 
 const non_formatting_actions = [
@@ -126,6 +127,13 @@ const non_formatting_actions = [
 
 onChange((files) => {
   if (!files) return;
+  if(files[0].size > 1000000/3) {
+    toast({
+      title: "🎬 File too large",
+      description: "File size must be less than or equal to 330kb",
+    });
+    return;
+  }
   show_file_upload_dialog.value = true;
   raw_file.value = files[0];
 });
@@ -176,7 +184,7 @@ function setCaretPosition(start: number, end?: number) {
     }
 
     // Find end position
-    if (!end_node && charCount + node_length >= (end ?? start)) {
+    if (charCount + node_length >= (end ?? start)) {
       end_node = node;
       end_offset = (end ?? start) - charCount;
       break;
@@ -533,7 +541,7 @@ onUnmounted(() => {
                   <IconsListIcon v-if="action.icon === 'list'" width="20" />
                 </div>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent side="top">
                 <div>
                   <span>{{ action.label }}</span>
                   <span v-if="action.shortcut" class="ml-2 text-xs">{{ action.shortcut }}</span>
@@ -558,7 +566,7 @@ onUnmounted(() => {
                     <IconsMediaIcon v-if="action.icon === 'media'" width="20" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>
+               <TooltipContent side="top">
                   <div>
                     <span>{{ action.label }}</span>
                     <span v-if="action.shortcut" class="ml-2 text-xs">{{ action.shortcut }}</span>
@@ -607,14 +615,3 @@ onUnmounted(() => {
     </div>
   </main>
 </template>
-
-<style scoped lang="postcss">
-.tooltip-left::before {
-  content: attr(data-tooltip);
-  @apply absolute right-full mr-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 transition-opacity invisible;
-}
-
-.tooltip-left:hover::before {
-  @apply opacity-100 visible;
-}
-</style>
