@@ -433,6 +433,8 @@ async function publish() {
     });
   } finally {
     is_loading.value = false;
+    localStorage.removeItem("article_content");
+    localStorage.removeItem("article_title");
   }
 }
 
@@ -471,17 +473,35 @@ async function getMarkdownFile(path: string) {
   }
 }
 
+function  retrieveContentFromStorage(){
+  const content = localStorage.getItem("article_content");
+  const heading = localStorage.getItem("article_title");
+  if (heading) article.value.title = heading;
+  if (content) article.value.content = content;
+}
+
+
 onMounted(async () => {
   if (route.query.action === "edit" && route.query.article) {
     const slug = decodeURI(route.query.article as string);
     await getArticleMeta(slug);
     await getMarkdownFile(slug + ".md");
   }
+  retrieveContentFromStorage();
 });
+
+
+watch(
+    () => article.value.title,
+    (new_content) => {
+      localStorage.setItem("article_title", article.value.title);
+    }
+);
 
 watch(
   () => article.value.content,
   async (new_content) => {
+    localStorage.setItem("article_content", new_content);
     parsed_article.value.content = DOMPurify.sanitize(await marked.parse(new_content, { breaks: true }));
     if (is_first_call.value && route.query.action === "edit") {
       is_first_call.value = false;
@@ -516,7 +536,7 @@ onUnmounted(() => {
         </div>
         <!-- Toolbar -->
         <div
-          class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
+          class="rounded-lg hidden p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
           :class="{
             'mx-4 border border-gray-200 dark:border-gray-700 backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
             'w-full bg-base-light': !is_scrolled,
@@ -578,19 +598,17 @@ onUnmounted(() => {
         </div>
 
         <!-- Editor -->
-        <div
+        <textarea
           ref="editor"
           :aria-disabled="is_loading"
           :disabled="is_loading"
-          :contenteditable="!is_loading"
           spellcheck="true"
-          class="h-fit min-h-96 bg-base-light text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
-          @input="handleInput"
-          @keydown="handleKeyboard"
+          v-model="article.content"
+          class="h-fit w-full min-h-96 bg-base-light resize-none text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
           @focus="is_editor_focused = true"
           @blur="is_editor_focused = false">
           {{ article.content }}
-        </div>
+        </textarea>
 
         <ArticleFileUploadDialog v-if="show_file_upload_dialog && raw_file" @close="discardFile" @uploaded="fileSaved" :file="raw_file" />
       </div>
