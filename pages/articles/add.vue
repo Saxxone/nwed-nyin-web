@@ -44,22 +44,22 @@ const parsed_article = ref({
 const articleStore = useArticleStore();
 
 const actions: FormatAction[] = [
-  {
-    label: "Bold",
-    icon: "bold",
-    formatting: "font-bold",
-    command: "bold",
-    shortcut: "Ctrl+B",
-    markdown: { prefix: "**", suffix: "**" },
-  },
-  {
-    label: "Italic",
-    icon: "italic",
-    formatting: "font-italic",
-    command: "italic",
-    shortcut: "Ctrl+I",
-    markdown: { prefix: "_", suffix: "_" },
-  },
+  // {
+  //   label: "Bold",
+  //   icon: "bold",
+  //   formatting: "font-bold",
+  //   command: "bold",
+  //   shortcut: "Ctrl+B",
+  //   markdown: { prefix: "**", suffix: "**" },
+  // },
+  // {
+  //   label: "Italic",
+  //   icon: "italic",
+  //   formatting: "font-italic",
+  //   command: "italic",
+  //   shortcut: "Ctrl+I",
+  //   markdown: { prefix: "_", suffix: "_" },
+  // },
   // {
   //   label: "Underline",
   //   icon: "underline",
@@ -68,28 +68,28 @@ const actions: FormatAction[] = [
   //   shortcut: "Ctrl+U",
   //   markdown: { prefix: "_", suffix: "_" },
   // },
-  {
-    label: "Heading",
-    icon: "heading",
-    formatting: "font-heading",
-    command: "heading",
-    markdown: { prefix: "# " },
-  },
-  {
-    label: "Link",
-    icon: "link",
-    formatting: "font-link",
-    command: "link",
-    shortcut: "Ctrl+K",
-    markdown: { prefix: "[", suffix: "](url)" },
-  },
-  {
-    label: "Quote",
-    icon: "quote",
-    formatting: "font-quote",
-    command: "quote",
-    markdown: { prefix: "> " },
-  },
+  // {
+  //   label: "Heading",
+  //   icon: "heading",
+  //   formatting: "font-heading",
+  //   command: "heading",
+  //   markdown: { prefix: "# " },
+  // },
+  // {
+  //   label: "Link",
+  //   icon: "link",
+  //   formatting: "font-link",
+  //   command: "link",
+  //   shortcut: "Ctrl+K",
+  //   markdown: { prefix: "[", suffix: "](url)" },
+  // },
+  // {
+  //   label: "Quote",
+  //   icon: "quote",
+  //   formatting: "font-quote",
+  //   command: "quote",
+  //   markdown: { prefix: "> " },
+  // },
   // {
   //   label: "List",
   //   icon: "list",
@@ -109,19 +109,19 @@ const non_formatting_actions = [
     label: "Upload media",
     command: open,
     icon: "media",
-    shortcut: "Ctrl+O",
+    // shortcut: "Ctrl+O",
   },
   {
     label: "Undo",
     command: undo,
     icon: "undo",
-    shortcut: "Ctrl+Z",
+    // shortcut: "Ctrl+Z",
   },
   {
     label: "Redo",
     command: redo,
     icon: "redo",
-    shortcut: "Ctrl+Shift+Z",
+    // shortcut: "Ctrl+Shift+Z",
   },
 ];
 
@@ -536,7 +536,7 @@ onUnmounted(() => {
         </div>
         <!-- Toolbar -->
         <div
-          class="rounded-lg hidden p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
+          class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
           :class="{
             'mx-4 border border-gray-200 dark:border-gray-700 backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
             'w-full bg-base-light': !is_scrolled,
