@@ -425,6 +425,8 @@ async function publish() {
       title: "Published",
       description: "Your changes have been saved",
     });
+    localStorage.removeItem("article_content");
+    localStorage.removeItem("article_title");
     if (res.slug) await router.push(app_routes.articles.view(encodeURI(res.slug)));
   } catch (error) {
     toast({
@@ -433,8 +435,6 @@ async function publish() {
     });
   } finally {
     is_loading.value = false;
-    localStorage.removeItem("article_content");
-    localStorage.removeItem("article_title");
   }
 }
 
