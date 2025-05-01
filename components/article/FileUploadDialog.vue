@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import imageCompression from 'browser-image-compression';
 import { useToast } from "@/components/ui/toast/use-toast";
 import { disbaleForm, enableForm } from "~/composables/useUtils";
 import { useGlobalStore } from "~/store/global";
@@ -11,6 +12,7 @@ const emit = defineEmits(["close", "uploaded"]);
 const { toast } = useToast();
 const globalStore = useGlobalStore();
 const blob_url = ref<string>("");
+const compressed_file = ref<File>();
 
 const form = ref({
   name: "",
@@ -20,10 +22,11 @@ const form = ref({
 
 async function upload() {
   if (!form.value.name) return;
+  if (!compressed_file.value) return;
 
   try {
     disbaleForm();
-    const response = await globalStore.uploadFiles([props.file]);
+    const response = await globalStore.uploadFiles([compressed_file.value]);
     toast({
       title: `${form.value.name} uploaded successfully`,
       description: "Keep going 📝",
@@ -36,6 +39,26 @@ async function upload() {
       description: `${error instanceof Error ? error.message : "Unknown error"}`,
     });
     enableForm();
+  }
+}
+async function handleImageCompression() {
+  if(!props.file.type.includes('image')) return
+
+  const image_file = props.file;
+  console.log('originalFile instanceof Blob', image_file instanceof Blob); // true
+  console.log(`originalFile size ${image_file.size / 1024 / 1024} MB`);
+
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+  }
+  try {
+    compressed_file.value = await imageCompression(image_file, options);
+    console.log('compressedFile instanceof Blob', compressed_file.value instanceof Blob); // true
+    console.log(`compressedFile size ${compressed_file.value?.size / 1024 / 1024} MB`); // smaller than maxSizeMB
+  } catch (error) {
+    console.log(error);
   }
 }
 
@@ -63,6 +86,7 @@ watch(
   (file) => {
     if (file) {
       blob_url.value = URL.createObjectURL(file);
+      handleImageCompression()
       form.value.name = file.name;
     }
   },
@@ -84,8 +108,8 @@ onBeforeUnmount(() => {
       <form @submit.prevent.stop="upload">
         <div class="my-4" v-if="blob_url">
           <img :src="blob_url" alt="" v-if="props.file.type.includes('image')" class="object-cover max-h-60 w-full rounded-md" />
-          <video :src="blob_url" alt="" v-if="props.file.type.includes('video')" autoplay controls muted loop class="object-cover max-h-60 w-full rounded-md" />
-          <audio :src="blob_url" alt="" v-if="props.file.type.includes('audio')" autoplay controls loop />
+          <video :src="blob_url" v-if="props.file.type.includes('video')" autoplay controls muted loop class="object-cover max-h-60 w-full rounded-md" />
+          <audio :src="blob_url" v-if="props.file.type.includes('audio')" autoplay controls loop />
         </div>
         <fieldset>
           <label for="name" class="font-semibold mb-1 block">Name</label>
@@ -95,7 +119,7 @@ onBeforeUnmount(() => {
         </fieldset>
         <div class="flex justify-end">
           <Button type="button" @click="emit('close')" class="mr-4 border border-gray-200 dark:border-gray-800" variant="outline">Cancel</Button>
-          <Button type="submit" :disabled="!form.name && !form.description">Save</Button>
+          <Button type="submit" :disabled="!form.name && !form.description && !compressed_file">Save</Button>
         </div>
       </form>
     </div>

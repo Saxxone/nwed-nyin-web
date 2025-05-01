@@ -100,7 +100,7 @@ const actions: FormatAction[] = [
 ];
 
 const { files, open, reset, onCancel, onChange } = useFileDialog({
-  accept: "image/*, video/*",
+  accept: "image/*",
   multiple: false,
 });
 
@@ -127,13 +127,6 @@ const non_formatting_actions = [
 
 onChange((files) => {
   if (!files) return;
-  if(files[0].size > 1000000/3) {
-    toast({
-      title: "🎬 File too large",
-      description: "File size must be less than or equal to 330kb",
-    });
-    return;
-  }
   show_file_upload_dialog.value = true;
   raw_file.value = files[0];
 });
