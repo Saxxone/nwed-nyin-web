@@ -78,7 +78,7 @@ useSeoMeta({
 
     <div
       v-if="parsed_article"
-      class="bg-base-light break-words prose outfit-400 prose-sm max-w-none dark:prose-invert"
+      class="bg-base-light break-words prose prose-sm max-w-none dark:prose-invert"
       v-html="parsed_article"
     ></div>
   </main>
