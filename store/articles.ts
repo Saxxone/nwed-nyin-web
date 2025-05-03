@@ -7,7 +7,7 @@ import api_routes from "~/utils/api-routes";
 export const useArticleStore = defineStore("articles", () => {
   const last_article = ref<Article | null>(null);
   async function fetchArticles(
-    pagination: Pagination = { cursor: "1", skip: 0, take: 10 },
+    pagination: Pagination = { cursor: "1", skip: 0, take: 100 },
   ) {
     try {
       const response = await useApiConnect<Partial<Article>, Article[]>(
