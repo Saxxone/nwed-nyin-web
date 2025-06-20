@@ -9,7 +9,7 @@ onMounted(() => {
   authStore.value = useAuthStore();
 });
 
-const pages = [
+const pages: {name: string; route: string; external?: boolean}[] = [
   {
     name: "Articles",
     route: routes.articles.list,
@@ -18,7 +18,13 @@ const pages = [
     name: "Dictionary",
     route: routes.dictionary.list,
   },
+  {
+    name: "Donate",
+    route: "https://paystack.shop/pay/breb6r9a8y",
+    external: true,
+  },
 ];
+
 
 
 </script>
@@ -35,7 +41,10 @@ const pages = [
     </div>
     <Menubar>
       <MenubarMenu class="flex justify-between">
-        <NuxtLink :to="page.route" v-for="page in pages" :key="page.name" class="px-2">{{ page.name }}</NuxtLink>
+        <div v-for="page in pages" :key="page.name">
+           <a v-if="page.external" :href="page.route" target="_blank" class="px-2">Donate</a>
+          <NuxtLink v-else :to="page.route"  class="px-2">{{ page.name }}</NuxtLink>
+        </div>
       </MenubarMenu>
     </Menubar>
   </div>

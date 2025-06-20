@@ -83,3 +83,11 @@ useSeoMeta({
     ></div>
   </main>
 </template>
+
+
+<style lang="postcss">
+p img {
+  max-height: 345px;
+  margin: 1rem;
+}
+</style>
