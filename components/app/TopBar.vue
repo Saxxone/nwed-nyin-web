@@ -20,7 +20,7 @@ const pages: {name: string; route: string; external?: boolean}[] = [
   },
   {
     name: "Donate",
-    route: "https://paystack.shop/pay/breb6r9a8y",
+    route: "https://paystack.shop/pay/5lgc20wfzt",
     external: true,
   },
 ];
