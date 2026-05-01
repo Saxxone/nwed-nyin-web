@@ -18,7 +18,10 @@ const api_routes = {
     publish: `/article/publish`,
     add: "/article/add",
     update: (slug: string) => `/article/update/${slug}`,
-    search: (query: string) => `/article/search?term=${query}`,
+    search: (query: string, skip: number = 0, take: number = 10) =>
+      `/article/search?term=${encodeURIComponent(
+        query,
+      )}&skip=${encodeURIComponent(skip)}&take=${encodeURIComponent(take)}`,
     edit: (slug: string) => `/article/${slug}/edit`,
   },
   auth: {

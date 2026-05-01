@@ -7,7 +7,7 @@ import api_routes from "~/utils/api-routes";
 export const useArticleStore = defineStore("articles", () => {
   const last_article = ref<Article | null>(null);
   async function fetchArticles(
-    pagination: Pagination = { cursor: "1", skip: 0, take: 1000 },
+    pagination: Pagination = { cursor: "1", skip: 0, take: 10 },
   ) {
     try {
       const response = await useApiConnect<Partial<Article>, Article[]>(
@@ -22,7 +22,7 @@ export const useArticleStore = defineStore("articles", () => {
       if ("message" in response) {
         throw new Error(response.message);
       } else {
-        last_article.value = response[response.length - 1];
+        last_article.value = response[response.length - 1] ?? null;
         return response;
       }
     } catch (error) {
@@ -104,10 +104,17 @@ export const useArticleStore = defineStore("articles", () => {
     }
   }
 
-  async function searchArticles(query: string) {
+  async function searchArticles(
+    query: string,
+    pagination: Pagination = { skip: 0, take: 10 },
+  ) {
     try {
       const response = await useApiConnect<string, Article[]>(
-        api_routes.articles.search(query),
+        api_routes.articles.search(
+          query,
+          pagination.skip ?? 0,
+          pagination.take ?? 10,
+        ),
         FetchMethod.GET,
       );
 

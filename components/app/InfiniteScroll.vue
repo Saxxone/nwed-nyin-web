@@ -4,7 +4,7 @@ const emit = defineEmits(["refresh"]);
 const target = ref<Element | null>(null);
 const options = {
   root: null,
-  rootMargin: "0px",
+  rootMargin: "320px 0px",
   threshold: 0.1,
 };
 const observer = ref<IntersectionObserver | null>(null);
@@ -27,6 +27,10 @@ function startObserver() {
 
 onMounted(async () => {
   startObserver();
+});
+
+onBeforeUnmount(() => {
+  observer.value?.disconnect();
 });
 </script>
 
