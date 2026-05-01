@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToast } from "@/components/ui/toast/use-toast";
 import DOMPurify from "dompurify";
-import { ChevronDown, ChevronUp } from "lucide-vue-next";
+import { ChevronDown, ChevronUp, Search, X } from "lucide-vue-next";
 import { marked } from "marked";
 import type { ComponentPublicInstance } from "vue";
 import { useArticleStore } from "~/store/articles";
@@ -18,9 +18,12 @@ const is_loading_more = ref(false);
 const has_more_articles = ref(true);
 const page_size = 10;
 const auto_scroll_delay = 10000;
+const api_url = import.meta.env.VITE_API_BASE_URL;
 const articleStore = useArticleStore();
 const search_query = ref("");
+const is_mobile_search_open = ref(false);
 const sanitized_content = ref<Article[]>([]);
+const article_image_urls = ref<Record<string, string | null>>({});
 const feed = ref<HTMLElement | null>(null);
 const article_items = ref<HTMLElement[]>([]);
 const auto_scroll_timer = ref<ReturnType<typeof setTimeout> | null>(null);
@@ -29,6 +32,9 @@ const search_timer = ref<ReturnType<typeof setTimeout> | null>(null);
 const is_searching = computed(() => search_query.value.trim().length > 0);
 const show_search_results = computed(
   () => is_searching.value && !is_loading.value,
+);
+const show_mobile_search = computed(
+  () => is_mobile_search_open.value || is_searching.value,
 );
 
 async function sanitizeContent(content: string) {
@@ -44,6 +50,60 @@ async function sanitizeArticles(items: Article[]) {
       summary: await sanitizeContent(item.summary as string),
     })),
   );
+}
+
+function getArticleImages(article: Article) {
+  return (
+    article.file?.filter((file) => {
+      const type = file.type?.toUpperCase();
+      return type === "IMAGE" || file.mimetype?.startsWith("image/");
+    }) ?? []
+  );
+}
+
+function resolveArticleImageUrl(image_path?: string) {
+  if (!image_path) return null;
+  if (/^https?:\/\//i.test(image_path)) return image_path;
+
+  const normalized_path = image_path.replace(/^\/+/, "");
+  const static_path = normalized_path.startsWith("articles/")
+    ? normalized_path
+    : `articles/${normalized_path}`;
+
+  return `${api_url}/${static_path}`;
+}
+
+function selectArticleImageUrl(article: Article) {
+  const article_key = article.id || article.slug || article.title;
+
+  if (article_key in article_image_urls.value) {
+    return article_image_urls.value[article_key];
+  }
+
+  const images = getArticleImages(article);
+  const image = images[Math.floor(Math.random() * images.length)];
+  const image_url = resolveArticleImageUrl(image?.url || image?.path);
+
+  article_image_urls.value = {
+    ...article_image_urls.value,
+    [article_key]: image_url,
+  };
+
+  return image_url;
+}
+
+function getArticleImageUrl(article: Article) {
+  return selectArticleImageUrl(article);
+}
+
+function getArticleCardStyle(article: Article) {
+  const image_url = getArticleImageUrl(article);
+
+  if (!image_url) return undefined;
+
+  return {
+    backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.76)), url("${image_url}")`,
+  };
 }
 
 async function getArticles({ append = false } = {}) {
@@ -185,6 +245,17 @@ async function refreshArticles() {
   scheduleAutoScroll();
 }
 
+async function openMobileSearch() {
+  is_mobile_search_open.value = true;
+  await nextTick();
+  document.querySelector<HTMLInputElement>("#mobile-article-search")?.focus();
+}
+
+function closeMobileSearch() {
+  search_query.value = "";
+  is_mobile_search_open.value = false;
+}
+
 function setArticleItem(
   element: Element | ComponentPublicInstance | null,
   index: number,
@@ -224,12 +295,12 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="articles-page">
-    <div class="flex items-center mb-4 justify-between gap-4">
+    <div class="mb-4 flex items-center justify-between gap-3">
       <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">
         Articles
       </h1>
 
-      <div class="relative ml-auto w-full max-w-72">
+      <div class="relative ml-auto hidden w-full max-w-sm md:block">
         <Input
           v-model="search_query"
           class="input !mb-0 w-full"
@@ -271,7 +342,82 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <NuxtLink :to="app_routes.articles.add"> Contribute </NuxtLink>
+      <button
+        v-if="!show_mobile_search"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-base-white shadow-sm transition-colors hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:border-gray-700 dark:focus-visible:ring-gray-100 md:hidden"
+        type="button"
+        aria-label="Search articles"
+        @click="openMobileSearch"
+      >
+        <Search class="h-5 w-5" aria-hidden="true" />
+      </button>
+
+      <NuxtLink :to="app_routes.articles.add" class="hidden shrink-0 md:block">
+        Contribute
+      </NuxtLink>
+
+      <NuxtLink
+        v-if="!show_mobile_search"
+        :to="app_routes.articles.add"
+        class="shrink-0 md:hidden"
+      >
+        Contribute
+      </NuxtLink>
+    </div>
+
+    <div v-if="show_mobile_search" class="relative mb-4 md:hidden">
+      <div
+        class="flex items-center gap-2 rounded-lg border border-gray-200 bg-base-white p-2 shadow-sm dark:border-gray-700"
+      >
+        <Input
+          id="mobile-article-search"
+          v-model="search_query"
+          class="input !mb-0 w-full"
+          type="search"
+          placeholder="Search articles..."
+          aria-label="Search articles"
+          aria-controls="mobile-article-search-results"
+          :aria-expanded="show_search_results"
+        />
+        <button
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-base-white transition-colors hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:border-gray-700 dark:focus-visible:ring-gray-100"
+          type="button"
+          aria-label="Close search"
+          @click="closeMobileSearch"
+        >
+          <X class="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div
+        v-if="show_search_results"
+        id="mobile-article-search-results"
+        class="absolute left-0 right-0 top-full z-30 mt-2 max-h-80 overflow-y-auto scroll-bar-none rounded-lg border border-gray-200 bg-base-white shadow-lg dark:border-gray-700"
+        role="listbox"
+      >
+        <NuxtLink
+          v-for="article in sanitized_content"
+          :key="`${article.id}-mobile-search-result`"
+          :to="app_routes.articles.view(encodeURI(article.slug as string))"
+          class="block border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
+          role="option"
+        >
+          <p class="text-sm font-semibold capitalize text-main">
+            {{ article.title.toLowerCase() }}
+          </p>
+          <div
+            class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden text-xs text-muted dark:prose-invert"
+            v-html="article.summary"
+          ></div>
+        </NuxtLink>
+
+        <div
+          v-if="sanitized_content.length === 0"
+          class="px-4 py-6 text-center text-sm text-muted"
+        >
+          No articles found.
+        </div>
+      </div>
     </div>
 
     <div
@@ -322,23 +468,28 @@ onBeforeUnmount(() => {
         v-for="(article, index) in sanitized_content"
         :key="article.id"
         :ref="(element) => setArticleItem(element, index)"
-        class="flex min-h-full snap-start snap-always flex-col justify-end px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
+        :style="getArticleCardStyle(article)"
+        class="flex min-h-full snap-start snap-always flex-col justify-end bg-cover bg-center px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
       >
         <article class="mx-auto flex w-full max-w-3xl flex-col gap-5">
-          <p class="text-xs font-semibold uppercase text-muted">
-            Article {{ index + 1 }}
-          </p>
           <h2
-            class="text-4xl font-extrabold capitalize leading-tight text-main lg:text-5xl"
+            class="text-4xl font-extrabold capitalize leading-tight lg:text-5xl"
+            :class="getArticleImageUrl(article) ? 'text-white' : 'text-main'"
           >
             {{ article.title.toLowerCase() }}
           </h2>
           <div
-            class="prose prose-sm max-h-56 max-w-none overflow-hidden text-sub dark:prose-invert sm:max-h-72"
+            class="prose prose-sm max-h-56 max-w-none overflow-hidden dark:prose-invert sm:max-h-72"
+            :class="getArticleImageUrl(article) ? 'text-white/85' : 'text-sub'"
             v-html="article.summary"
           ></div>
           <span
-            class="w-fit rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white dark:bg-gray-100 dark:text-gray-900"
+            class="w-fit rounded-full px-4 py-2 text-xs font-semibold"
+            :class="
+              getArticleImageUrl(article)
+                ? 'bg-white text-gray-900'
+                : 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+            "
           >
             Read article
           </span>
