@@ -99,7 +99,13 @@ function getArticleImageUrl(article: Article) {
 function getArticleCardStyle(article: Article) {
   const image_url = getArticleImageUrl(article);
 
-  if (!image_url) return undefined;
+  if (!image_url) {
+    return {
+      backgroundImage:
+        "linear-gradient(135deg, rgba(248, 250, 252, 0.4), rgba(226, 232, 240, 0.34)), linear-gradient(45deg, rgba(15, 23, 42, 0.025), rgba(20, 184, 166, 0.04), rgba(245, 158, 11, 0.03))",
+      backgroundBlendMode: "normal, soft-light",
+    };
+  }
 
   return {
     backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.76)), url("${image_url}")`,
@@ -469,9 +475,18 @@ onBeforeUnmount(() => {
         :key="article.id"
         :ref="(element) => setArticleItem(element, index)"
         :style="getArticleCardStyle(article)"
-        class="flex min-h-full snap-start snap-always flex-col justify-end bg-cover bg-center px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
+        class="relative isolate flex min-h-full snap-start snap-always flex-col justify-end overflow-hidden bg-cover bg-center px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
       >
-        <article class="mx-auto flex w-full max-w-3xl flex-col gap-5">
+        <div
+          v-if="!getArticleImageUrl(article)"
+          class="pointer-events-none absolute -inset-8 -z-10 bg-gradient-to-br from-slate-200 via-white to-teal-100 opacity-80 blur-3xl dark:from-gray-950 dark:via-gray-800 dark:to-teal-950"
+        ></div>
+        <div
+          v-if="!getArticleImageUrl(article)"
+          class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(145deg,rgba(255,255,255,0.52),rgba(255,255,255,0.08)_46%,rgba(15,23,42,0.08))] backdrop-blur-sm dark:bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(17,24,39,0.2)_46%,rgba(0,0,0,0.28))]"
+        ></div>
+
+        <article class="relative mx-auto flex w-full max-w-3xl flex-col gap-5">
           <h2
             class="text-4xl font-extrabold capitalize leading-tight lg:text-5xl"
             :class="getArticleImageUrl(article) ? 'text-white' : 'text-main'"
