@@ -8,22 +8,39 @@ import { useArticleStore } from "~/store/articles";
 import type { Article } from "~/types/article";
 import app_routes from "~/utils/routes";
 
+type ArticlesFeedState = {
+  articles: Article[];
+  hasMoreArticles: boolean;
+  imageUrls: Record<string, string | null>;
+  scrollTop: number;
+  searchQuery: string;
+};
+
 definePageMeta({
   layout: "generic",
 });
 
 const { toast } = useToast();
+const articles_feed_state = useState<ArticlesFeedState>("articles-feed-state", () => ({
+  articles: [],
+  hasMoreArticles: true,
+  imageUrls: {},
+  scrollTop: 0,
+  searchQuery: "",
+}));
 const is_loading = ref(false);
 const is_loading_more = ref(false);
-const has_more_articles = ref(true);
+const has_more_articles = ref(articles_feed_state.value.hasMoreArticles);
 const page_size = 10;
 const auto_scroll_delay = 10000;
 const api_url = import.meta.env.VITE_API_BASE_URL;
 const articleStore = useArticleStore();
-const search_query = ref("");
+const search_query = ref(articles_feed_state.value.searchQuery);
 const is_mobile_search_open = ref(false);
-const sanitized_content = ref<Article[]>([]);
-const article_image_urls = ref<Record<string, string | null>>({});
+const sanitized_content = ref<Article[]>([...articles_feed_state.value.articles]);
+const article_image_urls = ref<Record<string, string | null>>({
+  ...articles_feed_state.value.imageUrls,
+});
 const feed = ref<HTMLElement | null>(null);
 const article_items = ref<HTMLElement[]>([]);
 const auto_scroll_timer = ref<ReturnType<typeof setTimeout> | null>(null);
@@ -115,6 +132,16 @@ function getArticleCardStyle(article: Article) {
   };
 }
 
+function saveFeedState({ scroll_top = feed.value?.scrollTop ?? 0 } = {}) {
+  articles_feed_state.value = {
+    articles: [...sanitized_content.value],
+    hasMoreArticles: has_more_articles.value,
+    imageUrls: { ...article_image_urls.value },
+    scrollTop: scroll_top,
+    searchQuery: search_query.value,
+  };
+}
+
 async function getArticles({ append = false } = {}) {
   if (
     (append && is_loading_more.value) ||
@@ -144,6 +171,7 @@ async function getArticles({ append = false } = {}) {
       ? [...sanitized_content.value, ...sanitized_items]
       : sanitized_items;
     has_more_articles.value = items.length === page_size;
+    saveFeedState();
   } catch (error) {
     toast({
       title: "Error loading article",
@@ -155,8 +183,18 @@ async function getArticles({ append = false } = {}) {
   }
 }
 
-async function loadMoreArticles() {
+async function loadMoreArticles({ snap_to_new_item = true } = {}) {
+  const first_new_article_index = sanitized_content.value.length;
+
   await getArticles({ append: true });
+
+  if (
+    snap_to_new_item &&
+    sanitized_content.value.length > first_new_article_index
+  ) {
+    await nextTick();
+    scrollFeedToArticle(article_items.value[first_new_article_index]);
+  }
 }
 
 function clearAutoScrollTimer() {
@@ -193,7 +231,7 @@ async function scrollToNextArticle() {
   let next_article = article_items.value[current_index + 1];
 
   if (!next_article && has_more_articles.value) {
-    await loadMoreArticles();
+    await loadMoreArticles({ snap_to_new_item: false });
     await nextTick();
     next_article = article_items.value[current_index + 1];
   }
@@ -249,7 +287,8 @@ function handleFeedInteraction() {
 }
 
 function resetFeedPosition() {
-  feed.value?.scrollTo({ top: 0, behavior: "instant" });
+  if (feed.value) feed.value.scrollTop = 0;
+  saveFeedState({ scroll_top: 0 });
 }
 
 async function refreshArticles() {
@@ -260,6 +299,7 @@ async function refreshArticles() {
   clearAutoScrollTimer();
   await getArticles();
   await nextTick();
+  saveFeedState({ scroll_top: 0 });
   scheduleAutoScroll();
 }
 
@@ -294,8 +334,20 @@ onBeforeUpdate(() => {
 });
 
 onMounted(async () => {
-  await getArticles();
+  const restored_scroll_top = articles_feed_state.value.scrollTop;
+
+  if (sanitized_content.value.length === 0) {
+    await getArticles();
+  } else {
+    await nextTick();
+    if (feed.value) feed.value.scrollTop = restored_scroll_top;
+  }
+
   scheduleAutoScroll();
+});
+
+onBeforeRouteLeave(() => {
+  saveFeedState();
 });
 
 watch(search_query, () => {
