@@ -127,7 +127,7 @@ useSeoMeta({
     </section>
 
     <section
-      class="mx-auto mt-6 max-w-5xl rounded-2xl border border-gray-200 bg-base-white px-4 lg:py-7 shadow-sm dark:border-gray-800 lg:px-10"
+      class="mx-auto mt-6 max-w-5xl rounded-2xl border border-gray-200 bg-base-white p-4 lg:py-7 shadow-sm dark:border-gray-800 lg:px-10"
       aria-live="polite"
     >
       <div v-if="is_loading" class="flex flex-col items-center justify-center py-16 text-center">
