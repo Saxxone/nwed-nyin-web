@@ -589,10 +589,10 @@ onUnmounted(() => {
         <!-- Editor -->
         <textarea
           ref="editor"
+          v-model="article.content"
           :aria-disabled="is_loading"
           :disabled="is_loading"
           spellcheck="true"
-          v-model="article.content"
           class="bg-base-light min-h-[55vh] w-full resize-y text-wrap rounded-lg p-3 font-mono text-sm outline-none whitespace-pre-wrap break-words sm:min-h-96 sm:text-base lg:min-h-[32rem]"
           @input="handleEditorInput"
           @keydown="handleKeyboard"
@@ -602,9 +602,9 @@ onUnmounted(() => {
 
         <ArticleFileUploadDialog
           v-if="show_file_upload_dialog && raw_file"
+          :file="raw_file"
           @close="discardFile"
           @uploaded="fileSaved"
-          :file="raw_file"
         />
       </div>
 
@@ -615,20 +615,20 @@ onUnmounted(() => {
         >
           <Button
             v-if="!article.id"
-            @click="publish"
             :disabled="is_loading || is_article_invalid"
             class="w-full sm:w-auto"
+            @click="publish"
           >
-            <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
+            <IconsUploadingIcon v-if="is_loading" class="text-base-dark" />
             Publish
           </Button>
           <Button
             v-else
-            @click="update"
             :disabled="is_loading || is_article_invalid"
             class="w-full sm:w-auto"
+            @click="update"
           >
-            <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
+            <IconsUploadingIcon v-if="is_loading" class="text-base-dark" />
             Update
           </Button>
         </div>

@@ -140,16 +140,16 @@ onBeforeUnmount(() => {
         <IconsCloseIcon class="h-6 w-6" @click="emit('close')" />
       </div>
       <form @submit.prevent.stop="upload">
-        <div class="my-4" v-if="blob_url">
+        <div v-if="blob_url" class="my-4">
           <img
+            v-if="props.file.type.includes('image')"
             :src="blob_url"
             alt=""
-            v-if="props.file.type.includes('image')"
             class="object-cover max-h-60 w-full rounded-md"
           />
           <video
-            :src="blob_url"
             v-if="props.file.type.includes('video')"
+            :src="blob_url"
             autoplay
             controls
             muted
@@ -157,8 +157,8 @@ onBeforeUnmount(() => {
             class="object-cover max-h-60 w-full rounded-md"
           />
           <audio
-            :src="blob_url"
             v-if="props.file.type.includes('audio')"
+            :src="blob_url"
             autoplay
             controls
             loop
@@ -167,20 +167,20 @@ onBeforeUnmount(() => {
         <fieldset>
           <label for="name" class="font-semibold mb-1 block">Name</label>
           <input
-            type="text"
             id="name"
-            placeholder="File Name"
             v-model="form.name"
+            type="text"
+            placeholder="File Name"
             class="input"
           />
           <label for="description" class="font-semibold mb-1 block"
             >Description</label
           >
           <input
-            type="text"
             id="description"
-            placeholder="File Description"
             v-model="form.description"
+            type="text"
+            placeholder="File Description"
             class="input"
           />
           <label
@@ -207,9 +207,9 @@ onBeforeUnmount(() => {
         <div class="flex justify-end">
           <Button
             type="button"
-            @click="emit('close')"
             class="mr-4 border border-gray-200 dark:border-gray-800"
             variant="outline"
+            @click="emit('close')"
             >Cancel</Button
           >
           <Button

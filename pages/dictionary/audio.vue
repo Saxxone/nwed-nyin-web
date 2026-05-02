@@ -149,10 +149,10 @@ onMounted(async () => {
 <template>
   <main>
     <form
-      ref="form"
       id="add-form"
-      @submit.prevent="onSubmit"
+      ref="form"
       class="grid card grid-cols-12 gap-4 rounded-lg border p-4"
+      @submit.prevent="onSubmit"
     >
       <div class="col-span-12 md:col-span-4">
         <h2 class="mb-4 text-2xl font-medium tracking-tight">
@@ -165,11 +165,11 @@ onMounted(async () => {
           >
         </h2>
         <div class="mb-4">
-          <div class="flex items-center" v-if="word.term">
+          <div v-if="word.term" class="flex items-center">
             <div
+              v-if="!is_recording"
               class="p-3 border rounded-full bg-base-light hover:dark:bg-white hover:dark:text-gray-800 hover:bg-gray-700 hover:text-gray-200 inline-flex cursor-pointer items-center transition-colors"
               title="start recording"
-              v-if="!is_recording"
               @click="startRecording"
             >
               <IconsLoadingIcon

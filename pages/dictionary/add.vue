@@ -229,10 +229,10 @@ function bindForm() {
 <template>
   <main>
     <form
-      ref="form"
       id="add-form"
-      @submit.prevent="onSubmit"
+      ref="form"
       class="grid card grid-cols-12 gap-4 rounded-lg border p-4"
+      @submit.prevent="onSubmit"
     >
       <div class="col-span-12 md:col-span-4">
         <h2
@@ -243,25 +243,25 @@ function bindForm() {
           >
           <span v-else>Add a new word </span>
           <NuxtLink
+            v-if="!word.sound && word.id"
             :to="
               app_routes.dictionary.add_sound(
                 encodeURI(word.term),
                 encodeURI(word.id),
               )
             "
-            v-if="!word.sound && word.id"
             class="p-2 mt-1 text-blue-500 inline-block"
           >
             <IconsMicrophoneIcon width="16" height="16" />
           </NuxtLink>
         </h2>
-        <div :name="field.label" v-for="field in form_fields" class="mb-4">
+        <div v-for="field in form_fields" :key="field.name" :name="field.label" class="mb-4">
           <label :for="field.name" class="mb-2">{{ field.label }}</label>
           <input
-            class="input"
             :id="field.name"
-            type="text"
             v-model.trim="word[field.name] as string"
+            class="input"
+            type="text"
             :placeholder="field.placeholder"
           />
         </div>
@@ -276,14 +276,14 @@ function bindForm() {
 
         <div>
           <div
+            v-for="(_, definitionIndex) in word.definitions" :key="definitionIndex"
             class="rounded-lg border p-4 mb-4"
-            v-for="(_, definitionIndex) in word.definitions"
           >
             <div class="flex relative mb-2">
               <div
                 v-if="word.definitions.length > 1"
-                @click="removeDefinition(definitionIndex)"
                 class="hover:text-red-700 hover:bg-red-100 cursor-pointer -top-6 rounded-full leading-none w-6 h-6 bg-gray-200 flex text-gray-900 items-center justify-center absolute -right-6"
+                @click="removeDefinition(definitionIndex)"
               >
                 <IconsCloseIcon width="16" height="16" />
               </div>
@@ -294,8 +294,8 @@ function bindForm() {
               </div>
             </div>
             <div
+              v-for="definition in definitions" :key="definition.name"
               name="definition.label"
-              v-for="definition in definitions"
               class="mb-4"
             >
               <label :for="definition.name">{{ definition.label }}</label>
@@ -306,10 +306,10 @@ function bindForm() {
                   definition.name !== 'synonyms' &&
                   definition.name !== 'part_of_speech'
                 "
-                type="text"
                 v-model.trim="
                   word.definitions[definitionIndex][definition.name]
                 "
+                type="text"
                 :placeholder="definition.placeholder"
                 class="mb-4"
               />
@@ -318,14 +318,15 @@ function bindForm() {
                   v-for="(example, exampleIndex) in word.definitions[
                     definitionIndex
                   ].examples"
+                  :key="exampleIndex"
                   class="flex items-center mb-2"
                 >
                   <input
-                    type="text"
                     v-model.trim="
                       word.definitions[definitionIndex].examples[exampleIndex]
                         .sentence
                     "
+                    type="text"
                     placeholder="Example sentence"
                     class="input mr-2"
                   />
@@ -362,7 +363,7 @@ function bindForm() {
                   class="input"
                 >
                   <option
-                    v-for="part_of_speech in parts_of_speech"
+                    v-for="part_of_speech in parts_of_speech" :key="part_of_speech.id"
                     :value="part_of_speech"
                   >
                     {{ part_of_speech.name }}
@@ -371,18 +372,19 @@ function bindForm() {
               </div>
               <div v-if="definition.name === 'synonyms'">
                 <div
-                  v-for="(synonym, synonymIndex) in word.definitions[
+                  v-for="synonym in word.definitions[
                     definitionIndex
                   ].synonyms"
+                  :key="synonym"
                   class="flex items-center mb-2"
                 >
                   <input
-                    class="input mr-2"
-                    type="text"
                     v-model.trim="
                       word.definitions[definitionIndex].synonyms[synonymIndex]
                         .synonym
                     "
+                    class="input mr-2"
+                    type="text"
                     placeholder="Synonym"
                   />
                   <button

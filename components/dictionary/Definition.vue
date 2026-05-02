@@ -87,7 +87,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <NuxtLink :id="props.word.id"
+  <NuxtLink
+:id="props.word.id"
     :to="`${routes.dictionary.view(encodeURI(props.word.term), encodeURI(props.word.id as string))}`"
     class="border block rounded-lg card text-sm word-wrap mb-4 break-words"
   >
@@ -112,13 +113,13 @@ onMounted(async () => {
         </div>
       </div>
       <h5
-        class="text-gray-500 text-sm capitalize font-medium block"
         v-if="props.word.alt_spelling"
+        class="text-gray-500 text-sm capitalize font-medium block"
       >
         ({{ props.word.alt_spelling }})
       </h5>
     </div>
-    <p class="mb-2 font-serif text-xs" v-if="props.word.pronunciation">
+    <p v-if="props.word.pronunciation" class="mb-2 font-serif text-xs">
       {{
         `${props.word.pronunciation?.startsWith("/") ? "" : "/"}${props.word.pronunciation}${props.word.pronunciation?.endsWith("/") ? "" : "/"}`
       }}
@@ -131,7 +132,7 @@ onMounted(async () => {
             {{ index + 1 }}. {{ definition.part_of_speech.name }}
           </p>
           <p>{{ definition.meaning }}</p>
-          <div class="my-1" v-if="definition.examples.length > 0">
+          <div v-if="definition.examples.length > 0" class="my-1">
             <h6 class="text-xs mt-2 text-muted">Examples:</h6>
 
             <div>
@@ -144,9 +145,9 @@ onMounted(async () => {
               <h6 class="text-xs mt-2 text-muted">Synonyms:</h6>
               <div>
                 <NuxtLink
-                  :to="`${routes.dictionary.view(encodeURI(synonym.synonym), encodeURI(synonym.id as string))}`"
                   v-for="(synonym, index) in definition.synonyms"
                   :key="synonym.synonym + 'synonym'"
+                  :to="`${routes.dictionary.view(encodeURI(synonym.synonym), encodeURI(synonym.id as string))}`"
                   class="text-xs hover:underline"
                   >{{ synonym.synonym
                   }}{{

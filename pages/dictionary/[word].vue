@@ -8,7 +8,6 @@ import app_routes from "~/utils/routes";
 const word = ref<Word>();
 
 const route = useRoute();
-const router = useRouter();
 const dictStore = useDictStore();
 const is_loading = ref(false);
 
@@ -30,7 +29,7 @@ async function fetchWord() {
       decodeURI(route.query.id as string),
     );
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching word:", error);
   } finally {
     is_loading.value = false;
   }

@@ -33,7 +33,7 @@ const pages: {name: string; route: string; external?: boolean}[] = [
   <div>
     <div>
       <AppDarkMode />
-      <ClientOnly fallbackTag="span">
+      <ClientOnly fallback-tag="span">
         <div v-if="authStore?.user?.img">
           <img :src="'api.nwednyin.org/public/'+authStore?.user.img" alt="" />
         </div>

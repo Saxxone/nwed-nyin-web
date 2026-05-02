@@ -32,7 +32,7 @@ const is_loading = ref(false);
 const is_loading_more = ref(false);
 const has_more_articles = ref(articles_feed_state.value.hasMoreArticles);
 const page_size = 10;
-const auto_scroll_delay = 10000;
+const auto_scroll_delay = 5000;
 const api_url = import.meta.env.VITE_API_BASE_URL;
 const articleStore = useArticleStore();
 const search_query = ref(articles_feed_state.value.searchQuery);
@@ -53,6 +53,7 @@ const show_search_results = computed(
 const show_mobile_search = computed(
   () => is_mobile_search_open.value || is_searching.value,
 );
+const is_restoring_feed_scroll = ref(sanitized_content.value.length > 0);
 
 async function sanitizeContent(content: string) {
   return DOMPurify.sanitize(
@@ -140,6 +141,18 @@ function saveFeedState({ scroll_top = feed.value?.scrollTop ?? 0 } = {}) {
     scrollTop: scroll_top,
     searchQuery: search_query.value,
   };
+}
+
+async function restoreFeedScroll(scroll_top: number) {
+  await nextTick();
+
+  if (feed.value) feed.value.scrollTop = scroll_top;
+
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+
+  is_restoring_feed_scroll.value = false;
 }
 
 async function getArticles({ append = false } = {}) {
@@ -273,11 +286,14 @@ function scheduleAutoScroll() {
 }
 
 function handleFeedScroll() {
+  if (is_restoring_feed_scroll.value) return;
+
   clearAutoScrollTimer();
 
   if (scroll_settle_timer.value) clearTimeout(scroll_settle_timer.value);
 
   scroll_settle_timer.value = setTimeout(() => {
+    saveFeedState();
     scheduleAutoScroll();
   }, 250);
 }
@@ -338,9 +354,9 @@ onMounted(async () => {
 
   if (sanitized_content.value.length === 0) {
     await getArticles();
+    is_restoring_feed_scroll.value = false;
   } else {
-    await nextTick();
-    if (feed.value) feed.value.scrollTop = restored_scroll_top;
+    await restoreFeedScroll(restored_scroll_top);
   }
 
   scheduleAutoScroll();
@@ -348,14 +364,6 @@ onMounted(async () => {
 
 onBeforeRouteLeave(() => {
   saveFeedState();
-});
-
-watch(search_query, () => {
-  if (search_timer.value) clearTimeout(search_timer.value);
-
-  search_timer.value = setTimeout(async () => {
-    await refreshArticles();
-  }, 300);
 });
 
 onBeforeUnmount(() => {
@@ -504,7 +512,12 @@ onBeforeUnmount(() => {
     <section
       v-else
       ref="feed"
-      class="relative h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain snap-y snap-mandatory scroll-smooth scroll-bar-none rounded-lg bg-base-white lg:h-[calc(100dvh-14rem)]"
+      class="relative h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain scroll-bar-none rounded-lg bg-base-white lg:h-[calc(100dvh-14rem)]"
+      :class="
+        is_restoring_feed_scroll
+          ? 'invisible snap-none scroll-auto'
+          : 'snap-y snap-mandatory scroll-smooth'
+      "
       aria-label="Articles feed"
       tabindex="0"
       @scroll="handleFeedScroll"
@@ -536,10 +549,10 @@ onBeforeUnmount(() => {
       </div>
 
       <NuxtLink
-        :to="app_routes.articles.view(encodeURI(article.slug as string))"
         v-for="(article, index) in sanitized_content"
         :key="article.id"
         :ref="(element) => setArticleItem(element, index)"
+        :to="app_routes.articles.view(encodeURI(article.slug as string))"
         :style="getArticleCardStyle(article)"
         class="relative isolate flex min-h-full snap-start snap-always flex-col justify-end overflow-hidden bg-cover bg-center px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
       >

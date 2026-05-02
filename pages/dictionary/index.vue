@@ -79,7 +79,7 @@ async function getDictionaryItems() {
     words.value = [...words.value, ...dictionary];
     saveDictionaryListState();
     is_loading.value = false;
-  } catch (error) {
+  } catch {
     is_loading.value = false;
   } finally {
     is_loading.value = false;
@@ -97,7 +97,7 @@ async function jumpToAlphabet(alphabet: string) {
     saveDictionaryListState({ scroll_y: 0 });
     is_loading.value = false;
     scrollToTop();
-  } catch (error) {
+  } catch {
     is_loading.value = false;
   } finally {
     is_loading.value = false;
@@ -171,9 +171,9 @@ definePageMeta({
     <div class="flex justify-end gap-4 z-20 relative">
       <div class="">
         <form @submit.prevent="search">
-          <input class="input" type="search" v-model="query" placeholder="Search..." @keydown.enter="search" />
+          <input v-model="query" class="input" type="search" placeholder="Search..." @keydown.enter="search" />
         </form>
-        <div class="absolute w-72 right-0 bg-base-white shadow-lg rounded-lg" v-if="search_results.length > 0">
+        <div v-if="search_results.length > 0" class="absolute w-72 right-0 bg-base-white shadow-lg rounded-lg">
           <div></div>
           <NuxtLink
             v-for="word in search_results"
@@ -193,7 +193,7 @@ definePageMeta({
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-' + i" />
       </div>
-      <Definition @cursor="setCursor" :word="word" v-for="word in words" :key="word.id" />
+      <Definition v-for="word in words" :key="word.id" :word="word" @cursor="setCursor" />
       <WayPoints @jump="jumpToAlphabet" />
       <AppInfiniteScroll @refresh="getDictionaryItems" />
       <div v-if="is_loading" class="fixed top-24 z-50 w-full py-10 left-0">
