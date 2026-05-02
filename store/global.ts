@@ -31,19 +31,25 @@ export const useGlobalStore = defineStore("global", () => {
     }
   }
 
-  async function getFileUrls(ids: string[]): Promise<{
-    id: string;
-    url: string;
-  }[]> {
-
-    const response = await useApiConnect<string[], {
+  async function getFileUrls(ids: string[]): Promise<
+    {
       id: string;
+      path: string;
       url: string;
-    }[]>(
-      api_routes.files.getUrls,
-      FetchMethod.POST,
-      ids,
-    );
+      type: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
+      mimetype: string;
+    }[]
+  > {
+    const response = await useApiConnect<
+      string[],
+      {
+        id: string;
+        path: string;
+        url: string;
+        type: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
+        mimetype: string;
+      }[]
+    >(api_routes.files.getUrls, FetchMethod.POST, ids);
 
     if ("message" in response) {
       throw new Error(response.message);

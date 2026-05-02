@@ -63,14 +63,17 @@ function getArticleImages(article: Article) {
 
 function resolveArticleImageUrl(image_path?: string) {
   if (!image_path) return null;
-  if (/^https?:\/\//i.test(image_path)) return image_path;
+  if (/^(https?:|data:|blob:)/i.test(image_path)) return image_path;
 
-  const normalized_path = image_path.replace(/^\/+/, "");
+  const api_base_url = api_url?.replace(/\/+$/, "") ?? "";
+  const normalized_path = image_path
+    .replace(/^\/+/, "")
+    .replace(/^public\/+/, "");
   const static_path = normalized_path.startsWith("articles/")
     ? normalized_path
     : `articles/${normalized_path}`;
 
-  return `${api_url}/${static_path}`;
+  return `${api_base_url}/${static_path}`;
 }
 
 function selectArticleImageUrl(article: Article) {
@@ -176,6 +179,15 @@ function getCurrentArticleIndex() {
   }, 0);
 }
 
+function scrollFeedToArticle(article: HTMLElement | undefined) {
+  if (!feed.value || !article) return;
+
+  feed.value.scrollTo({
+    top: article.offsetTop,
+    behavior: "smooth",
+  });
+}
+
 async function scrollToNextArticle() {
   const current_index = getCurrentArticleIndex();
   let next_article = article_items.value[current_index + 1];
@@ -186,14 +198,14 @@ async function scrollToNextArticle() {
     next_article = article_items.value[current_index + 1];
   }
 
-  next_article?.scrollIntoView({ behavior: "smooth", block: "start" });
+  scrollFeedToArticle(next_article);
 }
 
 function scrollToPreviousArticle() {
   const current_index = getCurrentArticleIndex();
   const previous_article = article_items.value[current_index - 1];
 
-  previous_article?.scrollIntoView({ behavior: "smooth", block: "start" });
+  scrollFeedToArticle(previous_article);
 }
 
 async function goToNextArticle() {
@@ -266,12 +278,14 @@ function setArticleItem(
   element: Element | ComponentPublicInstance | null,
   index: number,
 ) {
+  if (!element) return;
+
   if (element instanceof HTMLElement) {
     article_items.value[index] = element;
     return;
   }
 
-  const root = element?.$el;
+  const root = (element as ComponentPublicInstance).$el;
   if (root instanceof HTMLElement) article_items.value[index] = root;
 }
 
@@ -438,7 +452,7 @@ onBeforeUnmount(() => {
     <section
       v-else
       ref="feed"
-      class="relative h-[calc(100dvh-13rem)] overflow-y-auto snap-y snap-mandatory scroll-smooth scroll-bar-none rounded-lg bg-base-white lg:h-[calc(100dvh-14rem)]"
+      class="relative h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain snap-y snap-mandatory scroll-smooth scroll-bar-none rounded-lg bg-base-white lg:h-[calc(100dvh-14rem)]"
       aria-label="Articles feed"
       tabindex="0"
       @scroll="handleFeedScroll"

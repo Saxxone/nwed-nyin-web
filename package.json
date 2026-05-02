@@ -7,6 +7,9 @@
     "dev": "nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write '**/*.{js,vue,ts}'",
@@ -39,9 +42,13 @@
   },
   "packageManager": "pnpm@8.12.1+sha1.aa961ffce9b6eaa56307d9b5ff7e984f25b7eb58",
   "devDependencies": {
+    "@nuxt/test-utils": "^4.0.3",
     "@nuxtjs/tailwindcss": "6.12.2",
+    "@vue/test-utils": "^2.4.10",
+    "happy-dom": "^20.9.0",
     "prettier": "3.3.3",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.5"
   },
   "husky": {
     "hooks": {

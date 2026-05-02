@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useDebounceFn, useFileDialog, useTextSelection } from "@vueuse/core";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { nextTick, onMounted, ref, watch } from "vue";
 import { useArticleStore } from "~/store/articles";
-import type { Article } from "~/types/article";
+import type { Article, ArticleFile } from "~/types/article";
 import type { FormatAction } from "~/types/types";
 import app_routes from "~/utils/routes";
 
@@ -99,15 +103,22 @@ const actions: FormatAction[] = [
   // },
 ];
 
+type NonFormattingAction = {
+  label: string;
+  command: () => void;
+  icon: string;
+  shortcut?: string;
+};
+
 const { files, open, reset, onCancel, onChange } = useFileDialog({
   accept: "image/*",
   multiple: false,
 });
 
-const non_formatting_actions = [
+const non_formatting_actions: NonFormattingAction[] = [
   {
     label: "Upload media",
-    command: open,
+    command: () => open(),
     icon: "media",
     // shortcut: "Ctrl+O",
   },
@@ -149,7 +160,10 @@ function getCaretPosition(is_start: boolean): number {
   const range = selection.getRangeAt(0);
   const preCaretRange = range.cloneRange();
   preCaretRange.selectNodeContents(editor.value!);
-  preCaretRange.setEnd(range[is_start ? "startContainer" : "endContainer"], range[is_start ? "startOffset" : "endOffset"]);
+  preCaretRange.setEnd(
+    range[is_start ? "startContainer" : "endContainer"],
+    range[is_start ? "startOffset" : "endOffset"],
+  );
   return preCaretRange.toString().length;
 }
 
@@ -160,7 +174,11 @@ function setCaretPosition(start: number, end?: number) {
   if (!sel || !editor.value) return;
 
   let charCount = 0;
-  const walker = document.createTreeWalker(editor.value, NodeFilter.SHOW_TEXT, null);
+  const walker = document.createTreeWalker(
+    editor.value,
+    NodeFilter.SHOW_TEXT,
+    null,
+  );
   let start_node: Node | null = null;
   let end_node: Node | null = null;
   let start_offset = 0;
@@ -204,9 +222,15 @@ function setCaretPosition(start: number, end?: number) {
 
 // Update the applyFormat function to maintain selection
 function applyFormat(evt: Event, action: FormatAction) {
-  if (!selections.value[selections.value.length - 1] || selections.value[selections.value.length - 1].length === 0) return;
+  if (
+    !selections.value[selections.value.length - 1] ||
+    selections.value[selections.value.length - 1].length === 0
+  )
+    return;
 
-  const text = selections.value[selections.value.length - 1] ?? selections.value[selections.value.length - 2];
+  const text =
+    selections.value[selections.value.length - 1] ??
+    selections.value[selections.value.length - 2];
   const content = article.value.content;
 
   let new_text = "";
@@ -225,7 +249,10 @@ function applyFormat(evt: Event, action: FormatAction) {
     case "link":
       const url = prompt("Enter URL:", "https://");
       if (url) {
-        new_text = article.value.content.substring(0, start) + `[${text}](${url})` + article.value.content.substring(end);
+        new_text =
+          article.value.content.substring(0, start) +
+          `[${text}](${url})` +
+          article.value.content.substring(end);
         new_start = start + 1; // Position after '['
         new_end = start + text.length + 1; // Position before ']'
       }
@@ -234,14 +261,22 @@ function applyFormat(evt: Event, action: FormatAction) {
     case "heading":
     case "quote":
     case "list":
-      new_text = article.value.content.substring(0, start) + formatted_lines.join("\n") + article.value.content.substring(end);
+      new_text =
+        article.value.content.substring(0, start) +
+        formatted_lines.join("\n") +
+        article.value.content.substring(end);
       new_start = start + action.markdown.prefix.length;
       new_end = end + formatted_lines.length * action.markdown.prefix.length;
       break;
 
     default:
       // Handle inline formatting
-      new_text = content.substring(0, start) + prefix + text + suffix + article.value.content.substring(end);
+      new_text =
+        content.substring(0, start) +
+        prefix +
+        text +
+        suffix +
+        article.value.content.substring(end);
       new_start = start + prefix.length;
       new_end = end + prefix.length;
 
@@ -334,9 +369,26 @@ function discardFile() {
   reset();
 }
 
-function fileSaved(data: { url: string; description: string; name: string }) {
+function fileSaved(
+  data: {
+    name: string;
+    description: string;
+  } & Required<Pick<ArticleFile, "id" | "type" | "url" | "path" | "mimetype">>,
+) {
   const inject_content = ` ![${data.description}](${data.url}) `;
   article.value.content += inject_content;
+  article.value.file = [
+    ...(article.value.file ?? []),
+    {
+      id: data.id,
+      type: data.type,
+      url: data.url,
+      path: data.path,
+      mimetype: data.mimetype,
+      alt_text: data.description,
+      caption: data.name,
+    },
+  ];
   show_file_upload_dialog.value = false;
 }
 
@@ -382,12 +434,16 @@ function handleKeyboard(event: KeyboardEvent) {
 async function update(evt: any, label: string = "Updated") {
   if (article.value.id && article.value.content.trim()) {
     try {
-      const res = await articleStore.updateArticle(article.value.id, article.value);
+      const res = await articleStore.updateArticle(
+        article.value.id,
+        article.value,
+      );
       toast({
         title: label,
         description: "Your changes have been saved",
       });
-      if (res.slug && label.toLowerCase() === "updated") await router.push(app_routes.articles.view(encodeURI(res.slug)));
+      if (res.slug && label.toLowerCase() === "updated")
+        await router.push(app_routes.articles.view(encodeURI(res.slug)));
     } catch (error) {
       toast({
         title: `${label} failed`,
@@ -420,7 +476,8 @@ async function publish() {
     });
     localStorage.removeItem("article_content");
     localStorage.removeItem("article_title");
-    if (res.slug) await router.push(app_routes.articles.view(encodeURI(res.slug)));
+    if (res.slug)
+      await router.push(app_routes.articles.view(encodeURI(res.slug)));
   } catch (error) {
     toast({
       title: "Publish failed",
@@ -466,13 +523,12 @@ async function getMarkdownFile(path: string) {
   }
 }
 
-function  retrieveContentFromStorage(){
+function retrieveContentFromStorage() {
   const content = localStorage.getItem("article_content");
   const heading = localStorage.getItem("article_title");
   if (heading) article.value.title = heading;
   if (content) article.value.content = content;
 }
-
 
 onMounted(async () => {
   if (route.query.action === "edit" && route.query.article) {
@@ -483,32 +539,33 @@ onMounted(async () => {
   retrieveContentFromStorage();
 });
 
-
 watch(
-    () => article.value.title,
-    (new_content) => {
-      localStorage.setItem("article_title", article.value.title);
-    }
+  () => article.value.title,
+  (new_content) => {
+    localStorage.setItem("article_title", article.value.title);
+  },
 );
 
 watch(
   () => article.value.content,
   async (new_content) => {
     localStorage.setItem("article_content", new_content);
-    parsed_article.value.content = DOMPurify.sanitize(await marked.parse(new_content, { breaks: true }));
+    parsed_article.value.content = DOMPurify.sanitize(
+      await marked.parse(new_content, { breaks: true }),
+    );
     if (is_first_call.value && route.query.action === "edit") {
       is_first_call.value = false;
       return;
     }
     autoSave();
-  }
+  },
 );
 
 watch(
   () => selection.text.value,
   (new_selection) => {
     selections.value.push(new_selection);
-  }
+  },
 );
 
 onMounted(() => {
@@ -524,16 +581,25 @@ onUnmounted(() => {
   <main>
     <div class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
       <div class="rounded-lg lg:col-span-6 col-span-12">
-        <div class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap">
-          <Input v-model="article.title" placeholder="Title" required :disabled="is_loading" />
+        <div
+          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
+        >
+          <Input
+            v-model="article.title"
+            placeholder="Title"
+            required
+            :disabled="is_loading"
+          />
         </div>
         <!-- Toolbar -->
         <div
           class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
           :class="{
-            'mx-4 border border-gray-200 dark:border-gray-700 backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white': is_scrolled,
+            'mx-4 border border-gray-200 dark:border-gray-700 backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white':
+              is_scrolled,
             'w-full bg-base-light': !is_scrolled,
-          }">
+          }"
+        >
           <TooltipProvider>
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
@@ -543,11 +609,21 @@ onUnmounted(() => {
                     'bg-base-light': is_scrolled,
                     'bg-base-white': !is_scrolled,
                   }"
-                  @click="applyFormat($event, action)">
+                  @click="applyFormat($event, action)"
+                >
                   <IconsBoldIcon v-if="action.icon === 'bold'" width="20" />
-                  <IconsItalicsIcon v-if="action.icon === 'italic'" width="20" />
-                  <IconsUnderlineIcon v-if="action.icon === 'underline'" width="20" />
-                  <IconsStrikethroughIcon v-if="action.icon === 'strikethrough'" width="20" />
+                  <IconsItalicsIcon
+                    v-if="action.icon === 'italic'"
+                    width="20"
+                  />
+                  <IconsUnderlineIcon
+                    v-if="action.icon === 'underline'"
+                    width="20"
+                  />
+                  <IconsStrikethroughIcon
+                    v-if="action.icon === 'strikethrough'"
+                    width="20"
+                  />
                   <div v-if="action.icon === 'heading'">H</div>
                   <IconsLinkIcon v-if="action.icon === 'link'" width="20" />
                   <IconsQuoteIcon v-if="action.icon === 'quote'" width="20" />
@@ -557,7 +633,9 @@ onUnmounted(() => {
               <TooltipContent side="top">
                 <div>
                   <span>{{ action.label }}</span>
-                  <span v-if="action.shortcut" class="ml-2 text-xs">{{ action.shortcut }}</span>
+                  <span v-if="action.shortcut" class="ml-2 text-xs">{{
+                    action.shortcut
+                  }}</span>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -565,7 +643,10 @@ onUnmounted(() => {
 
           <div class="ml-auto flex items-center gap-x-2">
             <TooltipProvider>
-              <Tooltip v-for="action in non_formatting_actions" :key="action.label">
+              <Tooltip
+                v-for="action in non_formatting_actions"
+                :key="action.label"
+              >
                 <TooltipTrigger as-child>
                   <div
                     class="bg-base-white rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
@@ -573,16 +654,19 @@ onUnmounted(() => {
                       'bg-base-light': is_scrolled,
                       'bg-base-white': !is_scrolled,
                     }"
-                    @click="action.command">
+                    @click="action.command()"
+                  >
                     <IconsUndoIcon v-if="action.icon === 'undo'" width="20" />
                     <IconsRedoIcon v-if="action.icon === 'redo'" width="20" />
                     <IconsMediaIcon v-if="action.icon === 'media'" width="20" />
                   </div>
                 </TooltipTrigger>
-               <TooltipContent side="top">
+                <TooltipContent side="top">
                   <div>
                     <span>{{ action.label }}</span>
-                    <span v-if="action.shortcut" class="ml-2 text-xs">{{ action.shortcut }}</span>
+                    <span v-if="action.shortcut" class="ml-2 text-xs">{{
+                      action.shortcut
+                    }}</span>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -599,11 +683,17 @@ onUnmounted(() => {
           v-model="article.content"
           class="h-fit w-full min-h-96 bg-base-light resize-none text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
           @focus="is_editor_focused = true"
-          @blur="is_editor_focused = false">
+          @blur="is_editor_focused = false"
+        >
           {{ article.content }}
         </textarea>
 
-        <ArticleFileUploadDialog v-if="show_file_upload_dialog && raw_file" @close="discardFile" @uploaded="fileSaved" :file="raw_file" />
+        <ArticleFileUploadDialog
+          v-if="show_file_upload_dialog && raw_file"
+          @close="discardFile"
+          @uploaded="fileSaved"
+          :file="raw_file"
+        />
       </div>
 
       <!-- Preview -->
@@ -619,8 +709,13 @@ onUnmounted(() => {
           </Button>
         </div>
         <div>
-          <h1 class="mb-4 text-xl capitalize">{{ article.title.toLowerCase() }}</h1>
-          <div class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert" v-html="parsed_article.content"></div>
+          <h1 class="mb-4 text-xl capitalize">
+            {{ article.title.toLowerCase() }}
+          </h1>
+          <div
+            class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert"
+            v-html="parsed_article.content"
+          ></div>
         </div>
       </div>
     </div>
@@ -628,8 +723,8 @@ onUnmounted(() => {
 </template>
 
 <style lang="postcss">
- p img {
-   max-height: 345px;
-   margin: 1rem;
- }
+p img {
+  max-height: 345px;
+  margin: 1rem;
+}
 </style>

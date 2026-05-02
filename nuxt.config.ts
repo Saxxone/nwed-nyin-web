@@ -30,7 +30,7 @@ export default defineNuxtConfig({
             src: "https://www.googletagmanager.com/gtag/js?id=G-ZMKY8C7KWE",
           },
           {
-            hid: "gtag",
+            key: "gtag",
             innerHTML: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}

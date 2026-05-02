@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import imageCompression from 'browser-image-compression';
+import imageCompression from "browser-image-compression";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { disbaleForm, enableForm } from "~/composables/useUtils";
 import { useGlobalStore } from "~/store/global";
@@ -19,6 +19,18 @@ const form = ref({
   description: "",
 });
 
+function resolveUploadedFileUrl(path?: string) {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const api_url = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") ?? "";
+  const normalized_path = path.replace(/^\/+/, "").replace(/^public\/+/, "");
+  const served_path = normalized_path.startsWith("articles/")
+    ? normalized_path
+    : `articles/${normalized_path}`;
+
+  return `${api_url}/${served_path}`;
+}
 
 async function upload() {
   if (!form.value.name) return;
@@ -42,21 +54,26 @@ async function upload() {
   }
 }
 async function handleImageCompression() {
-  if(!props.file.type.includes('image')) return
+  if (!props.file.type.includes("image")) return;
 
   const image_file = props.file;
-  console.log('originalFile instanceof Blob', image_file instanceof Blob); // true
+  console.log("originalFile instanceof Blob", image_file instanceof Blob); // true
   console.log(`originalFile size ${image_file.size / 1024 / 1024} MB`);
 
   const options = {
     maxSizeMB: 1,
     maxWidthOrHeight: 1920,
     useWebWorker: true,
-  }
+  };
   try {
     compressed_file.value = await imageCompression(image_file, options);
-    console.log('compressedFile instanceof Blob', compressed_file.value instanceof Blob); // true
-    console.log(`compressedFile size ${compressed_file.value?.size / 1024 / 1024} MB`); // smaller than maxSizeMB
+    console.log(
+      "compressedFile instanceof Blob",
+      compressed_file.value instanceof Blob,
+    ); // true
+    console.log(
+      `compressedFile size ${compressed_file.value?.size / 1024 / 1024} MB`,
+    ); // smaller than maxSizeMB
   } catch (error) {
     console.log(error);
   }
@@ -65,13 +82,17 @@ async function handleImageCompression() {
 async function getFileUrls(ids: string[]) {
   try {
     const response = await globalStore.getFileUrls(ids);
-    const api_url = import.meta.env.VITE_API_BASE_URL;
-    const url = `${api_url}${api_url.endsWith("/") ? "nwed-nyin-api" : "/nwed-nyin-api"}${response[0].url}`;
+    const uploaded_file = response[0];
+    const url = resolveUploadedFileUrl(uploaded_file.url);
 
     emit("uploaded", {
+      id: uploaded_file.id,
       name: form.value.name,
       description: form.value.description,
+      path: uploaded_file.path,
+      type: uploaded_file.type,
       url: url,
+      mimetype: uploaded_file.mimetype,
     });
   } catch (error) {
     toast({
@@ -86,11 +107,11 @@ watch(
   (file) => {
     if (file) {
       blob_url.value = URL.createObjectURL(file);
-      handleImageCompression()
+      handleImageCompression();
       form.value.name = file.name;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onBeforeUnmount(() => {
@@ -99,7 +120,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+  >
     <div class="bg-base-light p-4 rounded-lg w-full max-w-lg m-4">
       <div class="flex justify-between items-center">
         <h2>Upload File</h2>
@@ -107,19 +130,62 @@ onBeforeUnmount(() => {
       </div>
       <form @submit.prevent.stop="upload">
         <div class="my-4" v-if="blob_url">
-          <img :src="blob_url" alt="" v-if="props.file.type.includes('image')" class="object-cover max-h-60 w-full rounded-md" />
-          <video :src="blob_url" v-if="props.file.type.includes('video')" autoplay controls muted loop class="object-cover max-h-60 w-full rounded-md" />
-          <audio :src="blob_url" v-if="props.file.type.includes('audio')" autoplay controls loop />
+          <img
+            :src="blob_url"
+            alt=""
+            v-if="props.file.type.includes('image')"
+            class="object-cover max-h-60 w-full rounded-md"
+          />
+          <video
+            :src="blob_url"
+            v-if="props.file.type.includes('video')"
+            autoplay
+            controls
+            muted
+            loop
+            class="object-cover max-h-60 w-full rounded-md"
+          />
+          <audio
+            :src="blob_url"
+            v-if="props.file.type.includes('audio')"
+            autoplay
+            controls
+            loop
+          />
         </div>
         <fieldset>
           <label for="name" class="font-semibold mb-1 block">Name</label>
-          <input type="text" id="name" placeholder="File Name" v-model="form.name" class="input" />
-          <label for="description" class="font-semibold mb-1 block">Description</label>
-          <input type="text" id="description" placeholder="File Description" v-model="form.description" class="input" />
+          <input
+            type="text"
+            id="name"
+            placeholder="File Name"
+            v-model="form.name"
+            class="input"
+          />
+          <label for="description" class="font-semibold mb-1 block"
+            >Description</label
+          >
+          <input
+            type="text"
+            id="description"
+            placeholder="File Description"
+            v-model="form.description"
+            class="input"
+          />
         </fieldset>
         <div class="flex justify-end">
-          <Button type="button" @click="emit('close')" class="mr-4 border border-gray-200 dark:border-gray-800" variant="outline">Cancel</Button>
-          <Button type="submit" :disabled="!form.name && !form.description && !compressed_file">Save</Button>
+          <Button
+            type="button"
+            @click="emit('close')"
+            class="mr-4 border border-gray-200 dark:border-gray-800"
+            variant="outline"
+            >Cancel</Button
+          >
+          <Button
+            type="submit"
+            :disabled="!form.name && !form.description && !compressed_file"
+            >Save</Button
+          >
         </div>
       </form>
     </div>

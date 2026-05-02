@@ -1,3 +1,5 @@
+import { defineStore } from "pinia";
+import { ref } from "vue";
 import { useApiConnect } from "~/composables/useApiConnect";
 import type { Article } from "~/types/article";
 import type { Pagination } from "~/types/types";

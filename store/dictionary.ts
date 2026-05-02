@@ -1,3 +1,6 @@
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import { useApiConnect } from "~/composables/useApiConnect";
 import type { Pagination } from "~/types/types";
 import { FetchMethod } from "~/types/types";
 import type { PartOfSpeech, Word } from "~/types/word";

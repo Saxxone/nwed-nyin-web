@@ -4,6 +4,8 @@ export interface ArticleFile {
   url?: string;
   path?: string;
   mimetype?: string;
+  caption?: string | null;
+  credit?: string | null;
   alt_text?: string | null;
 }
 
