@@ -6,23 +6,60 @@ import WayPoints from "~/components/dictionary/WayPoints.vue";
 import type { Word } from "~/types/word";
 import app_routes from "~/utils/routes";
 
-const words = ref<Word[]>([]);
+type DictionaryListState = {
+  words: Word[];
+  searchResults: Word[];
+  count: number;
+  audioCount: number;
+  take: number;
+  query: string;
+  scrollY: number;
+};
+
+const dictionary_list_state = useState<DictionaryListState>(
+  "dictionary-list-state",
+  () => ({
+    words: [],
+    searchResults: [],
+    count: 0,
+    audioCount: 0,
+    take: 50,
+    query: "",
+    scrollY: 0,
+  }),
+);
+const words = ref<Word[]>([...dictionary_list_state.value.words]);
 const router = useRouter();
 const route = useRoute();
 const is_loading = ref(false);
-const count = ref(0);
-const audio_count = ref(0);
-const take = ref(50);
-const query = ref("");
-const search_results = ref<Word[]>([]);
+const count = ref(dictionary_list_state.value.count);
+const audio_count = ref(dictionary_list_state.value.audioCount);
+const take = ref(dictionary_list_state.value.take);
+const query = ref(dictionary_list_state.value.query);
+const search_results = ref<Word[]>([
+  ...dictionary_list_state.value.searchResults,
+]);
 const dictStore = useDictStore();
 
 async function search() {
   search_results.value = await dictStore.searchWord(query.value);
+  saveDictionaryListState();
 }
 
 function setCursor(cursor: string) {
   router.push({ query: { cursor } });
+}
+
+function saveDictionaryListState({ scroll_y = window.scrollY } = {}) {
+  dictionary_list_state.value = {
+    words: [...words.value],
+    searchResults: [...search_results.value],
+    count: count.value,
+    audioCount: audio_count.value,
+    take: take.value,
+    query: query.value,
+    scrollY: scroll_y,
+  };
 }
 
 async function getDictionaryItems() {
@@ -40,6 +77,7 @@ async function getDictionaryItems() {
     count.value = total_count;
     audio_count.value = audioCount;
     words.value = [...words.value, ...dictionary];
+    saveDictionaryListState();
     is_loading.value = false;
   } catch (error) {
     is_loading.value = false;
@@ -55,6 +93,8 @@ async function jumpToAlphabet(alphabet: string) {
     count.value = total_count;
     audio_count.value = audioCount;
     words.value = dictionary;
+    search_results.value = [];
+    saveDictionaryListState({ scroll_y: 0 });
     is_loading.value = false;
     scrollToTop();
   } catch (error) {
@@ -67,6 +107,17 @@ async function jumpToAlphabet(alphabet: string) {
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+onMounted(async () => {
+  if (dictionary_list_state.value.words.length === 0) return;
+
+  await nextTick();
+  window.scrollTo(0, dictionary_list_state.value.scrollY);
+});
+
+onBeforeRouteLeave(() => {
+  saveDictionaryListState();
+});
 
 definePageMeta({
   title: "Ñwed Nyịn (Nwed Nyin) - Dictionary",

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useToast } from "@/components/ui/toast/use-toast";
 import DOMPurify from "dompurify";
+import { ArrowLeft, Edit3 } from "lucide-vue-next";
 import { marked } from "marked";
 import { useArticleStore } from "~/store/articles";
 import type { Article } from "~/types/article";
@@ -20,6 +21,19 @@ const article = ref<Article>({
 const markdown = ref();
 const parsed_article = ref();
 const articleStore = useArticleStore();
+const is_loading = ref(true);
+const article_title = computed(() => article.value?.title?.trim() || "Article");
+const reading_time = computed(() => {
+  const word_count = (markdown.value || "")
+    .replace(/[#>*_`[\]()!-]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+  if (!word_count) return "Quick read";
+
+  return `${Math.max(1, Math.ceil(word_count / 200))} min read`;
+});
 
 async function getArticleMeta(slug: string) {
   try {
@@ -44,8 +58,9 @@ async function getMarkdownFile(path: string) {
 }
 
 onMounted(async () => {
-  await getArticleMeta(slug.value);
-  await getMarkdownFile(slug.value + ".md");
+  is_loading.value = true;
+  await Promise.all([getArticleMeta(slug.value), getMarkdownFile(slug.value + ".md")]);
+  is_loading.value = false;
 });
 
 watch(
@@ -58,36 +73,102 @@ watch(
 );
 
 useSeoMeta({
-  title: article.value?.title,
+  title: () => article_title.value,
 });
 </script>
 
 <template>
-  <main>
-    <div class="flex items-start mb-4 justify-between">
-      <h1
-        class="font-extrabold tracking-tight text-xl lg:text-2xl capitalize"
-        v-if="article?.title"
-      >
-        {{ article.title.toLowerCase() }}
-      </h1>
-      <NuxtLink :to="app_routes.articles.edit(encodeURI(slug))" class="ml-auto">
-        <IconsEditIcon /> 
-      </NuxtLink>
-    </div>
+  <main class="article-view">
+    <section
+      class="relative isolate overflow-hidden rounded-2xl border border-gray-200 bg-base-white px-5 py-6 shadow-sm dark:border-gray-800 sm:px-8 lg:px-10"
+    >
+      <div
+        class="pointer-events-none absolute -right-24 -top-24 -z-10 h-56 w-56 rounded-full bg-teal-100/70 blur-3xl dark:bg-teal-950/40"
+      ></div>
+      <div
+        class="pointer-events-none absolute -bottom-24 -left-20 -z-10 h-48 w-48 rounded-full bg-amber-100/70 blur-3xl dark:bg-amber-950/30"
+      ></div>
 
-    <div
-      v-if="parsed_article"
-      class="bg-base-light break-words prose prose-sm max-w-none dark:prose-invert"
-      v-html="parsed_article"
-    ></div>
+      <div class="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <NuxtLink
+          :to="app_routes.articles.list"
+          class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-base-white px-4 py-2 text-sm font-medium text-sub shadow-sm transition hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:border-gray-700 dark:focus-visible:ring-gray-100"
+        >
+          <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+          Articles
+        </NuxtLink>
+
+        <NuxtLink
+          :to="app_routes.articles.edit(encodeURI(slug))"
+          class="inline-flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white dark:focus-visible:ring-gray-100"
+        >
+          <Edit3 class="h-4 w-4" aria-hidden="true" />
+          Edit
+        </NuxtLink>
+      </div>
+
+      <header class="mx-auto max-w-3xl text-center">
+        <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-muted">
+          Knowledgebase Article
+        </p>
+        <h1
+          class="text-balance text-4xl font-extrabold capitalize leading-tight tracking-tight text-main sm:text-5xl"
+        >
+          {{ article_title.toLowerCase() }}
+        </h1>
+        <p class="mt-4 text-sm font-medium text-muted">
+          {{ reading_time }}
+        </p>
+      </header>
+    </section>
+
+    <section
+      class="mx-auto mt-6 max-w-3xl rounded-2xl border border-gray-200 bg-base-white px-5 py-7 shadow-sm dark:border-gray-800 sm:px-8 lg:px-10"
+      aria-live="polite"
+    >
+      <div v-if="is_loading" class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="mb-4 h-12 w-12 rounded-full bg-base-light p-3 shadow-lg">
+          <IconsLoadingIcon />
+        </div>
+        <p class="text-sm font-medium text-muted">Loading article...</p>
+      </div>
+
+      <div
+        v-else-if="parsed_article"
+        class="article-content prose max-w-none break-words prose-headings:scroll-mt-24 prose-headings:font-bold prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 prose-p:leading-8 prose-a:font-semibold prose-a:no-underline hover:prose-a:underline prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:bg-base-light prose-blockquote:py-1 prose-blockquote:pr-4 prose-img:mx-auto prose-img:rounded-xl prose-img:shadow-sm dark:prose-invert dark:prose-h2:border-gray-800"
+        v-html="parsed_article"
+      ></div>
+
+      <div v-else class="py-16 text-center">
+        <p class="text-base font-semibold text-main">Article content is not available.</p>
+        <p class="mt-2 text-sm text-muted">Please try again later or edit this article.</p>
+      </div>
+    </section>
   </main>
 </template>
 
 
 <style lang="postcss">
-p img {
-  max-height: 345px;
-  margin: 1rem;
+.article-view {
+  @apply pb-10;
+}
+
+.article-content :deep(p img),
+.article-content :deep(img) {
+  max-height: 420px;
+  width: auto;
+  object-fit: contain;
+}
+
+.article-content :deep(p:has(img)) {
+  @apply my-8 text-center;
+}
+
+.article-content :deep(table) {
+  @apply block w-full overflow-x-auto rounded-lg border border-gray-200 text-sm dark:border-gray-800;
+}
+
+.article-content :deep(hr) {
+  @apply my-10 border-gray-200 dark:border-gray-800;
 }
 </style>

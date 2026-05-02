@@ -107,8 +107,14 @@ button:disabled {
 }
 
 /* markdown */
-.prose{
-  font-family: "Georgia", sans-serif;
+.prose {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 .prose h1 {
