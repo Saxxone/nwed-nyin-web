@@ -3,6 +3,7 @@ import imageCompression from "browser-image-compression";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { disbaleForm, enableForm } from "~/composables/useUtils";
 import { useGlobalStore } from "~/store/global";
+import type { ArticleImagePosition } from "~/utils/article-editor";
 
 const props = defineProps<{
   file: File;
@@ -17,7 +18,16 @@ const compressed_file = ref<File>();
 const form = ref({
   name: "",
   description: "",
+  position: "center" as ArticleImagePosition,
 });
+
+const image_position_options: { label: string; value: ArticleImagePosition }[] = [
+  { label: "Centered", value: "center" },
+  { label: "Left aligned", value: "left" },
+  { label: "Right aligned", value: "right" },
+  { label: "Wide", value: "wide" },
+  { label: "Full width", value: "full" },
+];
 
 function resolveUploadedFileUrl(path?: string) {
   if (!path) return "";
@@ -33,7 +43,7 @@ function resolveUploadedFileUrl(path?: string) {
 }
 
 async function upload() {
-  if (!form.value.name) return;
+  if (!form.value.name || !form.value.description) return;
   if (!compressed_file.value) return;
 
   try {
@@ -89,6 +99,7 @@ async function getFileUrls(ids: string[]) {
       id: uploaded_file.id,
       name: form.value.name,
       description: form.value.description,
+      position: form.value.position,
       path: uploaded_file.path,
       type: uploaded_file.type,
       url: url,
@@ -172,6 +183,26 @@ onBeforeUnmount(() => {
             v-model="form.description"
             class="input"
           />
+          <label
+            v-if="props.file.type.includes('image')"
+            for="position"
+            class="font-semibold mb-1 block"
+            >Image position</label
+          >
+          <select
+            v-if="props.file.type.includes('image')"
+            id="position"
+            v-model="form.position"
+            class="input"
+          >
+            <option
+              v-for="option in image_position_options"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
         </fieldset>
         <div class="flex justify-end">
           <Button
@@ -183,7 +214,7 @@ onBeforeUnmount(() => {
           >
           <Button
             type="submit"
-            :disabled="!form.name && !form.description && !compressed_file"
+            :disabled="!form.name || !form.description || !compressed_file"
             >Save</Button
           >
         </div>

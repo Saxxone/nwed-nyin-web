@@ -68,6 +68,10 @@ watch(
   async (new_content) => {
     parsed_article.value = DOMPurify.sanitize(
       await marked.parse(new_content, { breaks: true }),
+      {
+        ADD_TAGS: ["figure", "figcaption"],
+        ADD_ATTR: ["class", "loading", "decoding"],
+      },
     );
   },
 );
@@ -123,7 +127,7 @@ useSeoMeta({
     </section>
 
     <section
-      class="mx-auto mt-6 max-w-3xl rounded-2xl border border-gray-200 bg-base-white px-5 py-7 shadow-sm dark:border-gray-800 sm:px-8 lg:px-10"
+      class="mx-auto mt-6 max-w-5xl rounded-2xl border border-gray-200 bg-base-white px-4 lg:py-7 shadow-sm dark:border-gray-800 lg:px-10"
       aria-live="polite"
     >
       <div v-if="is_loading" class="flex flex-col items-center justify-center py-16 text-center">
@@ -135,7 +139,7 @@ useSeoMeta({
 
       <div
         v-else-if="parsed_article"
-        class="article-content prose max-w-none break-words prose-headings:scroll-mt-24 prose-headings:font-bold prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 prose-p:leading-8 prose-a:font-semibold prose-a:no-underline hover:prose-a:underline prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:bg-base-light prose-blockquote:py-1 prose-blockquote:pr-4 prose-img:mx-auto prose-img:rounded-xl prose-img:shadow-sm dark:prose-invert dark:prose-h2:border-gray-800"
+        class="article-content prose max-w-none break-words prose-headings:scroll-mt-24 prose-headings:font-bold prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 prose-p:leading-8 prose-a:font-semibold prose-a:no-underline hover:prose-a:underline prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:bg-base-light prose-blockquote:py-1 prose-blockquote:pr-4 dark:prose-invert dark:prose-h2:border-gray-800"
         v-html="parsed_article"
       ></div>
 
@@ -151,17 +155,6 @@ useSeoMeta({
 <style lang="postcss">
 .article-view {
   @apply pb-10;
-}
-
-.article-content :deep(p img),
-.article-content :deep(img) {
-  max-height: 420px;
-  width: auto;
-  object-fit: contain;
-}
-
-.article-content :deep(p:has(img)) {
-  @apply my-8 text-center;
 }
 
 .article-content :deep(table) {

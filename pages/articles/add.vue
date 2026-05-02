@@ -6,13 +6,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useDebounceFn, useFileDialog, useTextSelection } from "@vueuse/core";
+import { useDebounceFn, useFileDialog } from "@vueuse/core";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import { nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useArticleStore } from "~/store/articles";
-import type { Article, ArticleFile } from "~/types/article";
+import type { Article } from "~/types/article";
 import type { FormatAction } from "~/types/types";
+import {
+  createArticleFileMetadata,
+  createArticleImageMarkup,
+  formatMarkdownSelection,
+  getArticleDraftKeys,
+  insertMarkdownAtSelection,
+  type TextSelectionRange,
+  type UploadedArticleFileData,
+} from "~/utils/article-editor";
 import app_routes from "~/utils/routes";
 
 definePageMeta({
@@ -22,19 +31,19 @@ definePageMeta({
 
 const { toast } = useToast();
 const is_scrolled = ref(false);
-const selection = useTextSelection();
 const route = useRoute();
 const router = useRouter();
 const is_loading = ref(false);
-const editor = ref<HTMLElement | null>(null);
+const editor = ref<HTMLTextAreaElement | null>(null);
 const is_editor_focused = ref(false);
 const editor_history = ref<string[]>([]);
 const history_index = ref(-1);
 const last_caret_position = ref<number>(0);
-const selections = ref<string[]>([]);
 const is_first_call = ref(true);
+const is_initializing_article = ref(true);
 const show_file_upload_dialog = ref(false);
 const raw_file = ref<File | null>(null);
+const current_edit_slug = ref<string | null>(null);
 
 const article = ref<Article>({
   content: "",
@@ -46,61 +55,64 @@ const parsed_article = ref({
 });
 
 const articleStore = useArticleStore();
+const is_article_invalid = computed(
+  () => !article.value.title.trim() || !article.value.content.trim(),
+);
 
 const actions: FormatAction[] = [
-  // {
-  //   label: "Bold",
-  //   icon: "bold",
-  //   formatting: "font-bold",
-  //   command: "bold",
-  //   shortcut: "Ctrl+B",
-  //   markdown: { prefix: "**", suffix: "**" },
-  // },
-  // {
-  //   label: "Italic",
-  //   icon: "italic",
-  //   formatting: "font-italic",
-  //   command: "italic",
-  //   shortcut: "Ctrl+I",
-  //   markdown: { prefix: "_", suffix: "_" },
-  // },
-  // {
-  //   label: "Underline",
-  //   icon: "underline",
-  //   formatting: "font-underline",
-  //   command: "underline",
-  //   shortcut: "Ctrl+U",
-  //   markdown: { prefix: "_", suffix: "_" },
-  // },
-  // {
-  //   label: "Heading",
-  //   icon: "heading",
-  //   formatting: "font-heading",
-  //   command: "heading",
-  //   markdown: { prefix: "# " },
-  // },
-  // {
-  //   label: "Link",
-  //   icon: "link",
-  //   formatting: "font-link",
-  //   command: "link",
-  //   shortcut: "Ctrl+K",
-  //   markdown: { prefix: "[", suffix: "](url)" },
-  // },
-  // {
-  //   label: "Quote",
-  //   icon: "quote",
-  //   formatting: "font-quote",
-  //   command: "quote",
-  //   markdown: { prefix: "> " },
-  // },
-  // {
-  //   label: "List",
-  //   icon: "list",
-  //   formatting: "font-list",
-  //   command: "list",
-  //   markdown: { prefix: "- " },
-  // },
+  {
+    label: "Bold",
+    icon: "bold",
+    formatting: "font-bold",
+    command: "bold",
+    shortcut: "Ctrl+B",
+    markdown: { prefix: "**", suffix: "**" },
+  },
+  {
+    label: "Italic",
+    icon: "italic",
+    formatting: "font-italic",
+    command: "italic",
+    shortcut: "Ctrl+I",
+    markdown: { prefix: "_", suffix: "_" },
+  },
+  {
+    label: "Underline",
+    icon: "underline",
+    formatting: "font-underline",
+    command: "underline",
+    shortcut: "Ctrl+U",
+    markdown: { prefix: "<u>", suffix: "</u>" },
+  },
+  {
+    label: "Heading",
+    icon: "heading",
+    formatting: "font-heading",
+    command: "heading",
+    markdown: { prefix: "# " },
+  },
+  {
+    label: "Link",
+    icon: "link",
+    formatting: "font-link",
+    command: "link",
+    shortcut: "Ctrl+K",
+    markdown: { prefix: "[", suffix: "](url)" },
+  },
+  {
+    label: "Quote",
+    icon: "quote",
+    formatting: "font-quote",
+    command: "quote",
+    markdown: { prefix: "> " },
+  },
+  {
+    label: "List",
+    icon: "list",
+    formatting: "font-list",
+    command: "list",
+    markdown: { prefix: "- " },
+  },
 ];
 
 type NonFormattingAction = {
@@ -110,7 +122,7 @@ type NonFormattingAction = {
   shortcut?: string;
 };
 
-const { files, open, reset, onCancel, onChange } = useFileDialog({
+const { open, reset, onCancel, onChange } = useFileDialog({
   accept: "image/*",
   multiple: false,
 });
@@ -152,180 +164,51 @@ function toggleIsScrolled() {
   is_scrolled.value = window.scrollY > 120;
 }
 
-// Get caret position
-function getCaretPosition(is_start: boolean): number {
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return 0;
-
-  const range = selection.getRangeAt(0);
-  const preCaretRange = range.cloneRange();
-  preCaretRange.selectNodeContents(editor.value!);
-  preCaretRange.setEnd(
-    range[is_start ? "startContainer" : "endContainer"],
-    range[is_start ? "startOffset" : "endOffset"],
-  );
-  return preCaretRange.toString().length;
+function getEditorSelection(): TextSelectionRange {
+  return {
+    start: editor.value?.selectionStart ?? article.value.content.length,
+    end: editor.value?.selectionEnd ?? article.value.content.length,
+  };
 }
 
-// Set caret position
-// Update the setCaretPosition function to handle both single caret and range selection
-function setCaretPosition(start: number, end?: number) {
-  const sel = window.getSelection();
-  if (!sel || !editor.value) return;
+function setCaretPosition(start: number, end = start) {
+  if (!editor.value) return;
 
-  let charCount = 0;
-  const walker = document.createTreeWalker(
-    editor.value,
-    NodeFilter.SHOW_TEXT,
-    null,
-  );
-  let start_node: Node | null = null;
-  let end_node: Node | null = null;
-  let start_offset = 0;
-  let end_offset = 0;
-
-  let node = walker.nextNode();
-  while (node) {
-    const node_length = node.nodeValue?.length || 0;
-
-    // Find start position
-    if (!start_node && charCount + node_length >= start) {
-      start_node = node;
-      start_offset = start - charCount;
-    }
-
-    // Find end position
-    if (charCount + node_length >= (end ?? start)) {
-      end_node = node;
-      end_offset = (end ?? start) - charCount;
-      break;
-    }
-
-    charCount += node_length;
-    node = walker.nextNode();
-  }
-
-  if (start_node) {
-    const range = document.createRange();
-    range.setStart(start_node, start_offset);
-
-    if (end && end_node) {
-      range.setEnd(end_node, end_offset);
-    } else {
-      range.collapse(true);
-    }
-
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
+  const max = editor.value.value.length;
+  const safe_start = Math.min(Math.max(start, 0), max);
+  const safe_end = Math.min(Math.max(end, 0), max);
+  editor.value.setSelectionRange(safe_start, safe_end);
 }
 
-// Update the applyFormat function to maintain selection
-function applyFormat(evt: Event, action: FormatAction) {
-  if (
-    !selections.value[selections.value.length - 1] ||
-    selections.value[selections.value.length - 1].length === 0
-  )
-    return;
+function applyFormat(evt: Event, action?: FormatAction) {
+  evt.preventDefault();
+  if (!action) return;
 
-  const text =
-    selections.value[selections.value.length - 1] ??
-    selections.value[selections.value.length - 2];
-  const content = article.value.content;
+  const result = formatMarkdownSelection(
+    article.value.content,
+    getEditorSelection(),
+    action,
+    () => prompt("Enter URL:", "https://"),
+  );
+  if (!result) return;
 
-  let new_text = "";
-  let new_start = 0;
-  let new_end = 0;
-
-  const start = getCaretPosition(true);
-  const end = getCaretPosition(false);
-
-  const lines = text.split("\n");
-  const formatted_lines = lines.map((line) => action.markdown.prefix + line);
-  const prefix = action.markdown.prefix;
-  const suffix = action.markdown.suffix || action.markdown.prefix;
-
-  switch (action.command) {
-    case "link":
-      const url = prompt("Enter URL:", "https://");
-      if (url) {
-        new_text =
-          article.value.content.substring(0, start) +
-          `[${text}](${url})` +
-          article.value.content.substring(end);
-        new_start = start + 1; // Position after '['
-        new_end = start + text.length + 1; // Position before ']'
-      }
-      break;
-
-    case "heading":
-    case "quote":
-    case "list":
-      new_text =
-        article.value.content.substring(0, start) +
-        formatted_lines.join("\n") +
-        article.value.content.substring(end);
-      new_start = start + action.markdown.prefix.length;
-      new_end = end + formatted_lines.length * action.markdown.prefix.length;
-      break;
-
-    default:
-      // Handle inline formatting
-      new_text =
-        content.substring(0, start) +
-        prefix +
-        text +
-        suffix +
-        article.value.content.substring(end);
-      new_start = start + prefix.length;
-      new_end = end + prefix.length;
-
-      break;
-  }
-
-  // Update content and history
-  updateContent(new_text);
-
-  // Restore focus and selection
+  updateContent(result.content);
   nextTick(() => {
     editor.value?.focus();
-    setCaretPosition(new_start, new_end);
-    selections.value = [];
+    setCaretPosition(result.selection.start, result.selection.end);
   });
 }
 
-// Content update handler
-function handleInput(event: Event) {
-  const target = event.target as HTMLElement;
-  const start = getCaretPosition(true);
-  const end = getCaretPosition(false);
-  const new_content = target.innerText;
-  if (event instanceof InputEvent && event.data) {
-    updateContent(new_content);
-  }
-  nextTick(() => {
-    setCaretPosition(start, end);
-  });
+function handleEditorInput(event: Event) {
+  const target = event.target as HTMLTextAreaElement;
+  last_caret_position.value = target.selectionEnd;
+  addToHistory(target.value);
 }
 
-function handleEnter(event: KeyboardEvent) {
-  if (event.key !== "Enter") return;
-  const target = event.target as HTMLElement;
-  const start = getCaretPosition(true);
-  const end = getCaretPosition(false);
-  const new_content = target.innerText;
-
-  nextTick(() => {
-    updateContent(new_content);
-    setCaretPosition(start + 1, end + 1);
-  });
-}
-
-// Update content with proper sync
-function updateContent(new_content: string) {
+function updateContent(new_content: string, record_history = true) {
   article.value.content = new_content;
-  last_caret_position.value = getCaretPosition(false);
-  addToHistory(new_content);
+  last_caret_position.value = getEditorSelection().end;
+  if (record_history) addToHistory(new_content);
 }
 
 const debouncedAddToHistory = useDebounceFn((content: string) => {
@@ -343,7 +226,7 @@ function undo() {
   if (history_index.value > 0) {
     history_index.value--;
     const content = editor_history.value[history_index.value];
-    updateContent(content);
+    updateContent(content, false);
     nextTick(() => {
       editor.value?.focus();
       setCaretPosition(last_caret_position.value);
@@ -355,7 +238,7 @@ function redo() {
   if (history_index.value < editor_history.value.length - 1) {
     history_index.value++;
     const content = editor_history.value[history_index.value];
-    updateContent(content);
+    updateContent(content, false);
     nextTick(() => {
       editor.value?.focus();
       setCaretPosition(last_caret_position.value);
@@ -369,37 +252,46 @@ function discardFile() {
   reset();
 }
 
-function fileSaved(
-  data: {
-    name: string;
-    description: string;
-  } & Required<Pick<ArticleFile, "id" | "type" | "url" | "path" | "mimetype">>,
-) {
-  const inject_content = ` ![${data.description}](${data.url}) `;
-  article.value.content += inject_content;
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getCurrentDraftKeys() {
+  return getArticleDraftKeys(current_edit_slug.value);
+}
+
+function clearCurrentDraft() {
+  const keys = getCurrentDraftKeys();
+  localStorage.removeItem(keys.title);
+  localStorage.removeItem(keys.content);
+  localStorage.removeItem("article_title");
+  localStorage.removeItem("article_content");
+}
+
+function fileSaved(data: UploadedArticleFileData) {
+  const inject_content = createArticleImageMarkup(data);
+  const result = insertMarkdownAtSelection(
+    article.value.content,
+    getEditorSelection(),
+    inject_content,
+  );
+  updateContent(result.content);
   article.value.file = [
     ...(article.value.file ?? []),
-    {
-      id: data.id,
-      type: data.type,
-      url: data.url,
-      path: data.path,
-      mimetype: data.mimetype,
-      alt_text: data.description,
-      caption: data.name,
-    },
+    createArticleFileMetadata(data),
   ];
   show_file_upload_dialog.value = false;
+  raw_file.value = null;
+  reset();
+  nextTick(() => {
+    editor.value?.focus();
+    setCaretPosition(result.selection.start, result.selection.end);
+  });
 }
 
 function handleKeyboard(event: KeyboardEvent) {
   const is_mac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
   const modifier = is_mac ? event.metaKey : event.ctrlKey;
-
-  if (event.key === "Enter") {
-    handleEnter(event);
-    return;
-  }
 
   if (modifier) {
     switch (event.key.toLowerCase()) {
@@ -412,49 +304,67 @@ function handleKeyboard(event: KeyboardEvent) {
         }
         break;
       case "b":
-        event.preventDefault();
-        applyFormat(event, actions[0]); // Bold
+        applyFormat(
+          event,
+          actions.find((action) => action.command === "bold"),
+        );
         break;
       case "i":
-        event.preventDefault();
-        applyFormat(event, actions[1]); // Italic
+        applyFormat(
+          event,
+          actions.find((action) => action.command === "italic"),
+        );
         break;
       case "k":
-        event.preventDefault();
-        applyFormat(event, actions[3]); // Link
+        applyFormat(
+          event,
+          actions.find((action) => action.command === "link"),
+        );
         break;
       case "u":
-        event.preventDefault();
-        open();
+        applyFormat(
+          event,
+          actions.find((action) => action.command === "underline"),
+        );
         break;
     }
   }
 }
 
-async function update(evt: any, label: string = "Updated") {
-  if (article.value.id && article.value.content.trim()) {
-    try {
-      const res = await articleStore.updateArticle(
-        article.value.id,
-        article.value,
-      );
-      toast({
-        title: label,
-        description: "Your changes have been saved",
-      });
-      if (res.slug && label.toLowerCase() === "updated")
-        await router.push(app_routes.articles.view(encodeURI(res.slug)));
-    } catch (error) {
-      toast({
-        title: `${label} failed`,
-        description: error as string,
-      });
-    }
+async function update(_evt?: Event, label: string = "Updated") {
+  if (!article.value.id || is_article_invalid.value) {
+    toast({
+      title: "Article content or title cannot be empty",
+      description: "Create a proper article before trying to update",
+    });
+    return;
+  }
+
+  try {
+    is_loading.value = true;
+    const res = await articleStore.updateArticle(
+      article.value.id,
+      article.value,
+    );
+    toast({
+      title: label,
+      description: "Your changes have been saved",
+    });
+    clearCurrentDraft();
+    if (res.slug && label.toLowerCase() === "updated")
+      await router.push(app_routes.articles.view(encodeURI(res.slug)));
+  } catch (error) {
+    toast({
+      title: `${label} failed`,
+      description: getErrorMessage(error),
+    });
+  } finally {
+    is_loading.value = false;
   }
 }
 
 // Debounced auto-save
-const autoSave = debounce(async () => {
+const autoSave = useDebounceFn(async () => {
   //Temporarily disable autosave to reign in resource usage
   // await update({}, "Auto-saved");
 }, 60000);
@@ -474,26 +384,17 @@ async function publish() {
       title: "Published",
       description: "Your changes have been saved",
     });
-    localStorage.removeItem("article_content");
-    localStorage.removeItem("article_title");
+    clearCurrentDraft();
     if (res.slug)
       await router.push(app_routes.articles.view(encodeURI(res.slug)));
   } catch (error) {
     toast({
       title: "Publish failed",
-      description: error as string,
+      description: getErrorMessage(error),
     });
   } finally {
     is_loading.value = false;
   }
-}
-
-function debounce(fn: Function, ms: number) {
-  let timeout: number;
-  return function (this: void, ...args: any[]): void {
-    window.clearTimeout(timeout);
-    timeout = window.setTimeout(() => fn.apply(this, args), ms);
-  };
 }
 
 async function getArticleMeta(slug: string) {
@@ -503,7 +404,7 @@ async function getArticleMeta(slug: string) {
   } catch (error) {
     toast({
       title: "Error loading article",
-      description: error as string,
+      description: getErrorMessage(error),
     });
   }
 }
@@ -518,53 +419,62 @@ async function getMarkdownFile(path: string) {
   } catch (error) {
     toast({
       title: "Error loading article contents",
-      description: error as string,
+      description: getErrorMessage(error),
     });
   }
 }
 
 function retrieveContentFromStorage() {
-  const content = localStorage.getItem("article_content");
-  const heading = localStorage.getItem("article_title");
+  const keys = getCurrentDraftKeys();
+  const content = localStorage.getItem(keys.content);
+  const heading = localStorage.getItem(keys.title);
   if (heading) article.value.title = heading;
   if (content) article.value.content = content;
 }
 
 onMounted(async () => {
-  if (route.query.action === "edit" && route.query.article) {
-    const slug = decodeURI(route.query.article as string);
-    await getArticleMeta(slug);
-    await getMarkdownFile(slug + ".md");
+  try {
+    if (route.query.action === "edit" && route.query.article) {
+      const slug = decodeURI(route.query.article as string);
+      current_edit_slug.value = slug;
+      await getArticleMeta(slug);
+      await getMarkdownFile(slug + ".md");
+    }
+    retrieveContentFromStorage();
+  } finally {
+    is_initializing_article.value = false;
   }
-  retrieveContentFromStorage();
 });
 
 watch(
   () => article.value.title,
-  (new_content) => {
-    localStorage.setItem("article_title", article.value.title);
+  () => {
+    if (is_initializing_article.value) return;
+
+    const keys = getCurrentDraftKeys();
+    localStorage.setItem(keys.title, article.value.title);
   },
 );
 
 watch(
   () => article.value.content,
   async (new_content) => {
-    localStorage.setItem("article_content", new_content);
+    if (!is_initializing_article.value) {
+      const keys = getCurrentDraftKeys();
+      localStorage.setItem(keys.content, new_content);
+    }
     parsed_article.value.content = DOMPurify.sanitize(
       await marked.parse(new_content, { breaks: true }),
+      {
+        ADD_TAGS: ["figure", "figcaption"],
+        ADD_ATTR: ["class", "loading", "decoding"],
+      },
     );
     if (is_first_call.value && route.query.action === "edit") {
       is_first_call.value = false;
       return;
     }
     autoSave();
-  },
-);
-
-watch(
-  () => selection.text.value,
-  (new_selection) => {
-    selections.value.push(new_selection);
   },
 );
 
@@ -578,11 +488,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main>
-    <div class="grid card grid-cols-12 gap-4 rounded-lg border p-4">
-      <div class="rounded-lg lg:col-span-6 col-span-12">
+  <main class="mx-auto w-full max-w-7xl px-3 py-4 sm:px-4 lg:px-6">
+    <div
+      class="card grid grid-cols-1 gap-4 rounded-lg border-0 p-0 sm:border sm:p-4 lg:grid-cols-12 lg:gap-6"
+    >
+      <div class="min-w-0 rounded-lg lg:col-span-6">
         <div
-          class="bg-base-light rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap"
+          class="bg-base-light mb-3 flex items-center gap-x-2 rounded-lg p-3"
         >
           <Input
             v-model="article.title"
@@ -593,9 +505,9 @@ onUnmounted(() => {
         </div>
         <!-- Toolbar -->
         <div
-          class="rounded-lg p-3 mb-3 flex items-center gap-x-2 flex-wrap transition-colors duration-300 ease-in-out"
+          class="mb-3 flex items-center gap-2 overflow-x-auto rounded-lg p-2 transition-colors duration-300 ease-in-out sm:p-3"
           :class="{
-            'mx-4 border border-gray-200 dark:border-gray-700 backdrop-blur-md shadow-sm dark:shadow-lg fixed top-0 left-0 right-0 z-50 bg-base-white':
+            'sticky top-2 z-40 border border-gray-200 bg-base-white shadow-sm backdrop-blur-md dark:border-gray-700 dark:shadow-lg':
               is_scrolled,
             'w-full bg-base-light': !is_scrolled,
           }"
@@ -604,7 +516,7 @@ onUnmounted(() => {
             <Tooltip v-for="action in actions" :key="action.label">
               <TooltipTrigger as-child>
                 <div
-                  class="rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
+                  class="shrink-0 cursor-pointer select-none rounded p-2 transition-colors duration-300 ease-in-out"
                   :class="{
                     'bg-base-light': is_scrolled,
                     'bg-base-white': !is_scrolled,
@@ -641,7 +553,7 @@ onUnmounted(() => {
             </Tooltip>
           </TooltipProvider>
 
-          <div class="ml-auto flex items-center gap-x-2">
+          <div class="ml-auto flex shrink-0 items-center gap-x-2">
             <TooltipProvider>
               <Tooltip
                 v-for="action in non_formatting_actions"
@@ -649,7 +561,7 @@ onUnmounted(() => {
               >
                 <TooltipTrigger as-child>
                   <div
-                    class="bg-base-white rounded p-1 lg:p-2 cursor-pointer select-none transition-colors duration-300 ease-in-out"
+                    class="bg-base-white shrink-0 cursor-pointer select-none rounded p-2 transition-colors duration-300 ease-in-out"
                     :class="{
                       'bg-base-light': is_scrolled,
                       'bg-base-white': !is_scrolled,
@@ -681,12 +593,12 @@ onUnmounted(() => {
           :disabled="is_loading"
           spellcheck="true"
           v-model="article.content"
-          class="h-fit w-full min-h-96 bg-base-light resize-none text-wrap rounded-lg p-3 outline-none font-mono whitespace-pre-wrap break-words"
+          class="bg-base-light min-h-[55vh] w-full resize-y text-wrap rounded-lg p-3 font-mono text-sm outline-none whitespace-pre-wrap break-words sm:min-h-96 sm:text-base lg:min-h-[32rem]"
+          @input="handleEditorInput"
+          @keydown="handleKeyboard"
           @focus="is_editor_focused = true"
           @blur="is_editor_focused = false"
-        >
-          {{ article.content }}
-        </textarea>
+        ></textarea>
 
         <ArticleFileUploadDialog
           v-if="show_file_upload_dialog && raw_file"
@@ -697,23 +609,35 @@ onUnmounted(() => {
       </div>
 
       <!-- Preview -->
-      <div class="lg:col-span-6 col-span-12">
-        <div class="flex items-center gap-x-2 mb-10 justify-end">
-          <Button v-if="!article.id" @click="publish" :disabled="is_loading">
+      <div class="min-w-0 lg:col-span-6">
+        <div
+          class="bg-base-white/95 sticky bottom-2 z-30 mb-4 flex items-center justify-stretch gap-x-2 rounded-lg p-2 shadow-sm backdrop-blur sm:static sm:mb-10 sm:justify-end sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+        >
+          <Button
+            v-if="!article.id"
+            @click="publish"
+            :disabled="is_loading || is_article_invalid"
+            class="w-full sm:w-auto"
+          >
             <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
             Publish
           </Button>
-          <Button v-else @click="update" :disabled="is_loading">
+          <Button
+            v-else
+            @click="update"
+            :disabled="is_loading || is_article_invalid"
+            class="w-full sm:w-auto"
+          >
             <IconsUploadingIcon class="text-base-dark" v-if="is_loading" />
             Update
           </Button>
         </div>
-        <div>
-          <h1 class="mb-4 text-xl capitalize">
+        <div class="rounded-lg sm:rounded-none">
+          <h1 class="mb-4 text-lg capitalize sm:text-xl">
             {{ article.title.toLowerCase() }}
           </h1>
           <div
-            class="min-h-96 bg-base-light rounded-lg col-span-12 p-4 prose prose-sm max-w-none dark:prose-invert"
+            class="article-content bg-base-light prose prose-sm col-span-12 min-h-80 max-w-none overflow-x-auto rounded-lg p-3 dark:prose-invert sm:min-h-96 sm:p-4"
             v-html="parsed_article.content"
           ></div>
         </div>
@@ -721,10 +645,3 @@ onUnmounted(() => {
     </div>
   </main>
 </template>
-
-<style lang="postcss">
-p img {
-  max-height: 345px;
-  margin: 1rem;
-}
-</style>

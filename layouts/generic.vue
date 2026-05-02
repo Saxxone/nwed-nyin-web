@@ -8,7 +8,7 @@ import RightSideBar from "@/components/RightSideBar.vue";
     <LeftSideBar class="col-span-2 hidden lg:block" />
 
     <section class="col-span-12 lg:col-span-8">
-      <div class="container px-4 mx-auto">
+      <div class="container px-2 lg:px-4 mx-auto">
         <AppTopBar />
         <main class="my-4">
           <slot></slot>

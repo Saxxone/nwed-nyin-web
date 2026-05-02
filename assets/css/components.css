@@ -147,3 +147,72 @@ button:disabled {
 .prose a {
   @apply text-blue-600 hover:underline dark:text-blue-400;
 }
+
+.article-content > :where(:not(.article-image--wide):not(.article-image--full)) {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.article-content :where(img) {
+  @apply h-auto max-w-full rounded-xl shadow-sm;
+  max-height: min(72vh, 620px);
+  object-fit: contain;
+}
+
+.article-content :where(p:has(> img:only-child)) {
+  @apply my-8 text-center;
+}
+
+.article-content :where(p > img:only-child) {
+  @apply mx-auto block;
+}
+
+.article-content :where(.article-image) {
+  @apply clear-both my-8;
+}
+
+.article-content :where(.article-image img) {
+  @apply mx-auto block w-auto;
+}
+
+.article-content :where(.article-image figcaption) {
+  @apply mt-3 text-center text-sm leading-6 text-gray-400 dark:text-gray-400;
+}
+
+.article-content :where(.article-image--center) {
+  @apply mx-auto text-center;
+  max-width: min(100%, 42rem);
+}
+
+.article-content :where(.article-image--wide) {
+  @apply mx-auto text-center;
+  max-width: 56rem;
+  width: 100%;
+}
+
+.article-content :where(.article-image--full) {
+  @apply mx-auto text-center;
+  width: 100%;
+}
+
+.article-content :where(.article-image--full img) {
+  @apply w-full;
+}
+
+@media (min-width: 640px) {
+  .article-content :where(.article-image--left) {
+    @apply float-left clear-left mb-4 mr-6 mt-2 text-left;
+    max-width: min(45%, 20rem);
+  }
+
+  .article-content :where(.article-image--right) {
+    @apply float-right clear-right mb-4 ml-6 mt-2 text-left;
+    max-width: min(45%, 20rem);
+  }
+
+  .article-content :where(.article-image--left figcaption),
+  .article-content :where(.article-image--right figcaption) {
+    @apply text-left;
+  }
+}
