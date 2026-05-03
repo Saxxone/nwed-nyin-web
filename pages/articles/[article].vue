@@ -93,6 +93,20 @@ watch(
 useSeoMeta({
   title: () => article_title.value,
 });
+
+const article_hero = ref<HTMLElement | null>(null);
+/** True while any part of the hero card is visible; floating back only after it scrolls fully off-screen. */
+const hero_visible = ref(true);
+
+useIntersectionObserver(
+  article_hero,
+  (entries) => {
+    hero_visible.value = entries[0]?.isIntersecting ?? false;
+  },
+  { threshold: [0, 1] },
+);
+
+const show_floating_article_back = computed(() => !hero_visible.value);
 </script>
 
 <template>
@@ -102,9 +116,11 @@ useSeoMeta({
       :current-slug="slug"
       :terms="article_suggestion_terms"
       :back-to="app_routes.articles.list"
+      :show-floating-back="show_floating_article_back"
     />
 
     <section
+      ref="article_hero"
       class="relative isolate overflow-hidden rounded-2xl border border-gray-200 bg-base-white px-5 py-6 shadow-sm dark:border-gray-800 sm:px-8 lg:px-10"
     >
       <div

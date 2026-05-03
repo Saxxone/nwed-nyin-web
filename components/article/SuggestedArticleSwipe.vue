@@ -22,11 +22,14 @@ const props = withDefaults(
     currentSlug?: string;
     terms?: string[];
     backTo?: string;
+    /** When false, the fixed ArrowLeft control is hidden (e.g. while an inline hero back link is visible). */
+    showFloatingBack?: boolean;
   }>(),
   {
     currentSlug: undefined,
     terms: () => [],
     backTo: app_routes.articles.list,
+    showFloatingBack: true,
   },
 );
 
@@ -308,6 +311,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="article-swipe-controls pointer-events-none fixed inset-0 z-40">
     <button
+      v-show="props.showFloatingBack"
       type="button"
       class="pointer-events-auto fixed left-4 top-24 inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-base-white/95 text-main shadow-lg backdrop-blur transition hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:border-gray-700 dark:focus-visible:ring-gray-100 sm:left-6"
       aria-label="Go back"
