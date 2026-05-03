@@ -14,22 +14,24 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDebounceFn, useFileDialog } from "@vueuse/core";
-import DOMPurify from "dompurify";
-import { marked } from "marked";
+import { History } from "lucide-vue-next";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
+import ArticleWysiwygEditor from "~/components/article/ArticleWysiwygEditor.vue";
 import { useArticleStore } from "~/store/articles";
 import type { Article, ArticleRevision } from "~/types/article";
 import type { FormatAction } from "~/types/types";
 import {
   createArticleFileMetadata,
-  createArticleImageMarkup,
-  formatMarkdownSelection,
   getArticleDraftKeys,
-  insertMarkdownAtSelection,
-  type TextSelectionRange,
   type UploadedArticleFileData,
 } from "~/utils/article-editor";
+import {
+  diffLinesMarkdown,
+  type DiffLinePart,
+} from "~/utils/article-revision-diff";
 import app_routes from "~/utils/routes";
+
+type RevisionViewMode = "snapshot" | "diff_draft" | "diff_previous";
 
 definePageMeta({
   title: "Ñwed Nnyịn (Nwed Nyin) - Articles",
@@ -41,11 +43,7 @@ const is_scrolled = ref(false);
 const route = useRoute();
 const router = useRouter();
 const is_loading = ref(false);
-const editor = ref<HTMLTextAreaElement | null>(null);
-const is_editor_focused = ref(false);
-const editor_history = ref<string[]>([]);
-const history_index = ref(-1);
-const last_caret_position = ref<number>(0);
+const body_editor = ref<InstanceType<typeof ArticleWysiwygEditor> | null>(null);
 const is_first_call = ref(true);
 const is_initializing_article = ref(true);
 const show_file_upload_dialog = ref(false);
@@ -57,10 +55,6 @@ const article = ref<Article>({
   title: "",
 });
 
-const parsed_article = ref({
-  content: "",
-});
-
 const articleStore = useArticleStore();
 const is_article_invalid = computed(
   () => !article.value.title.trim() || !article.value.content.trim(),
@@ -70,6 +64,7 @@ const revisions_dialog_open = ref(false);
 const revisions_loading = ref(false);
 const article_revisions = ref<ArticleRevision[]>([]);
 const selected_article_revision_id = ref<string | null>(null);
+const revision_view_mode = ref<RevisionViewMode>("snapshot");
 
 function abbreviatedContributor(ident: string) {
   const t = ident.trim();
@@ -134,6 +129,72 @@ watch(revisions_dialog_open, (open) => {
 
 const revision_preview_snapshot = computed(() =>
   revision_snapshot_fields(selected_article_revision.value),
+);
+
+const revision_selected_index = computed(() =>
+  article_revisions.value.findIndex(
+    (r) => r.id === selected_article_revision_id.value,
+  ),
+);
+
+const revision_older_than_selected = computed(() => {
+  const i = revision_selected_index.value;
+  if (i < 0 || i + 1 >= article_revisions.value.length) return undefined;
+  return article_revisions.value[i + 1];
+});
+
+const revision_has_older_neighbor = computed(
+  () => revision_older_than_selected.value !== undefined,
+);
+
+/** Selected revision snapshot as left side; additions = changes in newer / draft text. */
+const revision_diff_vs_draft = computed<DiffLinePart[]>(() => {
+  if (!selected_article_revision.value) return [];
+  const left = revision_preview_snapshot.value.markdown;
+  const right = article.value.content ?? "";
+  return diffLinesMarkdown(
+    `Revision v${selected_article_revision.value.version}`,
+    "Current draft",
+    left,
+    right,
+  );
+});
+
+const revision_diff_vs_previous = computed<DiffLinePart[]>(() => {
+  const older = revision_older_than_selected.value;
+  const selected_rev = selected_article_revision.value;
+  if (!older || !selected_rev) return [];
+  const left = revision_snapshot_fields(older).markdown;
+  const right = revision_preview_snapshot.value.markdown;
+  return diffLinesMarkdown(
+    `v${older.version}`,
+    `v${selected_rev.version}`,
+    left,
+    right,
+  );
+});
+
+const revision_diff_headline_previous = computed(() => {
+  const older = revision_older_than_selected.value;
+  const selected_rev = selected_article_revision.value;
+  if (!older || !selected_rev) return "";
+  return `Changes from revision v${older.version} → v${selected_rev.version}`;
+});
+
+watch(selected_article_revision_id, () => {
+  revision_view_mode.value = "snapshot";
+});
+
+watch(
+  [revision_view_mode, revision_has_older_neighbor],
+  () => {
+    if (
+      revision_view_mode.value === "diff_previous" &&
+      !revision_has_older_neighbor.value
+    )
+      revision_view_mode.value = "snapshot";
+  },
+  { flush: "post" },
 );
 
 const actions: FormatAction[] = [
@@ -241,86 +302,64 @@ function toggleIsScrolled() {
   is_scrolled.value = window.scrollY > 120;
 }
 
-function getEditorSelection(): TextSelectionRange {
-  return {
-    start: editor.value?.selectionStart ?? article.value.content.length,
-    end: editor.value?.selectionEnd ?? article.value.content.length,
-  };
-}
-
-function setCaretPosition(start: number, end = start) {
-  if (!editor.value) return;
-
-  const max = editor.value.value.length;
-  const safe_start = Math.min(Math.max(start, 0), max);
-  const safe_end = Math.min(Math.max(end, 0), max);
-  editor.value.setSelectionRange(safe_start, safe_end);
+function preserveSelectionOnToolbarPointerdown(evt: PointerEvent) {
+  // Keep focus + text selection inside TipTap when using toolbar (click otherwise blurs editor).
+  evt.preventDefault();
 }
 
 function applyFormat(evt: Event, action?: FormatAction) {
   evt.preventDefault();
   if (!action) return;
+  const ed = body_editor.value?.getTiptap();
+  if (!ed) return;
 
-  const result = formatMarkdownSelection(
-    article.value.content,
-    getEditorSelection(),
-    action,
-    () => prompt("Enter URL:", "https://"),
-  );
-  if (!result) return;
-
-  updateContent(result.content);
-  nextTick(() => {
-    editor.value?.focus();
-    setCaretPosition(result.selection.start, result.selection.end);
-  });
-}
-
-function handleEditorInput(event: Event) {
-  const target = event.target as HTMLTextAreaElement;
-  last_caret_position.value = target.selectionEnd;
-  addToHistory(target.value);
-}
-
-function updateContent(new_content: string, record_history = true) {
-  article.value.content = new_content;
-  last_caret_position.value = getEditorSelection().end;
-  if (record_history) addToHistory(new_content);
-}
-
-const debouncedAddToHistory = useDebounceFn((content: string) => {
-  history_index.value++;
-  editor_history.value = editor_history.value.slice(0, history_index.value);
-  editor_history.value.push(content);
-}, 1000);
-
-// History management
-function addToHistory(content: string) {
-  debouncedAddToHistory(content);
+  switch (action.command) {
+    case "bold":
+      ed.chain().focus().toggleBold().run();
+      break;
+    case "italic":
+      ed.chain().focus().toggleItalic().run();
+      break;
+    case "underline":
+      ed.chain().focus().toggleUnderline().run();
+      break;
+    case "heading":
+      // Matches previous markdown toolbar (`# `) — level-1 heading.
+      ed.chain().focus().toggleHeading({ level: 1 }).run();
+      break;
+    case "link": {
+      const url = prompt("Enter URL:", "https://");
+      if (!url) break;
+      const { empty } = ed.state.selection;
+      if (empty) {
+        ed.chain()
+          .focus()
+          .insertContent({
+            type: "text",
+            text: url,
+            marks: [{ type: "link", attrs: { href: url } }],
+          })
+          .run();
+      } else {
+        ed.chain().focus().setLink({ href: url }).run();
+      }
+      break;
+    }
+    case "quote":
+      ed.chain().focus().toggleBlockquote().run();
+      break;
+    case "list":
+      ed.chain().focus().toggleBulletList().run();
+      break;
+  }
 }
 
 function undo() {
-  if (history_index.value > 0) {
-    history_index.value--;
-    const content = editor_history.value[history_index.value];
-    updateContent(content, false);
-    nextTick(() => {
-      editor.value?.focus();
-      setCaretPosition(last_caret_position.value);
-    });
-  }
+  body_editor.value?.getTiptap()?.chain().focus().undo().run();
 }
 
 function redo() {
-  if (history_index.value < editor_history.value.length - 1) {
-    history_index.value++;
-    const content = editor_history.value[history_index.value];
-    updateContent(content, false);
-    nextTick(() => {
-      editor.value?.focus();
-      setCaretPosition(last_caret_position.value);
-    });
-  }
+  body_editor.value?.getTiptap()?.chain().focus().redo().run();
 }
 
 function discardFile() {
@@ -346,13 +385,12 @@ function clearCurrentDraft() {
 }
 
 function fileSaved(data: UploadedArticleFileData) {
-  const inject_content = createArticleImageMarkup(data);
-  const result = insertMarkdownAtSelection(
-    article.value.content,
-    getEditorSelection(),
-    inject_content,
-  );
-  updateContent(result.content);
+  body_editor.value?.insertArticleFigure?.({
+    src: data.url,
+    alt: data.description.trim() || data.name.trim(),
+    caption: data.name.trim(),
+    position: data.position,
+  });
   article.value.file = [
     ...(article.value.file ?? []),
     createArticleFileMetadata(data),
@@ -361,51 +399,8 @@ function fileSaved(data: UploadedArticleFileData) {
   raw_file.value = null;
   reset();
   nextTick(() => {
-    editor.value?.focus();
-    setCaretPosition(result.selection.start, result.selection.end);
+    body_editor.value?.focus?.();
   });
-}
-
-function handleKeyboard(event: KeyboardEvent) {
-  const is_mac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
-  const modifier = is_mac ? event.metaKey : event.ctrlKey;
-
-  if (modifier) {
-    switch (event.key.toLowerCase()) {
-      case "z":
-        event.preventDefault();
-        if (event.shiftKey) {
-          redo();
-        } else {
-          undo();
-        }
-        break;
-      case "b":
-        applyFormat(
-          event,
-          actions.find((action) => action.command === "bold"),
-        );
-        break;
-      case "i":
-        applyFormat(
-          event,
-          actions.find((action) => action.command === "italic"),
-        );
-        break;
-      case "k":
-        applyFormat(
-          event,
-          actions.find((action) => action.command === "link"),
-        );
-        break;
-      case "u":
-        applyFormat(
-          event,
-          actions.find((action) => action.command === "underline"),
-        );
-        break;
-    }
-  }
 }
 
 async function update(_evt?: Event, label: string = "Updated") {
@@ -489,9 +484,9 @@ async function getArticleMeta(slug: string) {
 async function getMarkdownFile(path: string) {
   try {
     article.value.content = await articleStore.fetchMarkdown(path);
-    addToHistory(article.value.content);
-    nextTick(() => {
-      editor.value?.focus();
+    await nextTick();
+    requestAnimationFrame(() => {
+      body_editor.value?.focus();
     });
   } catch (error) {
     toast({
@@ -510,6 +505,7 @@ function retrieveContentFromStorage() {
 }
 
 onMounted(async () => {
+  window.addEventListener("scroll", toggleIsScrolled);
   try {
     if (route.query.action === "edit" && route.query.article) {
       const slug = decodeURI(route.query.article as string);
@@ -520,6 +516,13 @@ onMounted(async () => {
     retrieveContentFromStorage();
   } finally {
     is_initializing_article.value = false;
+    if (
+      route.query.revisions === "1" &&
+      route.query.action === "edit" &&
+      article.value.id
+    ) {
+      revisions_dialog_open.value = true;
+    }
   }
 });
 
@@ -535,18 +538,11 @@ watch(
 
 watch(
   () => article.value.content,
-  async (new_content) => {
+  (new_content) => {
     if (!is_initializing_article.value) {
       const keys = getCurrentDraftKeys();
       localStorage.setItem(keys.content, new_content);
     }
-    parsed_article.value.content = DOMPurify.sanitize(
-      await marked.parse(new_content, { breaks: true }),
-      {
-        ADD_TAGS: ["figure", "figcaption"],
-        ADD_ATTR: ["class", "loading", "decoding"],
-      },
-    );
     if (is_first_call.value && route.query.action === "edit") {
       is_first_call.value = false;
       return;
@@ -554,10 +550,6 @@ watch(
     autoSave();
   },
 );
-
-onMounted(() => {
-  window.addEventListener("scroll", toggleIsScrolled);
-});
 
 onUnmounted(() => {
   window.removeEventListener("scroll", toggleIsScrolled);
@@ -567,9 +559,9 @@ onUnmounted(() => {
 <template>
   <main class="mx-auto w-full max-w-7xl px-3 py-4 sm:px-4 lg:px-6">
     <div
-      class="card grid grid-cols-1 gap-4 rounded-lg border-0 p-0 sm:border sm:p-4 lg:grid-cols-12 lg:gap-6"
+      class="card grid grid-cols-1 gap-6 rounded-lg border-0 p-0 sm:border sm:p-4"
     >
-      <div class="min-w-0 rounded-lg lg:col-span-6">
+      <div class="min-w-0 rounded-lg">
         <div
           class="bg-base-light mb-3 flex items-center gap-x-2 rounded-lg p-3"
         >
@@ -582,73 +574,45 @@ onUnmounted(() => {
         </div>
         <!-- Toolbar -->
         <div
-          class="mb-3 flex items-center gap-2 overflow-x-auto rounded-lg p-2 transition-colors duration-300 ease-in-out sm:p-3"
+          class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-2 rounded-lg p-2 transition-colors duration-300 ease-in-out sm:p-3"
           :class="{
             'sticky top-2 z-40 border border-gray-200 bg-base-white shadow-sm backdrop-blur-md dark:border-gray-700 dark:shadow-lg':
               is_scrolled,
             'w-full bg-base-light': !is_scrolled,
           }"
         >
-          <TooltipProvider>
-            <Tooltip v-for="action in actions" :key="action.label">
-              <TooltipTrigger as-child>
-                <div
-                  class="shrink-0 cursor-pointer select-none rounded p-2 transition-colors duration-300 ease-in-out"
-                  :class="{
-                    'bg-base-light': is_scrolled,
-                    'bg-base-white': !is_scrolled,
-                  }"
-                  @click="applyFormat($event, action)"
-                >
-                  <IconsBoldIcon v-if="action.icon === 'bold'" width="20" />
-                  <IconsItalicsIcon
-                    v-if="action.icon === 'italic'"
-                    width="20"
-                  />
-                  <IconsUnderlineIcon
-                    v-if="action.icon === 'underline'"
-                    width="20"
-                  />
-                  <IconsStrikethroughIcon
-                    v-if="action.icon === 'strikethrough'"
-                    width="20"
-                  />
-                  <div v-if="action.icon === 'heading'">H</div>
-                  <IconsLinkIcon v-if="action.icon === 'link'" width="20" />
-                  <IconsQuoteIcon v-if="action.icon === 'quote'" width="20" />
-                  <IconsListIcon v-if="action.icon === 'list'" width="20" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <div>
-                  <span>{{ action.label }}</span>
-                  <span v-if="action.shortcut" class="ml-2 text-xs">{{
-                    action.shortcut
-                  }}</span>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <div class="ml-auto flex shrink-0 items-center gap-x-2">
+          <div class="flex min-w-0 shrink-0 items-center gap-1 overflow-x-auto">
             <TooltipProvider>
-              <Tooltip
-                v-for="action in non_formatting_actions"
-                :key="action.label"
-              >
+              <Tooltip v-for="action in actions" :key="action.label">
                 <TooltipTrigger as-child>
-                  <div
-                    class="bg-base-white shrink-0 cursor-pointer select-none rounded p-2 transition-colors duration-300 ease-in-out"
+                  <button
+                    type="button"
+                    class="inline-flex shrink-0 cursor-pointer select-none rounded border-0 p-2 transition-colors duration-300 ease-in-out outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     :class="{
                       'bg-base-light': is_scrolled,
                       'bg-base-white': !is_scrolled,
                     }"
-                    @click="action.command()"
+                    @pointerdown="preserveSelectionOnToolbarPointerdown"
+                    @click="applyFormat($event, action)"
                   >
-                    <IconsUndoIcon v-if="action.icon === 'undo'" width="20" />
-                    <IconsRedoIcon v-if="action.icon === 'redo'" width="20" />
-                    <IconsMediaIcon v-if="action.icon === 'media'" width="20" />
-                  </div>
+                    <IconsBoldIcon v-if="action.icon === 'bold'" width="20" />
+                    <IconsItalicsIcon
+                      v-if="action.icon === 'italic'"
+                      width="20"
+                    />
+                    <IconsUnderlineIcon
+                      v-if="action.icon === 'underline'"
+                      width="20"
+                    />
+                    <IconsStrikethroughIcon
+                      v-if="action.icon === 'strikethrough'"
+                      width="20"
+                    />
+                    <span v-if="action.icon === 'heading'">H</span>
+                    <IconsLinkIcon v-if="action.icon === 'link'" width="20" />
+                    <IconsQuoteIcon v-if="action.icon === 'quote'" width="20" />
+                    <IconsListIcon v-if="action.icon === 'list'" width="20" />
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   <div>
@@ -661,21 +625,95 @@ onUnmounted(() => {
               </Tooltip>
             </TooltipProvider>
           </div>
+
+          <div
+            class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto sm:flex-nowrap"
+          >
+            <TooltipProvider>
+              <Tooltip
+                v-for="action in non_formatting_actions"
+                :key="action.label"
+              >
+                <TooltipTrigger as-child>
+                  <button
+                    type="button"
+                    class="inline-flex shrink-0 cursor-pointer select-none rounded border-0 bg-base-white p-2 transition-colors duration-300 ease-in-out outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    :class="{
+                      'bg-base-light': is_scrolled,
+                      'bg-base-white': !is_scrolled,
+                    }"
+                    @pointerdown="preserveSelectionOnToolbarPointerdown"
+                    @click="action.command()"
+                  >
+                    <IconsUndoIcon v-if="action.icon === 'undo'" width="20" />
+                    <IconsRedoIcon v-if="action.icon === 'redo'" width="20" />
+                    <IconsMediaIcon v-if="action.icon === 'media'" width="20" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <div>
+                    <span>{{ action.label }}</span>
+                    <span v-if="action.shortcut" class="ml-2 text-xs">{{
+                      action.shortcut
+                    }}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip v-if="article.id">
+                <TooltipTrigger as-child>
+                  <button
+                    type="button"
+                    class="inline-flex shrink-0 cursor-pointer select-none rounded border-0 bg-base-white p-2 transition-colors duration-300 ease-in-out outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    :class="{
+                      'bg-base-light': is_scrolled,
+                      'bg-base-white': !is_scrolled,
+                    }"
+                    aria-label="Revision history"
+                    @click="revisions_dialog_open = true"
+                  >
+                    <IconsHistoryIcon aria-hidden="true" width="20" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Revision history</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button
+              v-if="!article.id"
+              type="button"
+              :disabled="is_loading || is_article_invalid"
+              class="w-full sm:w-auto"
+              @click="publish"
+            >
+              <IconsUploadingIcon v-if="is_loading" class="text-base-dark" />
+              Publish
+            </Button>
+            <Button
+              v-else
+              type="button"
+              :disabled="is_loading || is_article_invalid"
+              class="w-full sm:w-auto"
+              @click="update"
+            >
+              <IconsUploadingIcon v-if="is_loading" class="text-base-dark" />
+              Update
+            </Button>
+          </div>
         </div>
 
-        <!-- Editor -->
-        <textarea
-          ref="editor"
-          v-model="article.content"
-          :aria-disabled="is_loading"
-          :disabled="is_loading"
-          spellcheck="true"
-          class="bg-base-light min-h-[55vh] w-full resize-y text-wrap rounded-lg p-3 font-mono text-sm outline-none whitespace-pre-wrap break-words sm:min-h-96 sm:text-base lg:min-h-[32rem]"
-          @input="handleEditorInput"
-          @keydown="handleKeyboard"
-          @focus="is_editor_focused = true"
-          @blur="is_editor_focused = false"
-        ></textarea>
+        <ClientOnly>
+          <ArticleWysiwygEditor
+            id="editor"
+            ref="body_editor"
+            v-model="article.content"
+            :disabled="is_loading"
+          />
+          <template #fallback>
+            <div
+              class="bg-base-light min-h-[55vh] animate-pulse rounded-lg sm:min-h-96"
+              aria-hidden="true"
+            />
+          </template>
+        </ClientOnly>
 
         <ArticleFileUploadDialog
           v-if="show_file_upload_dialog && raw_file"
@@ -684,62 +722,18 @@ onUnmounted(() => {
           @uploaded="fileSaved"
         />
       </div>
-
-      <!-- Preview -->
-      <div class="min-w-0 lg:col-span-6">
-        <div
-          class="bg-base-white/95 sticky bottom-2 z-30 mb-4 flex w-full flex-wrap items-center gap-2 justify-end rounded-lg p-2 shadow-sm backdrop-blur sm:static sm:mb-10 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
-        >
-          <Button
-            v-if="article.id"
-            variant="outline"
-            :disabled="is_loading"
-            class="w-full sm:mr-auto sm:w-auto"
-            @click="revisions_dialog_open = true"
-          >
-            Revision history
-          </Button>
-          <Button
-            v-if="!article.id"
-            :disabled="is_loading || is_article_invalid"
-            class="w-full sm:w-auto"
-            @click="publish"
-          >
-            <IconsUploadingIcon v-if="is_loading" class="text-base-dark" />
-            Publish
-          </Button>
-          <Button
-            v-else
-            :disabled="is_loading || is_article_invalid"
-            class="w-full sm:w-auto"
-            @click="update"
-          >
-            <IconsUploadingIcon v-if="is_loading" class="text-base-dark" />
-            Update
-          </Button>
-        </div>
-        <div class="rounded-lg sm:rounded-none">
-          <h1 class="mb-4 text-lg capitalize sm:text-xl">
-            {{ article.title.toLowerCase() }}
-          </h1>
-          <div
-            class="article-content bg-base-light prose prose-sm col-span-12 min-h-80 max-w-none overflow-x-auto rounded-lg p-3 dark:prose-invert sm:min-h-96 sm:p-4"
-            v-html="parsed_article.content"
-          ></div>
-        </div>
-      </div>
     </div>
 
     <Dialog v-model:open="revisions_dialog_open">
       <DialogScrollContent
-        class="max-h-[90vh] max-w-[min(100vw-2rem,56rem)] gap-6"
+        class="max-h-[90vh] max-w-[min(100vw-2rem,62rem)] gap-6"
       >
         <DialogHeader>
           <DialogTitle>Revision history</DialogTitle>
           <DialogDescription>
-            Saved snapshots from the server (read-only). Compare markdown before
-            a major edit if needed—restoring a version still requires copying
-            into the editor.
+            Saved snapshots from the server (read-only). Compare with your draft
+            before a major edit if needed—restoring a version still requires
+            copying markdown into the article body.
           </DialogDescription>
         </DialogHeader>
 
@@ -795,11 +789,92 @@ onUnmounted(() => {
               >
                 {{ revision_preview_snapshot.summary }}
               </p>
+
+              <div
+                role="tablist"
+                aria-label="Revision markdown view mode"
+                class="border-input bg-muted/30 mb-2 flex flex-wrap gap-1 rounded-lg border p-1"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  class="ring-offset-background hover:bg-accent/80 rounded-md px-3 py-1.5 text-xs font-medium outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm"
+                  :aria-selected="revision_view_mode === 'snapshot'"
+                  :class="
+                    revision_view_mode === 'snapshot'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground'
+                  "
+                  @click="revision_view_mode = 'snapshot'"
+                >
+                  Snapshot
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  class="ring-offset-background hover:bg-accent/80 rounded-md px-3 py-1.5 text-xs font-medium outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm"
+                  :aria-selected="revision_view_mode === 'diff_draft'"
+                  :class="
+                    revision_view_mode === 'diff_draft'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground'
+                  "
+                  @click="revision_view_mode = 'diff_draft'"
+                >
+                  Vs editor draft
+                </button>
+
+                <Tooltip v-if="!revision_has_older_neighbor">
+                  <TooltipTrigger as-child>
+                    <span class="inline-flex">
+                      <button
+                        type="button"
+                        role="tab"
+                        disabled
+                        class="text-muted-foreground cursor-not-allowed rounded-md px-3 py-1.5 text-xs font-medium opacity-60 md:text-sm"
+                        aria-selected="false"
+                      >
+                        Vs older revision
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom"
+                    >This is the earliest stored revision.</TooltipContent
+                  >
+                </Tooltip>
+                <button
+                  v-else
+                  type="button"
+                  role="tab"
+                  class="ring-offset-background hover:bg-accent/80 rounded-md px-3 py-1.5 text-xs font-medium outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm"
+                  :aria-selected="revision_view_mode === 'diff_previous'"
+                  :class="
+                    revision_view_mode === 'diff_previous'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground'
+                  "
+                  @click="revision_view_mode = 'diff_previous'"
+                >
+                  Vs older revision
+                </button>
+              </div>
+
               <textarea
+                v-if="revision_view_mode === 'snapshot'"
                 readonly
-                class="bg-muted/40 font-mono text-xs leading-relaxed whitespace-pre-wrap sm:text-sm shrink min-h-[40vh] w-full resize-y rounded-md border px-3 py-2 outline-none md:min-h-[50vh]"
+                class="bg-muted/40 shrink min-h-[40vh] w-full resize-y rounded-md border px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap outline-none sm:text-sm md:min-h-[50vh]"
                 :value="revision_preview_snapshot.markdown"
                 aria-label="Revision markdown preview"
+              />
+              <ArticleRevisionDiffView
+                v-else-if="revision_view_mode === 'diff_draft'"
+                :parts="revision_diff_vs_draft"
+                headline="Snapshot vs editor draft · added / removed vs selected revision lines"
+              />
+              <ArticleRevisionDiffView
+                v-else
+                :parts="revision_diff_vs_previous"
+                :headline="revision_diff_headline_previous"
               />
             </template>
             <p

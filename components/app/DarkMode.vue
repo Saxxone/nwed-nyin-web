@@ -1,11 +1,18 @@
 <script setup lang="ts">
 const isDarkMode = ref(false);
 
-onMounted(() => {
-  const storedDarkMode = localStorage.getItem("darkMode");
-  if (storedDarkMode) {
-    isDarkMode.value = JSON.parse(storedDarkMode);
+if (import.meta.client) {
+  try {
+    const storedDarkMode = localStorage.getItem("darkMode");
+    if (storedDarkMode !== null) {
+      isDarkMode.value = JSON.parse(storedDarkMode) === true;
+    }
+  } catch {
+    /* ignore invalid stored value */
   }
+}
+
+onMounted(() => {
   applyDarkMode();
 });
 

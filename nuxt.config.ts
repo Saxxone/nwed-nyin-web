@@ -2,6 +2,19 @@
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   ssr: true,
+  app: {
+    head: {
+      script: [
+        {
+          key: "dark-mode-init",
+          // Runs in <head> before paint so Tailwind `dark:` matches localStorage (see DarkMode.vue).
+          innerHTML: `(function(){try{var s=localStorage.getItem("darkMode");if(s!==null&&JSON.parse(s)===true)document.documentElement.classList.add("dark");}catch(e){}})();`,
+          type: "text/javascript",
+          tagPriority: "critical",
+        },
+      ],
+    },
+  },
   devtools: { enabled: process.env.NODE_ENV !== "production" },
   devServer: {
     port: 4000,

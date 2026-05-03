@@ -5,6 +5,8 @@ const app_routes = {
     add: "/articles/add",
     edit: (slug: string) =>
       `/articles/add?action=edit&article=${encodeURI(slug)}`,
+    edit_revisions: (slug: string) =>
+      `/articles/add?action=edit&article=${encodeURI(slug)}&revisions=1`,
   },
   dictionary: {
     list: "/dictionary",

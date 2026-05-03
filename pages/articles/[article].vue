@@ -2,7 +2,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast/use-toast";
 import DOMPurify from "dompurify";
-import { ArrowLeft, Edit3 } from "lucide-vue-next";
+import { ArrowLeft, Edit3, History } from "lucide-vue-next";
 import { marked } from "marked";
 import SuggestedArticleSwipe from "~/components/article/SuggestedArticleSwipe.vue";
 import { useArticleStore } from "~/store/articles";
@@ -128,13 +128,22 @@ const show_floating_article_back = computed(() => !hero_visible.value);
           Articles
         </NuxtLink>
 
-        <NuxtLink
-          :to="app_routes.articles.edit(encodeURI(slug))"
-          class="inline-flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white dark:focus-visible:ring-gray-100"
-        >
-          <Edit3 class="h-4 w-4" aria-hidden="true" />
-          Edit
-        </NuxtLink>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <NuxtLink
+            :to="app_routes.articles.edit_revisions(encodeURI(slug))"
+            class="inline-flex items-center justify-center rounded-full border border-gray-200 bg-base-white p-2.5 text-sub shadow-sm transition hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:border-gray-700 dark:focus-visible:ring-gray-100"
+            aria-label="Revision history"
+          >
+            <History class="h-4 w-4" aria-hidden="true" />
+          </NuxtLink>
+          <NuxtLink
+            :to="app_routes.articles.edit(encodeURI(slug))"
+            class="inline-flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white dark:focus-visible:ring-gray-100"
+          >
+            <Edit3 class="h-4 w-4" aria-hidden="true" />
+            Edit
+          </NuxtLink>
+        </div>
       </div>
 
       <header class="mx-auto max-w-3xl text-center">
