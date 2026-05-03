@@ -1,9 +1,23 @@
 <script setup lang="ts">
 import imageCompression from "browser-image-compression";
 import { useToast } from "@/components/ui/toast/use-toast";
-import { disbaleForm, enableForm } from "~/composables/useUtils";
 import { useGlobalStore } from "~/store/global";
 import type { ArticleImagePosition } from "~/utils/article-editor";
+
+/** Align with Multer `FILE_SIZE_LIMIT` in `nwed-nyin-api/src/file/file.controller.ts`. */
+const MAX_UPLOAD_BYTES = 1024 * 1024;
+
+/** `browser-image-compression` often returns a Blob; Multer/Sharp need a real filename + extension. */
+function toUploadableImageFile(blob: Blob, source_name: string): File {
+  const stem = source_name.replace(/\.[^/.]+$/, "").trim() || "image";
+  const mime = blob.type && blob.type.startsWith("image/")
+    ? blob.type
+    : "image/jpeg";
+  let suffix = ".jpg";
+  if (mime.includes("png")) suffix = ".png";
+  else if (mime.includes("webp")) suffix = ".webp";
+  return new File([blob], `${stem}${suffix}`, { type: mime });
+}
 
 const props = defineProps<{
   file: File;
@@ -48,45 +62,49 @@ async function upload() {
   if (!compressed_file.value) return;
 
   try {
-    disbaleForm();
     const response = await globalStore.uploadFiles([compressed_file.value]);
+    await getFileUrls(response);
     toast({
       title: `${form.value.name} uploaded successfully`,
       description: "Keep going 📝",
     });
-
-    await getFileUrls(response);
   } catch (error) {
     toast({
       title: `Error uploading ${props.file.name}`,
       description: `${error instanceof Error ? error.message : "Unknown error"}`,
     });
-    enableForm();
   }
 }
 async function handleImageCompression() {
+  compressed_file.value = undefined;
+
   if (!props.file.type.includes("image")) return;
 
   const image_file = props.file;
-  console.log("originalFile instanceof Blob", image_file instanceof Blob); // true
-  console.log(`originalFile size ${image_file.size / 1024 / 1024} MB`);
-
   const options = {
     maxSizeMB: 1,
     maxWidthOrHeight: 1920,
     useWebWorker: true,
   };
   try {
-    compressed_file.value = await imageCompression(image_file, options);
-    console.log(
-      "compressedFile instanceof Blob",
-      compressed_file.value instanceof Blob,
-    ); // true
-    console.log(
-      `compressedFile size ${compressed_file.value?.size / 1024 / 1024} MB`,
-    ); // smaller than maxSizeMB
-  } catch (error) {
-    console.log(error);
+    const out = await imageCompression(image_file, options);
+    compressed_file.value = toUploadableImageFile(out, props.file.name);
+  } catch {
+    const within_limit = props.file.size <= MAX_UPLOAD_BYTES;
+    if (within_limit) {
+      compressed_file.value = props.file;
+      toast({
+        title: "Could not shrink image locally",
+        description:
+          "Using your original file. The server will still optimize it (1 MB maximum).",
+      });
+    } else {
+      toast({
+        title: "Could not prepare this image",
+        description:
+          `${props.file.name} is over 1 MB and could not be reduced in the browser. Try another image file or shrink it elsewhere first.`,
+      });
+    }
   }
 }
 
@@ -105,12 +123,15 @@ async function getFileUrls(ids: string[]) {
       type: uploaded_file.type,
       url: url,
       mimetype: uploaded_file.mimetype,
+      width: uploaded_file.width,
+      height: uploaded_file.height,
     });
   } catch (error) {
     toast({
       title: `Error getting file url`,
       description: `${error instanceof Error ? error.message : "Unknown error"}`,
     });
+    throw error;
   }
 }
 

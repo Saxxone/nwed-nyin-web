@@ -1,5 +1,11 @@
 import { Node } from "@tiptap/core";
 
+function parseImgDimension(attr: string | null): number | null {
+  if (attr == null || attr.trim() === "") return null;
+  const parsed = Number.parseInt(attr, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 /** Block image+figcaption matching `createArticleImageMarkup` / server markdown. */
 export const ArticleImageFigure = Node.create({
   name: "articleImageFigure",
@@ -13,6 +19,8 @@ export const ArticleImageFigure = Node.create({
       alt: { default: "" },
       caption: { default: "" },
       position: { default: "center" },
+      width: { default: null as number | null },
+      height: { default: null as number | null },
     };
   },
 
@@ -32,6 +40,8 @@ export const ArticleImageFigure = Node.create({
             alt: img.getAttribute("alt") ?? "",
             caption: cap?.textContent?.trim() ?? "",
             position: m?.[1] ?? "center",
+            width: parseImgDimension(img.getAttribute("width")),
+            height: parseImgDimension(img.getAttribute("height")),
           };
         },
       },
@@ -39,19 +49,34 @@ export const ArticleImageFigure = Node.create({
   },
 
   renderHTML({ node }) {
-    const { src, alt, caption, position } = node.attrs;
+    const { src, alt, caption, position, width, height } = node.attrs;
     if (!src) return ["p", {}, ""];
 
     const pos = typeof position === "string" ? position : "center";
     const figClass = `article-image article-image--${pos}`;
-    const img: ["img", Record<string, string>] = [
+    const img_attrs: Record<string, string | number | undefined> = {
+      src,
+      alt: alt || "",
+      loading: "lazy",
+      decoding: "async",
+    };
+    if (
+      typeof width === "number" &&
+      Number.isFinite(width) &&
+      width > 0
+    ) {
+      img_attrs.width = width;
+    }
+    if (
+      typeof height === "number" &&
+      Number.isFinite(height) &&
+      height > 0
+    ) {
+      img_attrs.height = height;
+    }
+    const img: ["img", Record<string, string | number | undefined>] = [
       "img",
-      {
-        src,
-        alt: alt || "",
-        loading: "lazy",
-        decoding: "async",
-      },
+      img_attrs,
     ];
 
     if (caption)

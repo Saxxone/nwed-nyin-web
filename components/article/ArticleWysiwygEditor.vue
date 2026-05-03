@@ -104,10 +104,24 @@ defineExpose({
     alt: string;
     caption: string;
     position?: ArticleImagePosition;
+    width?: number | null;
+    height?: number | null;
   }) {
     const ed = editor.value;
     if (!ed) return;
     const position = normalizeArticleImagePosition(payload.position);
+    const width =
+      typeof payload.width === "number" &&
+      payload.width > 0 &&
+      Number.isFinite(payload.width)
+        ? payload.width
+        : null;
+    const height =
+      typeof payload.height === "number" &&
+      payload.height > 0 &&
+      Number.isFinite(payload.height)
+        ? payload.height
+        : null;
     ed.chain()
       .focus()
       .insertContent({
@@ -117,6 +131,8 @@ defineExpose({
           alt: payload.alt,
           caption: payload.caption,
           position,
+          width,
+          height,
         },
       })
       .run();

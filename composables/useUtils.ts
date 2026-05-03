@@ -7,7 +7,6 @@ export function useNormalizeString(str: string) {
 }
 
 export function disbaleForm() {
-  console.log(window);
   const inputs = ref<NodeListOf<HTMLInputElement>>();
   const buttons = ref<NodeListOf<HTMLButtonElement>>();
   inputs.value?.forEach((input) => {

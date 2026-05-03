@@ -22,6 +22,8 @@ export type UploadedArticleFileData = {
   name: string;
   description: string;
   position?: ArticleImagePosition;
+  width?: number | null;
+  height?: number | null;
 } & Required<Pick<ArticleFile, "id" | "type" | "url" | "path" | "mimetype">>;
 
 const DEFAULT_IMAGE_POSITION: ArticleImagePosition = "center";
@@ -63,12 +65,23 @@ export function createArticleImageMarkup(
   const alt_text = data.description.trim() || data.name.trim();
   const caption = data.name.trim();
 
+  const dims: string[] = [];
+  if (typeof data.width === "number" && data.width > 0 && Number.isFinite(data.width))
+    dims.push(`width="${String(data.width)}"`);
+  if (
+    typeof data.height === "number" &&
+    data.height > 0 &&
+    Number.isFinite(data.height)
+  )
+    dims.push(`height="${String(data.height)}"`);
+  const dim_attrs = dims.length ? ` ${dims.join(" ")}` : "";
+
   const lines = [
     "",
     `<figure class="article-image article-image--${position}">`,
     `  <img src="${escapeHtmlAttribute(data.url)}" alt="${escapeHtmlAttribute(
       alt_text,
-    )}" loading="lazy" decoding="async">`,
+    )}" loading="lazy" decoding="async"${dim_attrs}>`,
   ];
 
   if (caption)
@@ -175,6 +188,8 @@ export function createArticleFileMetadata(
     url: data.url,
     path: data.path,
     mimetype: data.mimetype,
+    width: data.width ?? null,
+    height: data.height ?? null,
     alt_text: data.description,
     caption: data.name,
   };

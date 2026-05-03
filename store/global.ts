@@ -5,10 +5,11 @@ export const useGlobalStore = defineStore("global", () => {
   const api_loading = ref(false);
   const page_title = ref("");
 
-  async function createFormData(files: File[] | Blob[]): Promise<FormData> {
+  async function createFormData(files: File[]): Promise<FormData> {
     const form_data = new FormData();
     files.forEach((file) => {
-      form_data.append(file instanceof File ? file.name : "file", file);
+      // Third arg sets multipart filename — required so Multer gets extension + sane originalname (not "blob").
+      form_data.append("file", file, file.name);
     });
 
     return form_data;
@@ -38,6 +39,8 @@ export const useGlobalStore = defineStore("global", () => {
       url: string;
       type: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
       mimetype: string;
+      width: number | null;
+      height: number | null;
     }[]
   > {
     const response = await useApiConnect<
@@ -48,6 +51,8 @@ export const useGlobalStore = defineStore("global", () => {
         url: string;
         type: "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
         mimetype: string;
+        width: number | null;
+        height: number | null;
       }[]
     >(api_routes.files.getUrls, FetchMethod.POST, ids);
 

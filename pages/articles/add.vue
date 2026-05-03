@@ -390,6 +390,8 @@ function fileSaved(data: UploadedArticleFileData) {
     alt: data.description.trim() || data.name.trim(),
     caption: data.name.trim(),
     position: data.position,
+    width: data.width,
+    height: data.height,
   });
   article.value.file = [
     ...(article.value.file ?? []),

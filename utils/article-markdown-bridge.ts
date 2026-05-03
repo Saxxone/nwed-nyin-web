@@ -5,7 +5,7 @@ import TurndownService from "turndown";
 function sanitizeArticleHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ADD_TAGS: ["figure", "figcaption"],
-    ADD_ATTR: ["class", "loading", "decoding"],
+    ADD_ATTR: ["class", "loading", "decoding", "width", "height"],
   });
 }
 

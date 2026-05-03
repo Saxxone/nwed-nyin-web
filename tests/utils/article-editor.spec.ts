@@ -94,6 +94,8 @@ describe("article editor utilities", () => {
       url: "https://cdn.example/image.png",
       path: "articles/image.png",
       mimetype: "image/png",
+      width: null,
+      height: null,
       alt_text: "Annotated map",
       caption: "Map of Ala",
     });
@@ -103,6 +105,24 @@ describe("article editor utilities", () => {
     expect(normalizeArticleImagePosition("wide")).toBe("wide");
     expect(normalizeArticleImagePosition("unsupported")).toBe("center");
     expect(normalizeArticleImagePosition()).toBe("center");
+  });
+
+  it("generates escaped positioned article image markup with dimensions", () => {
+    const markup = createArticleImageMarkup({
+      id: "file-1",
+      type: "IMAGE",
+      url: "https://cdn.example/image.png",
+      path: "/files/image.png",
+      mimetype: "image/png",
+      name: "Caption <text>",
+      description: 'Alt "quoted" & described',
+      position: "right",
+      width: 640,
+      height: 480,
+    });
+
+    expect(markup).toContain('width="640"');
+    expect(markup).toContain('height="480"');
   });
 
   it("generates escaped positioned article image markup", () => {
