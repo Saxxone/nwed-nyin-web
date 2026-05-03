@@ -44,7 +44,16 @@ async function search() {
   saveDictionaryListState();
 }
 
-function saveDictionaryListState({ scroll_y = window.scrollY } = {}) {
+function saveDictionaryListState(options?: {
+  preserve_scroll?: boolean;
+  scroll_y?: number;
+}) {
+  const scroll_y =
+    options?.scroll_y !== undefined
+      ? options.scroll_y
+      : options?.preserve_scroll === true
+        ? dictionary_list_state.value.scrollY
+        : window.scrollY;
   dictionary_list_state.value = {
     words: [...words.value],
     searchResults: [...search_results.value],
@@ -55,6 +64,19 @@ function saveDictionaryListState({ scroll_y = window.scrollY } = {}) {
     scrollY: scroll_y,
   };
 }
+
+async function restoreDictionaryScroll(scroll_y: number) {
+  if (scroll_y <= 0 || words.value.length === 0) return;
+  await nextTick();
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: scroll_y, behavior: "auto" });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scroll_y, behavior: "auto" });
+    });
+  });
+}
+
+const infinite_scroll_enabled = ref(false);
 
 async function getDictionaryItems() {
   if (is_loading.value) return;
@@ -72,8 +94,17 @@ async function getDictionaryItems() {
     });
     count.value = total_count;
     audio_count.value = audioCount;
-    words.value = [...words.value, ...dictionary];
-    saveDictionaryListState();
+    const existing_ids = new Set(
+      words.value
+        .map((w) => w.id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    );
+    const appended = dictionary.filter((w) => {
+      const id = w.id;
+      return typeof id === "string" && id.length > 0 && !existing_ids.has(id);
+    });
+    words.value = [...words.value, ...appended];
+    saveDictionaryListState({ preserve_scroll: true });
     is_loading.value = false;
   } catch {
     is_loading.value = false;
@@ -109,10 +140,12 @@ function scrollToTop() {
 }
 
 onMounted(async () => {
-  if (dictionary_list_state.value.words.length === 0) return;
-
+  if (dictionary_list_state.value.words.length === 0) {
+    await getDictionaryItems();
+  }
+  await restoreDictionaryScroll(dictionary_list_state.value.scrollY);
   await nextTick();
-  window.scrollTo(0, dictionary_list_state.value.scrollY);
+  infinite_scroll_enabled.value = true;
 });
 
 onBeforeRouteLeave(() => {
@@ -224,7 +257,10 @@ definePageMeta({
         :word="word"
       />
       <WayPoints @jump="jumpToAlphabet" />
-      <AppInfiniteScroll @refresh="getDictionaryItems" />
+      <AppInfiniteScroll
+        :enabled="infinite_scroll_enabled"
+        @refresh="getDictionaryItems"
+      />
       <div v-if="is_loading" class="fixed top-24 z-50 w-full py-10 left-0">
         <div class="w-10 h-10 mx-auto shadow-lg bg-base-light rounded-full p-2">
           <IconsLoadingIcon />
