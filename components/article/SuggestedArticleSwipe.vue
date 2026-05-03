@@ -149,12 +149,13 @@ function handleSwipeEnd(event: TouchEvent | PointerEvent) {
   if (Math.abs(delta_x) < swipe_threshold) return;
   if (Math.abs(delta_x) < Math.abs(delta_y) * 1.2) return;
 
+  // Match desktop chevrons and common reader UX: swipe left → next suggestion, swipe right → back.
   if (delta_x < 0) {
-    navigateToPreviousItem();
+    navigateToSuggestedArticle("right");
     return;
   }
 
-  navigateToSuggestedArticle("right");
+  navigateToPreviousItem();
 }
 
 async function prefetchSuggestion(article = active_suggestion.value) {
