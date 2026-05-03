@@ -9,7 +9,7 @@ onMounted(() => {
   authStore.value = useAuthStore();
 });
 
-const pages: {name: string; route: string; external?: boolean}[] = [
+const pages: { name: string; route: string; external?: boolean }[] = [
   {
     name: "Articles",
     route: routes.articles.list,
@@ -24,9 +24,6 @@ const pages: {name: string; route: string; external?: boolean}[] = [
     external: true,
   },
 ];
-
-
-
 </script>
 
 <template>
@@ -35,15 +32,23 @@ const pages: {name: string; route: string; external?: boolean}[] = [
       <AppDarkMode />
       <ClientOnly fallback-tag="span">
         <div v-if="authStore?.user?.img">
-          <img :src="'api.nwednyin.org/public/'+authStore?.user.img" alt="" />
+          <img :src="'api.nwednyin.org/public/' + authStore?.user.img" alt="" />
         </div>
       </ClientOnly>
     </div>
     <Menubar>
       <MenubarMenu class="flex justify-between">
         <div v-for="page in pages" :key="page.name">
-           <a v-if="page.external" :href="page.route" target="_blank" class="px-2">Donate</a>
-          <NuxtLink v-else :to="page.route"  class="px-2">{{ page.name }}</NuxtLink>
+          <a
+            v-if="page.external"
+            :href="page.route"
+            target="_blank"
+            class="px-2"
+            >Donate</a
+          >
+          <NuxtLink v-else :to="page.route" class="px-2">{{
+            page.name
+          }}</NuxtLink>
         </div>
       </MenubarMenu>
     </Menubar>

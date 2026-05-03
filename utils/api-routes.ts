@@ -43,7 +43,8 @@ const api_routes = {
 
       if (slug) params.set("slug", slug);
       if (terms.length) params.set("terms", terms.join(","));
-      if (excludeSlugs.length) params.set("excludeSlugs", excludeSlugs.join(","));
+      if (excludeSlugs.length)
+        params.set("excludeSlugs", excludeSlugs.join(","));
 
       return `/article/related?${params.toString()}`;
     },

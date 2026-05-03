@@ -18,7 +18,9 @@ describe("useDictStore", () => {
 
   it("fetches dictionary words with pagination query params", async () => {
     const response = {
-      words: [{ id: "word-1", term: "ụlọ", alt_spelling: null, definitions: [] }],
+      words: [
+        { id: "word-1", term: "ụlọ", alt_spelling: null, definitions: [] },
+      ],
       totalCount: 1,
       audioCount: 0,
     };
@@ -36,7 +38,12 @@ describe("useDictStore", () => {
   });
 
   it("fetches a word by id when one is provided", async () => {
-    const word = { id: "word-1", term: "ụlọ", alt_spelling: null, definitions: [] };
+    const word = {
+      id: "word-1",
+      term: "ụlọ",
+      alt_spelling: null,
+      definitions: [],
+    };
     mockedUseApiConnect.mockResolvedValueOnce(word);
 
     const store = useDictStore();
@@ -49,7 +56,12 @@ describe("useDictStore", () => {
   });
 
   it("falls back to the term route when id is empty", async () => {
-    const word = { id: "word-1", term: "ụlọ", alt_spelling: null, definitions: [] };
+    const word = {
+      id: "word-1",
+      term: "ụlọ",
+      alt_spelling: null,
+      definitions: [],
+    };
     mockedUseApiConnect.mockResolvedValueOnce(word);
 
     const store = useDictStore();
@@ -69,7 +81,12 @@ describe("useDictStore", () => {
   });
 
   it("uploads word sound as multipart form data", async () => {
-    const word = { id: "word-1", term: "ụlọ", alt_spelling: null, definitions: [] };
+    const word = {
+      id: "word-1",
+      term: "ụlọ",
+      alt_spelling: null,
+      definitions: [],
+    };
     const sound = new FormData();
     mockedUseApiConnect.mockResolvedValueOnce(word);
 

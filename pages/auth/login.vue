@@ -22,7 +22,10 @@ function handleCredentialResponse(response: CredentialResponse) {
   try {
     is_loading.value = true;
     const authStore = useAuthStore();
-    authStore.authWithGoogle({ token: response.credential }, route.query.redirect as string);
+    authStore.authWithGoogle(
+      { token: response.credential },
+      route.query.redirect as string,
+    );
   } catch (error) {
     toast({
       title: "Authentication failed",

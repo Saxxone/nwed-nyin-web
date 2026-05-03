@@ -60,7 +60,10 @@ async function getMarkdownFile(path: string) {
 
 onMounted(async () => {
   is_loading.value = true;
-  await Promise.all([getArticleMeta(slug.value), getMarkdownFile(slug.value + ".md")]);
+  await Promise.all([
+    getArticleMeta(slug.value),
+    getMarkdownFile(slug.value + ".md"),
+  ]);
   is_loading.value = false;
 });
 
@@ -188,13 +191,16 @@ const show_floating_article_back = computed(() => !hero_visible.value);
       ></div>
 
       <div v-else class="py-16 text-center">
-        <p class="text-base font-semibold text-main">Article content is not available.</p>
-        <p class="mt-2 text-sm text-muted">Please try again later or edit this article.</p>
+        <p class="text-base font-semibold text-main">
+          Article content is not available.
+        </p>
+        <p class="mt-2 text-sm text-muted">
+          Please try again later or edit this article.
+        </p>
       </div>
     </section>
   </main>
 </template>
-
 
 <style lang="postcss">
 .article-view {

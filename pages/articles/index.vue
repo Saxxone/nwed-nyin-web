@@ -19,13 +19,16 @@ definePageMeta({
 });
 
 const { toast } = useToast();
-const articles_feed_state = useState<ArticlesFeedState>("articles-feed-state", () => ({
-  articles: [],
-  hasMoreArticles: true,
-  imageUrls: {},
-  scrollTop: 0,
-  searchQuery: "",
-}));
+const articles_feed_state = useState<ArticlesFeedState>(
+  "articles-feed-state",
+  () => ({
+    articles: [],
+    hasMoreArticles: true,
+    imageUrls: {},
+    scrollTop: 0,
+    searchQuery: "",
+  }),
+);
 const is_loading = ref(false);
 const is_loading_more = ref(false);
 const has_more_articles = ref(articles_feed_state.value.hasMoreArticles);
@@ -35,7 +38,9 @@ const api_url = import.meta.env.VITE_API_BASE_URL;
 const articleStore = useArticleStore();
 const search_query = ref(articles_feed_state.value.searchQuery);
 const is_mobile_search_open = ref(false);
-const sanitized_content = ref<Article[]>([...articles_feed_state.value.articles]);
+const sanitized_content = ref<Article[]>([
+  ...articles_feed_state.value.articles,
+]);
 const article_image_urls = ref<Record<string, string | null>>({
   ...articles_feed_state.value.imageUrls,
 });
@@ -554,7 +559,9 @@ onBeforeUnmount(() => {
           class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(145deg,rgba(255,255,255,0.52),rgba(255,255,255,0.08)_46%,rgba(15,23,42,0.08))] backdrop-blur-sm dark:bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(17,24,39,0.2)_46%,rgba(0,0,0,0.28))]"
         ></div>
 
-        <article class="relative mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-5">
+        <article
+          class="relative mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-5"
+        >
           <h2
             class="min-w-0 break-words text-4xl font-extrabold capitalize leading-tight [overflow-wrap:anywhere] lg:text-5xl"
             :class="getArticleImageUrl(article) ? 'text-white' : 'text-main'"

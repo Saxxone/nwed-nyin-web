@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles } from "lucide-vue-next";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+} from "lucide-vue-next";
 import { useArticleStore } from "~/store/articles";
 import type { SuggestedArticleSource } from "~/store/articles";
 import { useDictStore } from "~/store/dictionary";
@@ -36,7 +41,10 @@ const props = withDefaults(
 const route = useRoute();
 const articleStore = useArticleStore();
 const dictStore = useDictStore();
-const viewed_items = useState<{ key: string; path: string }[]>("article-swipe-viewed-items", () => []);
+const viewed_items = useState<{ key: string; path: string }[]>(
+  "article-swipe-viewed-items",
+  () => [],
+);
 const suggestions = ref<SwipeSuggestion[]>([]);
 const suggestion_index = ref(0);
 const is_loading = ref(false);
@@ -51,13 +59,25 @@ const active_suggestion = computed(() => {
   return suggestions.value[suggestion_index.value % suggestions.value.length];
 });
 
-const suggestion_kicker = computed(() => (props.source === "article" ? "related article" : "Learn something new"));
+const suggestion_kicker = computed(() =>
+  props.source === "article" ? "related article" : "Learn something new",
+);
 
-const swipe_nav_region_label = computed(() => (props.source === "article" ? "Article suggestion navigation" : "Word suggestion navigation"));
+const swipe_nav_region_label = computed(() =>
+  props.source === "article"
+    ? "Article suggestion navigation"
+    : "Word suggestion navigation",
+);
 
-const next_suggestion_aria = computed(() => (props.source === "article" ? "Open suggested article" : "Open suggested word"));
+const next_suggestion_aria = computed(() =>
+  props.source === "article" ? "Open suggested article" : "Open suggested word",
+);
 
-const previous_item_aria = computed(() => (props.source === "article" ? "Return to the article you were just reading" : "Return to the word you were just reading"));
+const previous_item_aria = computed(() =>
+  props.source === "article"
+    ? "Return to the article you were just reading"
+    : "Return to the word you were just reading",
+);
 
 const current_item_key = computed(() => {
   if (props.source === "article" && props.currentSlug) {
@@ -68,14 +88,20 @@ const current_item_key = computed(() => {
 });
 const can_go_previous = computed(() => viewed_items.value.length > 1);
 const viewed_article_slugs = computed(() => {
-  return viewed_items.value.map((item) => item.key.match(/^article:(.+)$/)?.[1]).filter((slug): slug is string => Boolean(slug));
+  return viewed_items.value
+    .map((item) => item.key.match(/^article:(.+)$/)?.[1])
+    .filter((slug): slug is string => Boolean(slug));
 });
 const viewed_item_paths = computed(() => {
   return new Set(viewed_items.value.map((item) => item.path));
 });
 
 const normalized_terms = computed(() => {
-  return Array.from(new Set(props.terms.map((term) => term.trim()).filter((term) => term.length >= 2)));
+  return Array.from(
+    new Set(
+      props.terms.map((term) => term.trim()).filter((term) => term.length >= 2),
+    ),
+  );
 });
 
 function getPoint(event: TouchEvent | PointerEvent) {
@@ -91,7 +117,11 @@ function startedOnControl(event: Event) {
   const target = event.target;
   if (!(target instanceof Element)) return false;
 
-  return Boolean(target.closest("button, input, textarea, select, [contenteditable='true'], .article-swipe-controls"));
+  return Boolean(
+    target.closest(
+      "button, input, textarea, select, [contenteditable='true'], .article-swipe-controls",
+    ),
+  );
 }
 
 function handleSwipeStart(event: TouchEvent | PointerEvent) {
@@ -180,13 +210,25 @@ async function getArticleSuggestions() {
     take: 5,
   });
 
-  suggestions.value = articles.map(articleToSuggestion).filter((suggestion): suggestion is SwipeSuggestion => {
-    return Boolean(suggestion && suggestion.articleSlug !== props.currentSlug && !viewed_item_paths.value.has(suggestion.path));
-  });
+  suggestions.value = articles
+    .map(articleToSuggestion)
+    .filter((suggestion): suggestion is SwipeSuggestion => {
+      return Boolean(
+        suggestion &&
+          suggestion.articleSlug !== props.currentSlug &&
+          !viewed_item_paths.value.has(suggestion.path),
+      );
+    });
 }
 
 async function getWordSuggestions() {
-  const searched_words = (await Promise.all(normalized_terms.value.slice(0, 5).map((term) => dictStore.searchWord(term)))).flat();
+  const searched_words = (
+    await Promise.all(
+      normalized_terms.value
+        .slice(0, 5)
+        .map((term) => dictStore.searchWord(term)),
+    )
+  ).flat();
   const seen_keys = new Set<string>();
   const buildSuggestions = (words: Word[]) =>
     words
@@ -206,7 +248,9 @@ async function getWordSuggestions() {
   if (suggestions.value.length > 0) return;
 
   seen_keys.clear();
-  const fallback_words = (await dictStore.fetchWords({ take: 25, skip: viewed_items.value.length })).words;
+  const fallback_words = (
+    await dictStore.fetchWords({ take: 25, skip: viewed_items.value.length })
+  ).words;
 
   suggestions.value = fallback_words
     .map(wordToSuggestion)
@@ -248,9 +292,14 @@ function rememberCurrentItem() {
 
   if (last_item?.key === key) return;
 
-  const existing_index = viewed_items.value.findIndex((item) => item.key === key);
+  const existing_index = viewed_items.value.findIndex(
+    (item) => item.key === key,
+  );
 
-  viewed_items.value = existing_index >= 0 ? viewed_items.value.slice(0, existing_index + 1) : [...viewed_items.value, { key, path: route.fullPath }];
+  viewed_items.value =
+    existing_index >= 0
+      ? viewed_items.value.slice(0, existing_index + 1)
+      : [...viewed_items.value, { key, path: route.fullPath }];
 }
 
 function navigateToPreviousItem() {
@@ -315,20 +364,23 @@ onBeforeUnmount(() => {
       type="button"
       class="pointer-events-auto fixed left-4 top-24 inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-base-white/95 text-main shadow-lg backdrop-blur transition hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 dark:border-gray-700 dark:focus-visible:ring-gray-100 sm:left-6"
       aria-label="Go back"
-      @click="goBack">
+      @click="goBack"
+    >
       <ArrowLeft class="h-5 w-5" aria-hidden="true" />
     </button>
 
     <div
       v-if="active_suggestion || can_go_previous"
       class="pointer-events-none fixed inset-y-0 left-0 right-0 hidden items-center justify-between px-5 lg:flex xl:px-8"
-      :aria-label="swipe_nav_region_label">
+      :aria-label="swipe_nav_region_label"
+    >
       <button
         type="button"
         class="pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-base-white/95 text-main shadow-lg backdrop-blur transition hover:-translate-x-0.5 hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:focus-visible:ring-gray-100"
         :disabled="is_loading || is_animating || !can_go_previous"
         :aria-label="previous_item_aria"
-        @click="navigateToPreviousItem">
+        @click="navigateToPreviousItem"
+      >
         <ChevronLeft class="h-6 w-6" aria-hidden="true" />
       </button>
 
@@ -337,7 +389,8 @@ onBeforeUnmount(() => {
         class="pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-base-white/95 text-main shadow-lg backdrop-blur transition hover:translate-x-0.5 hover:bg-base-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:focus-visible:ring-gray-100"
         :disabled="is_loading || is_animating || !active_suggestion"
         :aria-label="next_suggestion_aria"
-        @click="navigateToSuggestedArticle('right')">
+        @click="navigateToSuggestedArticle('right')"
+      >
         <ChevronRight class="h-6 w-6" aria-hidden="true" />
       </button>
     </div>
@@ -352,12 +405,17 @@ onBeforeUnmount(() => {
         'swipe-suggestion--right': is_animating && swipe_direction === 'right',
       }"
       :disabled="is_loading || is_animating"
-      @click="navigateToSuggestedArticle('right')">
-      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900">
+      @click="navigateToSuggestedArticle('right')"
+    >
+      <span
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+      >
         <Sparkles class="h-5 w-5" aria-hidden="true" />
       </span>
       <span class="min-w-0">
-        <span class="block text-xs font-semibold uppercase tracking-wide text-muted">
+        <span
+          class="block text-xs font-semibold uppercase tracking-wide text-muted"
+        >
           {{ suggestion_kicker }}
         </span>
         <span class="block truncate text-sm font-semibold capitalize text-main">

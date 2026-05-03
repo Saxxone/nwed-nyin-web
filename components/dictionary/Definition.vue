@@ -10,7 +10,6 @@ interface Props {
 
 const emit = defineEmits(["cursor"]);
 
-
 const { toast } = useToast();
 const props = defineProps<Props>();
 const dictStore = useDictStore();
@@ -64,7 +63,6 @@ async function downloadAndPlaySound(path: string) {
   }
 }
 
-
 function handleIntersection(entries: IntersectionObserverEntry[]) {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
@@ -88,7 +86,7 @@ onMounted(async () => {
 
 <template>
   <NuxtLink
-:id="props.word.id"
+    :id="props.word.id"
     :to="`${routes.dictionary.view(encodeURI(props.word.term), encodeURI(props.word.id as string))}`"
     class="card mb-4 block max-w-full min-w-0 w-full rounded-lg border text-sm word-wrap break-words [overflow-wrap:anywhere]"
   >
@@ -133,10 +131,14 @@ onMounted(async () => {
     <div>
       <div v-for="(definition, index) in props.word.definitions" class="mb-4">
         <div v-if="props.more || index === 0">
-          <p class="break-words text-xs italic text-muted [overflow-wrap:anywhere]">
+          <p
+            class="break-words text-xs italic text-muted [overflow-wrap:anywhere]"
+          >
             {{ index + 1 }}. {{ definition.part_of_speech.name }}
           </p>
-          <p class="break-words [overflow-wrap:anywhere]">{{ definition.meaning }}</p>
+          <p class="break-words [overflow-wrap:anywhere]">
+            {{ definition.meaning }}
+          </p>
           <div v-if="definition.examples.length > 0" class="my-1">
             <h6 class="text-xs mt-2 text-muted">Examples:</h6>
 

@@ -70,7 +70,9 @@ async function getDictionaryItems() {
       totalCount: total_count,
       audioCount,
     } = await dictStore.fetchWords({
-      cursor: (route.query.cursor as string) ?? words.value[words.value.length - 1]?.id,
+      cursor:
+        (route.query.cursor as string) ??
+        words.value[words.value.length - 1]?.id,
       skip: 0,
       take: take.value,
     });
@@ -89,7 +91,11 @@ async function getDictionaryItems() {
 async function jumpToAlphabet(alphabet: string) {
   is_loading.value = true;
   try {
-    const { words: dictionary, totalCount: total_count, audioCount } = await dictStore.jumpToAlphabet(alphabet);
+    const {
+      words: dictionary,
+      totalCount: total_count,
+      audioCount,
+    } = await dictStore.jumpToAlphabet(alphabet);
     count.value = total_count;
     audio_count.value = audioCount;
     words.value = dictionary;
@@ -162,7 +168,9 @@ definePageMeta({
 
 <template>
   <main class="w-full min-w-0">
-    <div class="relative flex min-w-0 flex-wrap items-start justify-between gap-3">
+    <div
+      class="relative flex min-w-0 flex-wrap items-start justify-between gap-3"
+    >
       <div class="mb-4 min-w-0">
         <h1
           class="min-w-0 break-words text-4xl font-extrabold tracking-tight [overflow-wrap:anywhere] lg:text-2xl"
@@ -170,12 +178,20 @@ definePageMeta({
           Dictionary
         </h1>
       </div>
-      <NuxtLink class="shrink-0" :to="app_routes.dictionary.add">Contribute</NuxtLink>
+      <NuxtLink class="shrink-0" :to="app_routes.dictionary.add"
+        >Contribute</NuxtLink
+      >
     </div>
     <div class="relative z-20 flex min-w-0 justify-end gap-4">
       <div class="min-w-0 max-w-full">
         <form @submit.prevent="search">
-          <input v-model="query" class="input" type="search" placeholder="Search..." @keydown.enter="search" />
+          <input
+            v-model="query"
+            class="input"
+            type="search"
+            placeholder="Search..."
+            @keydown.enter="search"
+          />
         </form>
         <div
           v-if="search_results.length > 0"
@@ -186,21 +202,34 @@ definePageMeta({
             v-for="word in search_results"
             :key="word.id + 'search'"
             :to="`${routes.dictionary.view(encodeURI(word.term), encodeURI(word.id as string))}`"
-            class="block max-w-full min-w-0 border-b border-gray-100 p-4 last:border-b-0 dark:border-gray-800">
-            <div class="break-words font-medium [overflow-wrap:anywhere]">{{ word.term }}</div>
+            class="block max-w-full min-w-0 border-b border-gray-100 p-4 last:border-b-0 dark:border-gray-800"
+          >
+            <div class="break-words font-medium [overflow-wrap:anywhere]">
+              {{ word.term }}
+            </div>
             <div class="mt-1 max-w-full text-sm text-muted">
-              <p class="break-words [overflow-wrap:anywhere]">{{ word.definitions[0].meaning }}</p>
+              <p class="break-words [overflow-wrap:anywhere]">
+                {{ word.definitions[0].meaning }}
+              </p>
             </div>
           </NuxtLink>
         </div>
       </div>
     </div>
 
-    <section class="relative min-w-0 max-w-full" :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }">
+    <section
+      class="relative min-w-0 max-w-full"
+      :class="{ 'opacity-25 pointer-events-none': search_results.length > 0 }"
+    >
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-' + i" />
       </div>
-      <Definition v-for="word in words" :key="word.id" :word="word" @cursor="setCursor" />
+      <Definition
+        v-for="word in words"
+        :key="word.id"
+        :word="word"
+        @cursor="setCursor"
+      />
       <WayPoints @jump="jumpToAlphabet" />
       <AppInfiniteScroll @refresh="getDictionaryItems" />
       <div v-if="is_loading" class="fixed top-24 z-50 w-full py-10 left-0">

@@ -255,7 +255,12 @@ function bindForm() {
             <IconsMicrophoneIcon width="16" height="16" />
           </NuxtLink>
         </h2>
-        <div v-for="field in form_fields" :key="field.name" :name="field.label" class="mb-4">
+        <div
+          v-for="field in form_fields"
+          :key="field.name"
+          :name="field.label"
+          class="mb-4"
+        >
           <label :for="field.name" class="mb-2">{{ field.label }}</label>
           <input
             :id="field.name"
@@ -276,7 +281,8 @@ function bindForm() {
 
         <div>
           <div
-            v-for="(_, definitionIndex) in word.definitions" :key="definitionIndex"
+            v-for="(_, definitionIndex) in word.definitions"
+            :key="definitionIndex"
             class="rounded-lg border p-4 mb-4"
           >
             <div class="flex relative mb-2">
@@ -294,7 +300,8 @@ function bindForm() {
               </div>
             </div>
             <div
-              v-for="definition in definitions" :key="definition.name"
+              v-for="definition in definitions"
+              :key="definition.name"
               name="definition.label"
               class="mb-4"
             >
@@ -363,7 +370,8 @@ function bindForm() {
                   class="input"
                 >
                   <option
-                    v-for="part_of_speech in parts_of_speech" :key="part_of_speech.id"
+                    v-for="part_of_speech in parts_of_speech"
+                    :key="part_of_speech.id"
                     :value="part_of_speech"
                   >
                     {{ part_of_speech.name }}
@@ -372,9 +380,7 @@ function bindForm() {
               </div>
               <div v-if="definition.name === 'synonyms'">
                 <div
-                  v-for="synonym in word.definitions[
-                    definitionIndex
-                  ].synonyms"
+                  v-for="synonym in word.definitions[definitionIndex].synonyms"
                   :key="synonym"
                   class="flex items-center mb-2"
                 >

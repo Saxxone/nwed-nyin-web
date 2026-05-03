@@ -1,7 +1,11 @@
 <template>
   <main class="mx-auto max-w-4xl px-4 py-10 text-main">
-    <section class="rounded-2xl border border-gray-200 bg-base-white p-6 shadow-sm dark:border-gray-800 sm:p-8">
-      <p class="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted">
+    <section
+      class="rounded-2xl border border-gray-200 bg-base-white p-6 shadow-sm dark:border-gray-800 sm:p-8"
+    >
+      <p
+        class="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted"
+      >
         Legal
       </p>
       <h1 class="text-4xl font-extrabold tracking-tight">Privacy Policy</h1>
@@ -34,7 +38,9 @@
           <li>Publish and attribute community contributions.</li>
           <li>Review, moderate, and protect knowledgebase content.</li>
           <li>Respond to support requests or user feedback.</li>
-          <li>Prevent abuse, spam, unauthorized access, and security issues.</li>
+          <li>
+            Prevent abuse, spam, unauthorized access, and security issues.
+          </li>
           <li>Understand how visitors use the website.</li>
         </ul>
 
@@ -50,16 +56,16 @@
         <p>
           We may use cookies, local storage, and similar technologies to keep
           you signed in, remember preferences, protect the service, and measure
-          site usage. You can control cookies through your browser settings,
-          but some features may not work correctly if cookies are disabled.
+          site usage. You can control cookies through your browser settings, but
+          some features may not work correctly if cookies are disabled.
         </p>
 
         <h2>How We Share Information</h2>
         <p>
           We do not sell your personal information. We may share information
-          with service providers who help us operate the site, comply with
-          legal obligations, enforce our terms, protect users, or investigate
-          abuse and security issues.
+          with service providers who help us operate the site, comply with legal
+          obligations, enforce our terms, protect users, or investigate abuse
+          and security issues.
         </p>
 
         <h2>Data Retention</h2>

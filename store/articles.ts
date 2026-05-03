@@ -91,7 +91,13 @@ export const useArticleStore = defineStore("articles", () => {
   }) {
     try {
       const response = await useApiConnect<null, Article[]>(
-        api_routes.articles.related({ source, slug, terms, excludeSlugs, take }),
+        api_routes.articles.related({
+          source,
+          slug,
+          terms,
+          excludeSlugs,
+          take,
+        }),
         FetchMethod.GET,
       );
 
@@ -170,10 +176,10 @@ export const useArticleStore = defineStore("articles", () => {
 
   async function fetchArticleRevisions(article_id: string) {
     try {
-      const response = await useApiConnect<
-        undefined,
-        ArticleRevision[]
-      >(api_routes.articles.revisions(article_id), FetchMethod.GET);
+      const response = await useApiConnect<undefined, ArticleRevision[]>(
+        api_routes.articles.revisions(article_id),
+        FetchMethod.GET,
+      );
 
       if ("message" in response) {
         throw new Error(response.message);

@@ -18,9 +18,7 @@ export function disbaleForm() {
   });
 }
 
-
 export function enableForm() {
-  
   const inputs = ref<NodeListOf<HTMLInputElement>>();
   const buttons = ref<NodeListOf<HTMLButtonElement>>();
   inputs.value?.forEach((input) => {

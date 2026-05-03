@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
-import { useNormalizeString, disbaleForm, enableForm } from "~/composables/useUtils";
+import {
+  useNormalizeString,
+  disbaleForm,
+  enableForm,
+} from "~/composables/useUtils";
 import { useDictStore } from "~/store/dictionary";
 import { useGlobalStore } from "~/store/global";
 import type { Word } from "~/types/word";

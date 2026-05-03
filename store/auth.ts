@@ -20,7 +20,10 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       userData,
     );
-    if (("status" in response || "statusCode" in response) && "message" in response) {
+    if (
+      ("status" in response || "statusCode" in response) &&
+      "message" in response
+    ) {
       toast({
         title: response.message,
         description: "Invalid credentials",
@@ -40,7 +43,10 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       loginData,
     );
-    if (("status" in response || "statusCode" in response) && "message" in response) {
+    if (
+      ("status" in response || "statusCode" in response) &&
+      "message" in response
+    ) {
       toast({
         title: response.message,
         description: "Invalid credentials",
@@ -59,7 +65,10 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.GET,
     );
 
-    if (("status" in response || "statusCode" in response) && "message" in response) {
+    if (
+      ("status" in response || "statusCode" in response) &&
+      "message" in response
+    ) {
       toast({
         title: response.message,
         description: "User not found",
@@ -80,7 +89,10 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       credential,
     );
-    if (("status" in response || "statusCode" in response) && "message" in response) {
+    if (
+      ("status" in response || "statusCode" in response) &&
+      "message" in response
+    ) {
       logout();
       toast({
         title: response.message,

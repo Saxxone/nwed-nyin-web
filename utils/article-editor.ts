@@ -11,7 +11,12 @@ export type DraftStorageKeys = {
   content: string;
 };
 
-export type ArticleImagePosition = "center" | "left" | "right" | "wide" | "full";
+export type ArticleImagePosition =
+  | "center"
+  | "left"
+  | "right"
+  | "wide"
+  | "full";
 
 export type UploadedArticleFileData = {
   name: string;
@@ -51,7 +56,9 @@ export function normalizeArticleImagePosition(
     : DEFAULT_IMAGE_POSITION;
 }
 
-export function createArticleImageMarkup(data: UploadedArticleFileData): string {
+export function createArticleImageMarkup(
+  data: UploadedArticleFileData,
+): string {
   const position = normalizeArticleImagePosition(data.position);
   const alt_text = data.description.trim() || data.name.trim();
   const caption = data.name.trim();
@@ -64,7 +71,8 @@ export function createArticleImageMarkup(data: UploadedArticleFileData): string 
     )}" loading="lazy" decoding="async">`,
   ];
 
-  if (caption) lines.push(`  <figcaption>${escapeHtmlText(caption)}</figcaption>`);
+  if (caption)
+    lines.push(`  <figcaption>${escapeHtmlText(caption)}</figcaption>`);
 
   lines.push("</figure>", "");
   return lines.join("\n");

@@ -1,7 +1,11 @@
 <template>
   <main class="mx-auto max-w-4xl px-4 py-10 text-main">
-    <section class="rounded-2xl border border-gray-200 bg-base-white p-6 shadow-sm dark:border-gray-800 sm:p-8">
-      <p class="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted">
+    <section
+      class="rounded-2xl border border-gray-200 bg-base-white p-6 shadow-sm dark:border-gray-800 sm:p-8"
+    >
+      <p
+        class="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted"
+      >
         Legal
       </p>
       <h1 class="text-4xl font-extrabold tracking-tight">Terms of Service</h1>
@@ -16,10 +20,10 @@
 
         <h2>Use Of The Service</h2>
         <p>
-          You may use Nwed Nyin for lawful learning, research, contribution,
-          and community knowledgebase purposes. You agree not to misuse the
-          service, interfere with its operation, attempt unauthorized access, or
-          use it in a way that harms other users or the project.
+          You may use Nwed Nyin for lawful learning, research, contribution, and
+          community knowledgebase purposes. You agree not to misuse the service,
+          interfere with its operation, attempt unauthorized access, or use it
+          in a way that harms other users or the project.
         </p>
 
         <h2>Accounts</h2>
@@ -38,8 +42,14 @@
         </p>
         <p>You agree not to submit content that:</p>
         <ul>
-          <li>Violates another person's rights, including copyright or privacy rights.</li>
-          <li>Contains unlawful, abusive, hateful, harassing, or misleading material.</li>
+          <li>
+            Violates another person's rights, including copyright or privacy
+            rights.
+          </li>
+          <li>
+            Contains unlawful, abusive, hateful, harassing, or misleading
+            material.
+          </li>
           <li>Includes malware, spam, or attempts to disrupt the service.</li>
           <li>Contains private or sensitive information without permission.</li>
         </ul>

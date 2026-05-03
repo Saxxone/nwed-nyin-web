@@ -21,13 +21,14 @@ const form = ref({
   position: "center" as ArticleImagePosition,
 });
 
-const image_position_options: { label: string; value: ArticleImagePosition }[] = [
-  { label: "Centered", value: "center" },
-  { label: "Left aligned", value: "left" },
-  { label: "Right aligned", value: "right" },
-  { label: "Wide", value: "wide" },
-  { label: "Full width", value: "full" },
-];
+const image_position_options: { label: string; value: ArticleImagePosition }[] =
+  [
+    { label: "Centered", value: "center" },
+    { label: "Left aligned", value: "left" },
+    { label: "Right aligned", value: "right" },
+    { label: "Wide", value: "wide" },
+    { label: "Full width", value: "full" },
+  ];
 
 function resolveUploadedFileUrl(path?: string) {
   if (!path) return "";

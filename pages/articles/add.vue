@@ -103,7 +103,9 @@ function revision_snapshot_fields(rev: ArticleRevision | undefined) {
 }
 
 const selected_article_revision = computed(() =>
-  article_revisions.value.find((r) => r.id === selected_article_revision_id.value),
+  article_revisions.value.find(
+    (r) => r.id === selected_article_revision_id.value,
+  ),
 );
 
 async function load_article_revisions() {
@@ -735,18 +737,15 @@ onUnmounted(() => {
         <DialogHeader>
           <DialogTitle>Revision history</DialogTitle>
           <DialogDescription>
-            Saved snapshots from the server (read-only). Compare markdown before a
-            major edit if needed—restoring a version still requires copying into the
-            editor.
+            Saved snapshots from the server (read-only). Compare markdown before
+            a major edit if needed—restoring a version still requires copying
+            into the editor.
           </DialogDescription>
         </DialogHeader>
 
         <div class="grid min-h-[50vh] gap-6 md:grid-cols-[12rem,minmax(0,1fr)]">
           <div class="min-w-0">
-            <p
-              v-if="revisions_loading"
-              class="text-muted-foreground text-sm"
-            >
+            <p v-if="revisions_loading" class="text-muted-foreground text-sm">
               Loading revisions…
             </p>
             <p
@@ -762,7 +761,8 @@ onUnmounted(() => {
                   type="button"
                   class="hover:bg-accent w-full rounded-md border px-2 py-2 text-left transition-colors"
                   :class="{
-                    'border-primary bg-accent': rev.id === selected_article_revision_id,
+                    'border-primary bg-accent':
+                      rev.id === selected_article_revision_id,
                     'border-border': rev.id !== selected_article_revision_id,
                   }"
                   @click="selected_article_revision_id = rev.id"
