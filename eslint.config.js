@@ -1,11 +1,10 @@
 import js from "@eslint/js";
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import typescriptParser from "@typescript-eslint/parser";
 import prettier from "eslint-config-prettier";
 import vue from "eslint-plugin-vue";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
-export default [
+export default tseslint.config(
   {
     ignores: [
       ".nuxt/**",
@@ -48,10 +47,14 @@ export default [
   {
     files: ["**/*.ts"],
     languageOptions: {
-      parser: typescriptParser,
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
     },
     plugins: {
-      "@typescript-eslint": typescriptEslint,
+      "@typescript-eslint": tseslint.plugin,
     },
     rules: {
       "@typescript-eslint/no-unused-vars": [
@@ -68,14 +71,14 @@ export default [
     files: ["**/*.vue"],
     languageOptions: {
       parserOptions: {
-        parser: typescriptParser,
+        parser: tseslint.parser,
         extraFileExtensions: [".vue"],
         ecmaVersion: "latest",
         sourceType: "module",
       },
     },
     plugins: {
-      "@typescript-eslint": typescriptEslint,
+      "@typescript-eslint": tseslint.plugin,
     },
     rules: {
       "@typescript-eslint/no-unused-vars": [
@@ -89,4 +92,4 @@ export default [
     },
   },
   prettier,
-];
+);
