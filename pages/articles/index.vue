@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useToast } from "@/components/ui/toast/use-toast";
-import DOMPurify from "dompurify";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-vue-next";
-import { marked } from "marked";
 import type { ComponentPublicInstance } from "vue";
 import { useArticleStore } from "~/store/articles";
 import type { Article } from "~/types/article";
@@ -54,21 +52,6 @@ const show_mobile_search = computed(
   () => is_mobile_search_open.value || is_searching.value,
 );
 const is_restoring_feed_scroll = ref(sanitized_content.value.length > 0);
-
-async function sanitizeContent(content: string) {
-  return DOMPurify.sanitize(
-    await marked.parse(`${content || ""} ...`, { breaks: true }),
-  );
-}
-
-async function sanitizeArticles(items: Article[]) {
-  return Promise.all(
-    items.map(async (item) => ({
-      ...item,
-      summary: await sanitizeContent(item.summary as string),
-    })),
-  );
-}
 
 function getArticleImages(article: Article) {
   return (
@@ -178,11 +161,9 @@ async function getArticles({ append = false } = {}) {
           skip,
           take: page_size,
         });
-    const sanitized_items = await sanitizeArticles(items);
-
     sanitized_content.value = append
-      ? [...sanitized_content.value, ...sanitized_items]
-      : sanitized_items;
+      ? [...sanitized_content.value, ...items]
+      : items;
     has_more_articles.value = items.length === page_size;
     saveFeedState();
   } catch (error) {
@@ -409,8 +390,9 @@ onBeforeUnmount(() => {
             </p>
             <div
               class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden text-xs text-muted dark:prose-invert"
-              v-html="article.summary"
-            ></div>
+            >
+              {{ article.summary }}
+            </div>
           </NuxtLink>
 
           <div
@@ -487,8 +469,9 @@ onBeforeUnmount(() => {
           </p>
           <div
             class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden text-xs text-muted dark:prose-invert"
-            v-html="article.summary"
-          ></div>
+          >
+            {{ article.summary }}
+          </div>
         </NuxtLink>
 
         <div
@@ -575,8 +558,9 @@ onBeforeUnmount(() => {
           <div
             class="prose prose-sm max-h-56 max-w-none overflow-hidden dark:prose-invert sm:max-h-72"
             :class="getArticleImageUrl(article) ? 'text-white/85' : 'text-sub'"
-            v-html="article.summary"
-          ></div>
+          >
+            {{ article.summary }}
+          </div>
           <span
             class="w-fit rounded-full px-4 py-2 text-xs font-semibold"
             :class="
