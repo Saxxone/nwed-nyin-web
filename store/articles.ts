@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useApiConnect } from "~/composables/useApiConnect";
-import type { Article } from "~/types/article";
+import type { Article, ArticleRevision } from "~/types/article";
 import type { Pagination } from "~/types/types";
 import { FetchMethod } from "~/types/types";
 import api_routes from "~/utils/api-routes";
@@ -168,6 +168,23 @@ export const useArticleStore = defineStore("articles", () => {
     }
   }
 
+  async function fetchArticleRevisions(article_id: string) {
+    try {
+      const response = await useApiConnect<
+        undefined,
+        ArticleRevision[]
+      >(api_routes.articles.revisions(article_id), FetchMethod.GET);
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      }
+      return response;
+    } catch (error) {
+      console.error("Error fetching article revisions:", error);
+      throw error;
+    }
+  }
+
   async function searchArticles(
     query: string,
     pagination: Pagination = { skip: 0, take: 10 },
@@ -222,5 +239,6 @@ export const useArticleStore = defineStore("articles", () => {
     searchArticles,
     updateArticle,
     publishArticle,
+    fetchArticleRevisions,
   };
 });

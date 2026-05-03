@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogDescription,
+  DialogHeader,
+  DialogScrollContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast/use-toast";
 import {
   Tooltip,
@@ -11,7 +18,7 @@ import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useArticleStore } from "~/store/articles";
-import type { Article } from "~/types/article";
+import type { Article, ArticleRevision } from "~/types/article";
 import type { FormatAction } from "~/types/types";
 import {
   createArticleFileMetadata,
@@ -57,6 +64,74 @@ const parsed_article = ref({
 const articleStore = useArticleStore();
 const is_article_invalid = computed(
   () => !article.value.title.trim() || !article.value.content.trim(),
+);
+
+const revisions_dialog_open = ref(false);
+const revisions_loading = ref(false);
+const article_revisions = ref<ArticleRevision[]>([]);
+const selected_article_revision_id = ref<string | null>(null);
+
+function abbreviatedContributor(ident: string) {
+  const t = ident.trim();
+  const at = t.indexOf("@");
+  if (at <= 0 || at <= 2) return t;
+  return `${t.slice(0, 2)}…${t.slice(at)}`;
+}
+
+function format_revision_date(iso: string) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+function revision_snapshot_fields(rev: ArticleRevision | undefined) {
+  const raw = rev?.content;
+  if (!raw || typeof raw !== "object") {
+    return { title: "", summary: "", markdown: "" };
+  }
+  const c = raw as Record<string, unknown>;
+  return {
+    title: typeof c.title === "string" ? c.title : "",
+    summary: typeof c.summary === "string" ? c.summary : "",
+    markdown: typeof c.markdown === "string" ? c.markdown : "",
+  };
+}
+
+const selected_article_revision = computed(() =>
+  article_revisions.value.find((r) => r.id === selected_article_revision_id.value),
+);
+
+async function load_article_revisions() {
+  if (!article.value.id) return;
+
+  revisions_loading.value = true;
+  try {
+    const list = await articleStore.fetchArticleRevisions(article.value.id);
+    article_revisions.value = list;
+    selected_article_revision_id.value = list[0]?.id ?? null;
+  } catch (error) {
+    toast({
+      title: "Could not load revisions",
+      description: getErrorMessage(error),
+    });
+    article_revisions.value = [];
+    selected_article_revision_id.value = null;
+  } finally {
+    revisions_loading.value = false;
+  }
+}
+
+watch(revisions_dialog_open, (open) => {
+  if (open && article.value.id) void load_article_revisions();
+});
+
+const revision_preview_snapshot = computed(() =>
+  revision_snapshot_fields(selected_article_revision.value),
 );
 
 const actions: FormatAction[] = [
@@ -611,8 +686,17 @@ onUnmounted(() => {
       <!-- Preview -->
       <div class="min-w-0 lg:col-span-6">
         <div
-          class="bg-base-white/95 sticky bottom-2 z-30 mb-4 flex items-center justify-stretch gap-x-2 rounded-lg p-2 shadow-sm backdrop-blur sm:static sm:mb-10 sm:justify-end sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+          class="bg-base-white/95 sticky bottom-2 z-30 mb-4 flex w-full flex-wrap items-center gap-2 justify-end rounded-lg p-2 shadow-sm backdrop-blur sm:static sm:mb-10 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
         >
+          <Button
+            v-if="article.id"
+            variant="outline"
+            :disabled="is_loading"
+            class="w-full sm:mr-auto sm:w-auto"
+            @click="revisions_dialog_open = true"
+          >
+            Revision history
+          </Button>
           <Button
             v-if="!article.id"
             :disabled="is_loading || is_article_invalid"
@@ -643,5 +727,90 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <Dialog v-model:open="revisions_dialog_open">
+      <DialogScrollContent
+        class="max-h-[90vh] max-w-[min(100vw-2rem,56rem)] gap-6"
+      >
+        <DialogHeader>
+          <DialogTitle>Revision history</DialogTitle>
+          <DialogDescription>
+            Saved snapshots from the server (read-only). Compare markdown before a
+            major edit if needed—restoring a version still requires copying into the
+            editor.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="grid min-h-[50vh] gap-6 md:grid-cols-[12rem,minmax(0,1fr)]">
+          <div class="min-w-0">
+            <p
+              v-if="revisions_loading"
+              class="text-muted-foreground text-sm"
+            >
+              Loading revisions…
+            </p>
+            <p
+              v-else-if="!article_revisions.length"
+              class="text-muted-foreground text-sm"
+            >
+              No revisions recorded yet—save markdown once to capture the first
+              snapshot.
+            </p>
+            <ul v-else class="space-y-1 text-sm">
+              <li v-for="rev in article_revisions" :key="rev.id">
+                <button
+                  type="button"
+                  class="hover:bg-accent w-full rounded-md border px-2 py-2 text-left transition-colors"
+                  :class="{
+                    'border-primary bg-accent': rev.id === selected_article_revision_id,
+                    'border-border': rev.id !== selected_article_revision_id,
+                  }"
+                  @click="selected_article_revision_id = rev.id"
+                >
+                  <span class="font-medium">v{{ rev.version }}</span>
+                  <span class="block text-xs opacity-80">{{
+                    format_revision_date(rev.created_at)
+                  }}</span>
+                  <span class="text-muted-foreground block text-xs">{{
+                    abbreviatedContributor(rev.created_by)
+                  }}</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div
+            class="border-border flex min-h-0 min-w-0 flex-col gap-2 border-t pt-4 md:border-t-0 md:border-l md:pl-4 md:pt-0"
+          >
+            <template v-if="selected_article_revision">
+              <div
+                v-if="revision_preview_snapshot.title"
+                class="text-base font-semibold leading-tight break-words"
+              >
+                {{ revision_preview_snapshot.title }}
+              </div>
+              <p
+                v-if="revision_preview_snapshot.summary"
+                class="text-muted-foreground text-xs break-words"
+              >
+                {{ revision_preview_snapshot.summary }}
+              </p>
+              <textarea
+                readonly
+                class="bg-muted/40 font-mono text-xs leading-relaxed whitespace-pre-wrap sm:text-sm shrink min-h-[40vh] w-full resize-y rounded-md border px-3 py-2 outline-none md:min-h-[50vh]"
+                :value="revision_preview_snapshot.markdown"
+                aria-label="Revision markdown preview"
+              />
+            </template>
+            <p
+              v-else-if="!revisions_loading"
+              class="text-muted-foreground text-sm"
+            >
+              Select a revision to preview its markdown.
+            </p>
+          </div>
+        </div>
+      </DialogScrollContent>
+    </Dialog>
   </main>
 </template>

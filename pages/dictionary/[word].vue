@@ -17,11 +17,7 @@ const word_suggestion_terms = computed(() => {
   return [
     word.value.term,
     word.value.alt_spelling,
-    ...word.value.definitions.flatMap((definition) => [
-      definition.meaning,
-      ...definition.synonyms.map((synonym) => synonym.synonym),
-      ...definition.antonyms.map((antonym) => antonym.antonym),
-    ]),
+    ...word.value.definitions.map((definition) => definition.meaning),
   ].filter((term): term is string => Boolean(term?.trim()));
 });
 

@@ -36,19 +36,6 @@ const reading_time = computed(() => {
 
   return `${Math.max(1, Math.ceil(word_count / 200))} min read`;
 });
-const article_suggestion_terms = computed(() => {
-  const keywords = article.value.metadata?.keywords;
-  const keyword_terms = Array.isArray(keywords)
-    ? keywords.filter((keyword): keyword is string => typeof keyword === "string")
-    : [];
-
-  return [
-    ...(article.value.categories ?? []),
-    ...(article.value.tags ?? []),
-    ...keyword_terms,
-  ].filter((term): term is string => Boolean(term?.trim()));
-});
-
 async function getArticleMeta(slug: string) {
   try {
     article.value = await articleStore.fetchArticle(slug);
@@ -114,7 +101,6 @@ const show_floating_article_back = computed(() => !hero_visible.value);
     <SuggestedArticleSwipe
       source="article"
       :current-slug="slug"
-      :terms="article_suggestion_terms"
       :back-to="app_routes.articles.list"
       :show-floating-back="show_floating_article_back"
     />

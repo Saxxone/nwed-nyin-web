@@ -17,7 +17,8 @@ const api_routes = {
     getMarkdown: (path: string) => `/article/markdown?path=${path}`,
     publish: `/article/publish`,
     add: "/article/add",
-    update: (slug: string) => `/article/update/${slug}`,
+    update: (id: string) => `/article/update/${id}`,
+    revisions: (id: string) => `/article/revisions/${id}`,
     search: (query: string, skip: number = 0, take: number = 10) =>
       `/article/search?term=${encodeURIComponent(
         query,

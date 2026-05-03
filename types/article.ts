@@ -35,6 +35,23 @@ export interface ArticleContributor {
   img: string;
 }
 
+/** Snapshot payload from ArticleVersion.content (aligned with API). */
+export interface ArticleRevisionContent {
+  title?: string;
+  summary?: string;
+  body?: string;
+  markdown?: string;
+}
+
+export interface ArticleRevision {
+  id: string;
+  article_id: string;
+  version: number;
+  created_at: string;
+  created_by: string;
+  content: unknown;
+}
+
 export interface Article {
   id?: string;
   content: string;
