@@ -4,6 +4,20 @@ import { useGlobalStore } from "~/store/global";
 import { storeToRefs } from "pinia";
 import { FetchMethod } from "~/types/types";
 
+function normalizeApiMessage(raw: unknown, fallback: string): string {
+  if (typeof raw === "string" && raw.length) return raw;
+  if (Array.isArray(raw)) return raw.map(String).filter(Boolean).join(", ");
+  return fallback;
+}
+
+function toApiError(base: Error, patch: Partial<Error>): Error {
+  return {
+    ...base,
+    ...patch,
+    type: "error",
+  };
+}
+
 /**
  * Makes an API call using the provided parameters.
  *
@@ -59,15 +73,20 @@ export async function useApiConnect<Body, Res>(
     },
 
     async onRequestError({ response }) {
-      // handle error
-      err = {
-        message:
-          response?._data?.message ||
-          response?.statusText ||
-          "An unknown error occurred",
-        status: response?.status ?? response?._data?.statusCode ?? 500,
-        type: "error",
-      };
+      const data = response?._data;
+      const status =
+        typeof response?.status === "number"
+          ? response.status
+          : typeof data?.statusCode === "number"
+            ? data.statusCode
+            : 500;
+      err = toApiError(err, {
+        message: normalizeApiMessage(
+          data?.message,
+          response?.statusText || err.message,
+        ),
+        status,
+      });
     },
 
     async onResponse() {
@@ -78,25 +97,48 @@ export async function useApiConnect<Body, Res>(
       if (response.status === 401) {
         logout();
       }
-      err = {
-        ...err,
-        message: response.statusText,
-        status: response.status || response._data.statusCode || 500,
-      } as Error;
+      const data = response._data;
+      const status =
+        response.status ||
+        (typeof data?.statusCode === "number" ? data.statusCode : err.status);
+      err = toApiError(err, {
+        message: normalizeApiMessage(
+          data?.message,
+          response.statusText || err.message,
+        ),
+        status,
+      });
     },
-  }).catch((error) => {
+  }).catch((error: {
+    statusCode?: number;
+    status?: number;
+    statusMessage?: string;
+    data?: { statusCode?: number; message?: unknown };
+    message?: string;
+  }) => {
     console.log(error);
     if (error.statusCode === 401 || error.status === 401) {
       logout();
-      return err;
     }
-    err = { ...err, ...error.data } as Error;
+    const data =
+      error.data && typeof error.data === "object"
+        ? error.data
+        : ({} as { statusCode?: number; message?: unknown });
+    const statusFromBody =
+      typeof data.statusCode === "number" ? data.statusCode : undefined;
+    const status =
+      statusFromBody ?? error.statusCode ?? error.status ?? err.status;
+    const message = normalizeApiMessage(
+      data.message,
+      error.statusMessage || error.message || err.message,
+    );
+    err = toApiError(err, { message, status });
     return err;
   });
 
   api_loading.value = false;
 
-  if (!res) return err;
+  if (res === undefined) return err;
 
   return res;
 }

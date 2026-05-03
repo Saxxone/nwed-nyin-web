@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
     !access_token.value
   ) {
     toast({
-      title: "Invalid credentials",
+      title: "Sign in required",
       description: "Sorry, you need an account to continue",
     });
     return navigateTo(`${app_routes.auth.login}?redirect=${from.fullPath}`);

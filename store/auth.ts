@@ -1,9 +1,19 @@
 import { useToast } from "@/components/ui/toast/use-toast";
 import { useStorage } from "@vueuse/core";
-import { FetchMethod } from "~/types/types";
+import { FetchMethod, isApiError } from "~/types/types";
 import type { User } from "~/types/user";
 import api_routes from "~/utils/api-routes";
 import app_routes from "~/utils/routes";
+
+function hasBearerToken(payload: unknown): payload is User {
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    "access_token" in payload &&
+    typeof (payload as User).access_token === "string" &&
+    (payload as User).access_token.length > 0
+  );
+}
 
 export const useAuthStore = defineStore("auth", () => {
   const is_logged_in = useStorage("is_logged_in", false);
@@ -20,15 +30,12 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       userData,
     );
-    if (
-      ("status" in response || "statusCode" in response) &&
-      "message" in response
-    ) {
+    if (isApiError(response)) {
       toast({
         title: response.message,
-        description: "Invalid credentials",
+        description: "Sign up failed",
       });
-      throw new Error("Invalid credentials");
+      throw new Error(response.message);
     } else {
       goTo(app_routes.auth.login);
     }
@@ -43,13 +50,16 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       loginData,
     );
-    if (
-      ("status" in response || "statusCode" in response) &&
-      "message" in response
-    ) {
+    if (isApiError(response)) {
       toast({
         title: response.message,
-        description: "Invalid credentials",
+        description: "Sign in failed",
+      });
+      logout();
+    } else if (!hasBearerToken(response)) {
+      toast({
+        title: "Sign in failed",
+        description: "The server did not return a session token.",
       });
       logout();
     } else {
@@ -65,10 +75,7 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.GET,
     );
 
-    if (
-      ("status" in response || "statusCode" in response) &&
-      "message" in response
-    ) {
+    if (isApiError(response)) {
       toast({
         title: response.message,
         description: "User not found",
@@ -89,14 +96,16 @@ export const useAuthStore = defineStore("auth", () => {
       FetchMethod.POST,
       credential,
     );
-    if (
-      ("status" in response || "statusCode" in response) &&
-      "message" in response
-    ) {
+    if (isApiError(response)) {
       logout();
       toast({
         title: response.message,
-        description: "Invalid credentials",
+        description: "Google sign-in failed",
+      });
+    } else if (!hasBearerToken(response)) {
+      toast({
+        title: "Google sign-in failed",
+        description: "The server did not return a session token.",
       });
     } else {
       saveTokens(response, to);

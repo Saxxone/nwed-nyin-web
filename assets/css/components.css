@@ -160,25 +160,33 @@ button:disabled {
 }
 
 .article-content :where(img) {
-  @apply h-auto max-w-full rounded-xl shadow-sm;
+  @apply my-3 h-auto max-w-full rounded-xl shadow-sm sm:my-4;
   max-height: min(72vh, 620px);
   object-fit: contain;
 }
 
 .article-content :where(p:has(> img:only-child)) {
-  @apply my-8 text-center;
+  @apply my-8 px-2 text-center sm:px-3;
 }
 
 .article-content :where(p > img:only-child) {
-  @apply mx-auto block;
+  @apply mx-auto my-3 block max-w-full sm:my-4;
 }
 
 .article-content :where(.article-image) {
   @apply clear-both my-8;
 }
 
+/* Inset wide/center/full figures from column edges; floated L/R rely on margins to text instead. */
+.article-content
+  :where(
+    .article-image:not(.article-image--left):not(.article-image--right)
+  ) {
+  @apply px-2 sm:px-3;
+}
+
 .article-content :where(.article-image img) {
-  @apply mx-auto block w-auto;
+  @apply mx-auto my-0 block w-auto;
 }
 
 .article-content :where(.article-image figcaption) {

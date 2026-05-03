@@ -39,6 +39,15 @@ export interface Error {
   type: "error";
 }
 
+/** Narrow return type from `useApiConnect` (and similar) to the error branch. */
+export function isApiError(value: unknown): value is Error {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as Error).type === "error"
+  );
+}
+
 export interface Snack {
   title?: string | null;
   type: "error" | "info" | "warning" | "success";

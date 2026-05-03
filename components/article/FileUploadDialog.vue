@@ -7,9 +7,54 @@ import type { ArticleImagePosition } from "~/utils/article-editor";
 /** Align with Multer `FILE_SIZE_LIMIT` in `nwed-nyin-api/src/file/file.controller.ts`. */
 const MAX_UPLOAD_BYTES = 1024 * 1024;
 
+/** Base name without the last path segment dot-suffix (e.g. `photo.jpg` → `photo`). */
+function fileNameStem(filename: string): string {
+  const base = filename.trim();
+  const stem = base.replace(/\.[^/.]+$/, "").trim();
+  return stem || base;
+}
+
+function multipartExtension(filename: string): string {
+  return /\.[^/.]+$/.exec(filename.trim())?.[0] ?? "";
+}
+
+/** Avoid path/control characters so Multer/originalname stay predictable. */
+function sanitizeMultipartStem(raw: string): string {
+  return raw
+    .trim()
+    .replace(/[\x00-\x1f/\\:*?"<>|]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-.]+|[-.]+$/g, "")
+    .trim();
+}
+
+/**
+ * Stem stored on disk/multipart — uses edited name field, stripping a trailing extension
+ * that matches the file so users can type either `Vacation` or `Vacation.jpg`.
+ */
+function uploadStemFromEditedName(edited_name: string, file: File): string {
+  const ext = multipartExtension(file.name);
+  let base = edited_name.trim();
+  if (ext && base.toLowerCase().endsWith(ext.toLowerCase())) {
+    base = base.slice(0, -ext.length).trim();
+  }
+  const stem = sanitizeMultipartStem(base);
+  const fallback = fileNameStem(file.name) || "file";
+  return stem || fallback;
+}
+
+function fileWithMultipartFilename(blob_file: File, edited_display_name: string): File {
+  const ext = multipartExtension(blob_file.name);
+  const stem = uploadStemFromEditedName(edited_display_name, blob_file);
+  return new File([blob_file], `${stem}${ext}`, {
+    type: blob_file.type,
+    lastModified: blob_file.lastModified,
+  });
+}
+
 /** `browser-image-compression` often returns a Blob; Multer/Sharp need a real filename + extension. */
 function toUploadableImageFile(blob: Blob, source_name: string): File {
-  const stem = source_name.replace(/\.[^/.]+$/, "").trim() || "image";
+  const stem = fileNameStem(source_name) || "image";
   const mime = blob.type && blob.type.startsWith("image/")
     ? blob.type
     : "image/jpeg";
@@ -62,7 +107,11 @@ async function upload() {
   if (!compressed_file.value) return;
 
   try {
-    const response = await globalStore.uploadFiles([compressed_file.value]);
+    const file_for_upload = fileWithMultipartFilename(
+      compressed_file.value,
+      form.value.name,
+    );
+    const response = await globalStore.uploadFiles([file_for_upload]);
     await getFileUrls(response);
     toast({
       title: `${form.value.name} uploaded successfully`,
@@ -141,7 +190,7 @@ watch(
     if (file) {
       blob_url.value = URL.createObjectURL(file);
       handleImageCompression();
-      form.value.name = file.name;
+      form.value.name = fileNameStem(file.name);
     }
   },
   { immediate: true },
@@ -187,12 +236,13 @@ onBeforeUnmount(() => {
           />
         </div>
         <fieldset>
-          <label for="name" class="font-semibold mb-1 block">Name</label>
+          <label for="name" class="font-semibold mb-1 block">File name</label>
           <input
             id="name"
             v-model="form.name"
             type="text"
-            placeholder="File Name"
+            autocomplete="off"
+            placeholder="e.g. team-photo"
             class="input"
           />
           <label for="description" class="font-semibold mb-1 block"
