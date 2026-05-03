@@ -9,7 +9,8 @@ const api_routes = {
     search: (query: string) => `/dictionary/search?term=${query}`,
     jump: `/dictionary/jump`,
     parts_of_speech: "/dictionary/parts-of-speech",
-    getSound: (path: string) => `/dictionary/sound?path=${path}`,
+    getSound: (path: string) =>
+      `/dictionary/sound?path=${encodeURIComponent(path)}`,
   },
   articles: {
     list: "/article",

@@ -8,22 +8,13 @@ interface Props {
   more?: boolean;
 }
 
-const emit = defineEmits(["cursor"]);
+const props = defineProps<Props>();
 
 const { toast } = useToast();
-const props = defineProps<Props>();
 const dictStore = useDictStore();
 const is_loading = ref(false);
 const is_playing = ref(false);
 const sound = ref();
-
-const target = ref<Element | null>(null);
-const options = {
-  root: null,
-  rootMargin: "-100% 0px 0px 0px", // Adjust rootMargin to trigger when element crosses the top of the screen
-  threshold: 0, // Set threshold to 0 to trigger as soon as any part of the element is visible
-};
-const observer = ref<IntersectionObserver | null>(null);
 
 async function playSound() {
   if (is_playing.value) return;
@@ -50,38 +41,19 @@ async function downloadAndPlaySound(path: string) {
   if (!path) return;
 
   try {
-    is_loading;
+    is_loading.value = true;
     sound.value = await dictStore.fetchSound(path);
     playSound();
   } catch (error) {
     toast({
       title: "Error playing sound",
-      description: error as string,
+      description:
+        error instanceof Error ? error.message : String(error ?? "Unknown"),
     });
   } finally {
     is_loading.value = false;
   }
 }
-
-function handleIntersection(entries: IntersectionObserverEntry[]) {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      emit("cursor", props.word.id);
-    }
-  });
-}
-
-function startObserver() {
-  target.value = document.querySelector(`#${props.word.id}`);
-  observer.value = new IntersectionObserver(handleIntersection, options);
-  if (target.value) {
-    observer.value.observe(target.value);
-  }
-}
-
-onMounted(async () => {
-  startObserver();
-});
 </script>
 
 <template>

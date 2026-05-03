@@ -29,8 +29,6 @@ const dictionary_list_state = useState<DictionaryListState>(
   }),
 );
 const words = ref<Word[]>([...dictionary_list_state.value.words]);
-const router = useRouter();
-const route = useRoute();
 const is_loading = ref(false);
 const count = ref(dictionary_list_state.value.count);
 const audio_count = ref(dictionary_list_state.value.audioCount);
@@ -46,10 +44,6 @@ async function search() {
   saveDictionaryListState();
 }
 
-function setCursor(cursor: string) {
-  router.push({ query: { cursor } });
-}
-
 function saveDictionaryListState({ scroll_y = window.scrollY } = {}) {
   dictionary_list_state.value = {
     words: [...words.value],
@@ -63,6 +57,8 @@ function saveDictionaryListState({ scroll_y = window.scrollY } = {}) {
 }
 
 async function getDictionaryItems() {
+  if (is_loading.value) return;
+
   is_loading.value = true;
   try {
     const {
@@ -70,9 +66,7 @@ async function getDictionaryItems() {
       totalCount: total_count,
       audioCount,
     } = await dictStore.fetchWords({
-      cursor:
-        (route.query.cursor as string) ??
-        words.value[words.value.length - 1]?.id,
+      cursor: words.value[words.value.length - 1]?.id,
       skip: 0,
       take: take.value,
     });
@@ -228,7 +222,6 @@ definePageMeta({
         v-for="word in words"
         :key="word.id"
         :word="word"
-        @cursor="setCursor"
       />
       <WayPoints @jump="jumpToAlphabet" />
       <AppInfiniteScroll @refresh="getDictionaryItems" />

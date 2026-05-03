@@ -1,12 +1,19 @@
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useApiConnect } from "~/composables/useApiConnect";
-import { useDictStore } from "~/store/dictionary";
-import { FetchMethod } from "~/types/types";
 
 vi.mock("~/composables/useApiConnect", () => ({
   useApiConnect: vi.fn(),
 }));
+
+vi.mock("~/store/auth", () => ({
+  useAuthStore: vi.fn(() => ({
+    access_token: "",
+  })),
+}));
+
+import { useApiConnect } from "~/composables/useApiConnect";
+import { useDictStore } from "~/store/dictionary";
+import { FetchMethod } from "~/types/types";
 
 const mockedUseApiConnect = vi.mocked(useApiConnect);
 

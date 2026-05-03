@@ -5,6 +5,7 @@ import type { Pagination } from "~/types/types";
 import { FetchMethod } from "~/types/types";
 import type { PartOfSpeech, Word } from "~/types/word";
 import api_routes from "~/utils/api-routes";
+import { useAuthStore } from "~/store/auth";
 
 export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
@@ -179,19 +180,35 @@ export const useDictStore = defineStore("dict", () => {
     }
   }
 
-  async function fetchSound(path: string): Promise<string> {
-    try {
-      const response = await useApiConnect<string, string>(
-        api_routes.dictionary.getSound(path),
-        FetchMethod.GET,
-      );
+  async function fetchSound(path: string): Promise<Blob> {
+    const api_url = import.meta.env.VITE_API_BASE_URL as string | undefined;
+    const authStore = useAuthStore();
+    const url = `${api_url ?? ""}${api_routes.dictionary.getSound(path)}`;
 
-      if (typeof response === "string") return response;
-      else if ("message" in response) {
-        throw new Error(response.message);
-      } else return response;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authStore.access_token ?? ""}`,
+        },
+      });
+
+      if (!res.ok) {
+        let message = res.statusText;
+        try {
+          const body = await res.json() as {
+            message?: unknown;
+          };
+          if (typeof body?.message === "string") message = body.message;
+        } catch {
+          /* non-JSON error body */
+        }
+        throw new Error(message || `HTTP ${res.status}`);
+      }
+
+      return await res.blob();
     } catch (error) {
-      console.error("Error fetching articles:", error);
+      console.error("Error fetching pronunciation audio:", error);
       throw error;
     }
   }
