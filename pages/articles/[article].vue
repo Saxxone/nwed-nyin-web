@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast/use-toast";
 import DOMPurify from "dompurify";
 import { ArrowLeft, Edit3 } from "lucide-vue-next";
@@ -115,12 +116,21 @@ useSeoMeta({
         <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-muted">
           Knowledgebase Article
         </p>
+        <Skeleton
+          v-if="is_loading"
+          class="mx-auto h-12 w-4/5 max-w-xl rounded-full sm:h-14"
+        />
         <h1
+          v-else
           class="text-balance text-4xl font-extrabold capitalize leading-tight tracking-tight text-main sm:text-5xl"
         >
           {{ article_title.toLowerCase() }}
         </h1>
-        <p class="mt-4 text-sm font-medium text-muted">
+        <Skeleton
+          v-if="is_loading"
+          class="mx-auto mt-4 h-4 w-24 rounded-full"
+        />
+        <p v-else class="mt-4 text-sm font-medium text-muted">
           {{ reading_time }}
         </p>
       </header>
@@ -130,11 +140,26 @@ useSeoMeta({
       class="mx-auto mt-6 rounded-2xl border border-gray-200 bg-base-white p-4 lg:py-7 shadow-sm dark:border-gray-800 lg:px-10"
       aria-live="polite"
     >
-      <div v-if="is_loading" class="flex flex-col items-center justify-center py-16 text-center">
-        <div class="mb-4 h-12 w-12 rounded-full bg-base-light p-3 shadow-lg">
-          <IconsLoadingIcon />
-        </div>
-        <p class="text-sm font-medium text-muted">Loading article...</p>
+      <div
+        v-if="is_loading"
+        class="article-content mx-auto max-w-3xl py-2"
+        aria-label="Loading article"
+        role="status"
+      >
+        <Skeleton class="mb-5 h-5 w-3/4 rounded-full" />
+        <Skeleton class="mb-3 h-4 w-full rounded-full" />
+        <Skeleton class="mb-3 h-4 w-11/12 rounded-full" />
+        <Skeleton class="mb-8 h-4 w-5/6 rounded-full" />
+
+        <Skeleton class="mb-5 h-7 w-1/2 rounded-full" />
+        <Skeleton class="mb-3 h-4 w-full rounded-full" />
+        <Skeleton class="mb-3 h-4 w-[92%] rounded-full" />
+        <Skeleton class="mb-3 h-4 w-4/5 rounded-full" />
+        <Skeleton class="mb-8 h-52 w-full rounded-xl" />
+
+        <Skeleton class="mb-3 h-4 w-full rounded-full" />
+        <Skeleton class="mb-3 h-4 w-10/12 rounded-full" />
+        <Skeleton class="h-4 w-2/3 rounded-full" />
       </div>
 
       <div
