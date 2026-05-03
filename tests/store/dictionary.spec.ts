@@ -85,6 +85,11 @@ describe("useDictStore", () => {
 
     const store = useDictStore();
     await expect(store.fetchWords()).rejects.toThrow("Dictionary failed");
+
+    expect(mockedUseApiConnect).toHaveBeenCalledWith(
+      "/dictionary?skip=0&take=50",
+      FetchMethod.GET,
+    );
   });
 
   it("uploads word sound as multipart form data", async () => {

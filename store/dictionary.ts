@@ -7,6 +7,55 @@ import type { PartOfSpeech, Word } from "~/types/word";
 import api_routes from "~/utils/api-routes";
 import { useAuthStore } from "~/store/auth";
 
+function dictionaryListSearchParams(pagination: Pagination): string {
+  const skip =
+    typeof pagination.skip === "number" && Number.isFinite(pagination.skip)
+      ? pagination.skip
+      : 0;
+  const take =
+    typeof pagination.take === "number" && Number.isFinite(pagination.take)
+      ? pagination.take
+      : 50;
+  const parts: string[] = [
+    `skip=${encodeURIComponent(String(skip))}`,
+    `take=${encodeURIComponent(String(take))}`,
+  ];
+  const cursor =
+    typeof pagination.cursor === "string" ? pagination.cursor.trim() : "";
+  if (
+    cursor.length > 0 &&
+    cursor !== "undefined" &&
+    cursor !== "null"
+  ) {
+    parts.unshift(`cursor=${encodeURIComponent(cursor)}`);
+  }
+  return parts.join("&");
+}
+
+function dictionaryJumpSearchParams(
+  alphabet: string,
+  pagination: Pagination,
+): string {
+  const parts: string[] = [
+    `alphabet=${encodeURIComponent(alphabet.trim())}`,
+  ];
+  const take =
+    typeof pagination.take === "number" && Number.isFinite(pagination.take)
+      ? pagination.take
+      : 50;
+  parts.push(`take=${encodeURIComponent(String(take))}`);
+  const cursor =
+    typeof pagination.cursor === "string" ? pagination.cursor.trim() : "";
+  if (
+    cursor.length > 0 &&
+    cursor !== "undefined" &&
+    cursor !== "null"
+  ) {
+    parts.push(`cursor=${encodeURIComponent(cursor)}`);
+  }
+  return parts.join("&");
+}
+
 export const useDictStore = defineStore("dict", () => {
   const last_word = ref<Word | null>(null);
 
@@ -18,9 +67,11 @@ export const useDictStore = defineStore("dict", () => {
         Partial<Word>,
         { words: Word[]; totalCount: number; audioCount: number }
       >(
-        `${api_routes.dictionary.list}?cursor=${encodeURIComponent(pagination.cursor as string)}&skip=${encodeURIComponent(
-          pagination.skip as number,
-        )}&take=${encodeURIComponent(pagination.take as number)}`,
+        `${api_routes.dictionary.list}?${dictionaryListSearchParams({
+          cursor: pagination.cursor,
+          skip: pagination.skip,
+          take: pagination.take,
+        })}`,
         FetchMethod.GET,
       );
 
@@ -92,8 +143,12 @@ export const useDictStore = defineStore("dict", () => {
           audioCount: number;
         }
       >(
-        `${api_routes.dictionary.jump}?alphabet=${alphabet}&cursor=${encodeURIComponent(pagination.cursor as string)}&take=${encodeURIComponent(
-          pagination.take as number,
+        `${api_routes.dictionary.jump}?${dictionaryJumpSearchParams(
+          alphabet,
+          {
+            cursor: pagination.cursor,
+            take: pagination.take,
+          },
         )}`,
         FetchMethod.GET,
       );
