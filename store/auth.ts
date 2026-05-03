@@ -98,7 +98,26 @@ export const useAuthStore = defineStore("auth", () => {
     else router.push(to);
   }
 
+  async function revokeServerSessions() {
+    const api_url = import.meta.env.VITE_API_BASE_URL;
+    const token = access_token.value;
+    if (!api_url?.trim() || !token?.trim()) return;
+
+    try {
+      await fetch(`${api_url.replace(/\/$/, "")}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function logout() {
+    await revokeServerSessions();
     is_logged_in.value = false;
     user.value = null;
     access_token.value = "";
@@ -115,7 +134,9 @@ export const useAuthStore = defineStore("auth", () => {
 
   async function saveTokens(response: User, go: string) {
     access_token.value = response.access_token;
-    refresh_token.value = response.refresh_token;
+    if (response.refresh_token) {
+      refresh_token.value = response.refresh_token;
+    }
     is_logged_in.value = true;
     user.value = response;
     if (go) goTo(go);

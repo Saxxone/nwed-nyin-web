@@ -110,7 +110,7 @@ const show_floating_article_back = computed(() => !hero_visible.value);
 </script>
 
 <template>
-  <main class="article-view">
+  <main class="article-view w-full min-w-0">
     <SuggestedArticleSwipe
       source="article"
       :current-slug="slug"
@@ -121,7 +121,7 @@ const show_floating_article_back = computed(() => !hero_visible.value);
 
     <section
       ref="article_hero"
-      class="relative isolate overflow-hidden rounded-2xl border border-gray-200 bg-base-white px-5 py-6 shadow-sm dark:border-gray-800 sm:px-8 lg:px-10"
+      class="relative isolate min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-base-white px-5 py-6 shadow-sm dark:border-gray-800 sm:px-8 lg:px-10"
     >
       <div
         class="pointer-events-none absolute -right-24 -top-24 -z-10 h-56 w-56 rounded-full bg-teal-100/70 blur-3xl dark:bg-teal-950/40"
@@ -155,7 +155,7 @@ const show_floating_article_back = computed(() => !hero_visible.value);
         />
         <h1
           v-else
-          class="text-balance text-4xl font-extrabold capitalize leading-tight tracking-tight text-main sm:text-5xl"
+          class="min-w-0 text-balance break-words text-4xl font-extrabold capitalize leading-tight tracking-tight text-main sm:text-5xl [overflow-wrap:anywhere]"
         >
           {{ article_title.toLowerCase() }}
         </h1>
@@ -170,12 +170,12 @@ const show_floating_article_back = computed(() => !hero_visible.value);
     </section>
 
     <section
-      class="mx-auto mt-6 rounded-2xl border border-gray-200 bg-base-white p-4 lg:py-7 shadow-sm dark:border-gray-800 lg:px-10"
+      class="mx-auto mt-6 min-w-0 max-w-full rounded-2xl border border-gray-200 bg-base-white p-4 shadow-sm dark:border-gray-800 lg:px-10 lg:py-7"
       aria-live="polite"
     >
       <div
         v-if="is_loading"
-        class="article-content mx-auto max-w-3xl py-2"
+        class="article-content mx-auto min-w-0 max-w-3xl py-2"
         aria-label="Loading article"
         role="status"
       >
@@ -197,7 +197,7 @@ const show_floating_article_back = computed(() => !hero_visible.value);
 
       <div
         v-else-if="parsed_article"
-        class="article-content prose max-w-none break-words prose-headings:scroll-mt-24 prose-headings:font-bold prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 prose-p:leading-8 prose-a:font-semibold prose-a:no-underline hover:prose-a:underline prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:bg-base-light prose-blockquote:py-1 prose-blockquote:pr-4 dark:prose-invert dark:prose-h2:border-gray-800"
+        class="article-content prose w-full min-w-0 max-w-none break-words [overflow-wrap:anywhere] prose-headings:scroll-mt-24 prose-headings:font-bold prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 prose-p:leading-8 prose-a:font-semibold prose-a:no-underline hover:prose-a:underline prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:bg-base-light prose-blockquote:py-1 prose-blockquote:pr-4 dark:prose-invert dark:prose-h2:border-gray-800"
         v-html="parsed_article"
       ></div>
 
@@ -213,6 +213,21 @@ const show_floating_article_back = computed(() => !hero_visible.value);
 <style lang="postcss">
 .article-view {
   @apply pb-10;
+}
+
+.article-content {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.article-content :deep(pre) {
+  @apply max-w-full overflow-x-auto;
+}
+
+.article-content :deep(video),
+.article-content :deep(iframe),
+.article-content :deep(svg) {
+  @apply max-w-full;
 }
 
 .article-content :deep(table) {

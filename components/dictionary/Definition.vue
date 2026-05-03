@@ -90,16 +90,18 @@ onMounted(async () => {
   <NuxtLink
 :id="props.word.id"
     :to="`${routes.dictionary.view(encodeURI(props.word.term), encodeURI(props.word.id as string))}`"
-    class="border block rounded-lg card text-sm word-wrap mb-4 break-words"
+    class="card mb-4 block max-w-full min-w-0 w-full rounded-lg border text-sm word-wrap break-words [overflow-wrap:anywhere]"
   >
     <div
-      class="scroll-m-20 text-2xl items-end capitalize font-bold tracking-tight lg:text-xl mb-1"
+      class="mb-1 scroll-m-20 items-end text-2xl font-bold capitalize tracking-tight lg:text-xl"
     >
-      <div class="flex items-center space-x-3">
-        <h5>{{ props.word.term }}</h5>
+      <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        <h5 class="min-w-0 break-words [overflow-wrap:anywhere]">
+          {{ props.word.term }}
+        </h5>
         <div
           v-if="props.word?.pronunciation_audios?.[0]?.file?.url"
-          class="cursor-pointer"
+          class="shrink-0 cursor-pointer"
         >
           <IconsLoadingIcon v-if="is_loading" class="inline-block" />
           <IconsVolumeIcon
@@ -114,12 +116,15 @@ onMounted(async () => {
       </div>
       <h5
         v-if="props.word.alt_spelling"
-        class="text-gray-500 text-sm capitalize font-medium block"
+        class="block min-w-0 break-words text-sm font-medium capitalize text-gray-500 [overflow-wrap:anywhere]"
       >
         ({{ props.word.alt_spelling }})
       </h5>
     </div>
-    <p v-if="props.word.pronunciation" class="mb-2 font-serif text-xs">
+    <p
+      v-if="props.word.pronunciation"
+      class="mb-2 break-words font-serif text-xs [overflow-wrap:anywhere]"
+    >
       {{
         `${props.word.pronunciation?.startsWith("/") ? "" : "/"}${props.word.pronunciation}${props.word.pronunciation?.endsWith("/") ? "" : "/"}`
       }}
@@ -128,27 +133,30 @@ onMounted(async () => {
     <div>
       <div v-for="(definition, index) in props.word.definitions" class="mb-4">
         <div v-if="props.more || index === 0">
-          <p class="text-xs italic text-muted">
+          <p class="break-words text-xs italic text-muted [overflow-wrap:anywhere]">
             {{ index + 1 }}. {{ definition.part_of_speech.name }}
           </p>
-          <p>{{ definition.meaning }}</p>
+          <p class="break-words [overflow-wrap:anywhere]">{{ definition.meaning }}</p>
           <div v-if="definition.examples.length > 0" class="my-1">
             <h6 class="text-xs mt-2 text-muted">Examples:</h6>
 
             <div>
-              <p v-for="example in definition.examples" class="text-xs">
+              <p
+                v-for="example in definition.examples"
+                class="break-words text-xs [overflow-wrap:anywhere]"
+              >
                 {{ example.sentence }}
               </p>
             </div>
 
             <div v-if="definition.synonyms.length > 0">
               <h6 class="text-xs mt-2 text-muted">Synonyms:</h6>
-              <div>
+              <div class="min-w-0 break-words [overflow-wrap:anywhere]">
                 <NuxtLink
                   v-for="(synonym, index) in definition.synonyms"
                   :key="synonym.synonym + 'synonym'"
                   :to="`${routes.dictionary.view(encodeURI(synonym.synonym), encodeURI(synonym.id as string))}`"
-                  class="text-xs hover:underline"
+                  class="inline text-xs hover:underline [overflow-wrap:anywhere]"
                   >{{ synonym.synonym
                   }}{{
                     `${index < definition.synonyms.length - 1 ? ", " : ""}`
@@ -158,11 +166,11 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div>
+          <div class="min-w-0 break-words [overflow-wrap:anywhere]">
             <NuxtLink
               v-for="link in props.word.related_to"
               :to="`${routes.dictionary.view(link.type, link.id)}`"
-              class="text-blue-500 text-xs"
+              class="block text-xs text-blue-500 [overflow-wrap:anywhere] hover:underline"
               >{{ link }}</NuxtLink
             >
           </div>

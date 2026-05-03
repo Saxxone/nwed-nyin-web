@@ -355,13 +355,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="articles-page">
-    <div class="mb-4 flex items-center justify-between gap-3">
-      <h1 class="text-4xl font-extrabold tracking-tight lg:text-2xl">
+  <main class="articles-page w-full min-w-0">
+    <div class="mb-4 flex min-w-0 items-center justify-between gap-3">
+      <h1
+        class="min-w-0 shrink break-words text-4xl font-extrabold tracking-tight [overflow-wrap:anywhere] lg:text-2xl"
+      >
         Articles
       </h1>
 
-      <div class="relative ml-auto hidden w-full max-w-sm md:block">
+      <div class="relative ml-auto hidden w-full min-w-0 max-w-sm md:block">
         <Input
           v-model="search_query"
           class="input !mb-0 w-full"
@@ -382,14 +384,16 @@ onBeforeUnmount(() => {
             v-for="article in sanitized_content"
             :key="`${article.id}-search-result`"
             :to="app_routes.articles.view(encodeURI(article.slug as string))"
-            class="block border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
+            class="block min-w-0 max-w-full border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
             role="option"
           >
-            <p class="text-sm font-semibold capitalize text-main">
+            <p
+              class="break-words text-sm font-semibold capitalize text-main [overflow-wrap:anywhere]"
+            >
               {{ article.title.toLowerCase() }}
             </p>
             <div
-              class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden text-xs text-muted dark:prose-invert"
+              class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden break-words text-xs text-muted [overflow-wrap:anywhere] dark:prose-invert"
             >
               {{ article.summary }}
             </div>
@@ -427,9 +431,9 @@ onBeforeUnmount(() => {
       </NuxtLink>
     </div>
 
-    <div v-if="show_mobile_search" class="relative mb-4 md:hidden">
+    <div v-if="show_mobile_search" class="relative mb-4 min-w-0 md:hidden">
       <div
-        class="flex items-center gap-2 rounded-lg border border-gray-200 bg-base-white p-2 shadow-sm dark:border-gray-700"
+        class="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-base-white p-2 shadow-sm dark:border-gray-700"
       >
         <Input
           id="mobile-article-search"
@@ -461,14 +465,16 @@ onBeforeUnmount(() => {
           v-for="article in sanitized_content"
           :key="`${article.id}-mobile-search-result`"
           :to="app_routes.articles.view(encodeURI(article.slug as string))"
-          class="block border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
+          class="block min-w-0 max-w-full border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
           role="option"
         >
-          <p class="text-sm font-semibold capitalize text-main">
+          <p
+            class="break-words text-sm font-semibold capitalize text-main [overflow-wrap:anywhere]"
+          >
             {{ article.title.toLowerCase() }}
           </p>
           <div
-            class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden text-xs text-muted dark:prose-invert"
+            class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden break-words text-xs text-muted [overflow-wrap:anywhere] dark:prose-invert"
           >
             {{ article.summary }}
           </div>
@@ -495,7 +501,7 @@ onBeforeUnmount(() => {
     <section
       v-else
       ref="feed"
-      class="relative h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain scroll-bar-none rounded-lg bg-base-white lg:h-[calc(100dvh-14rem)]"
+      class="relative min-w-0 max-w-full h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain scroll-bar-none rounded-lg bg-base-white lg:h-[calc(100dvh-14rem)]"
       :class="
         is_restoring_feed_scroll
           ? 'invisible snap-none scroll-auto'
@@ -537,7 +543,7 @@ onBeforeUnmount(() => {
         :ref="(element) => setArticleItem(element, index)"
         :to="app_routes.articles.view(encodeURI(article.slug as string))"
         :style="getArticleCardStyle(article)"
-        class="relative isolate flex min-h-full snap-start snap-always flex-col justify-end overflow-hidden bg-cover bg-center px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
+        class="relative isolate flex min-h-full min-w-0 snap-start snap-always flex-col justify-end overflow-hidden bg-cover bg-center px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 [overflow-wrap:anywhere] dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
       >
         <div
           v-if="!getArticleImageUrl(article)"
@@ -548,15 +554,15 @@ onBeforeUnmount(() => {
           class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(145deg,rgba(255,255,255,0.52),rgba(255,255,255,0.08)_46%,rgba(15,23,42,0.08))] backdrop-blur-sm dark:bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(17,24,39,0.2)_46%,rgba(0,0,0,0.28))]"
         ></div>
 
-        <article class="relative mx-auto flex w-full max-w-3xl flex-col gap-5">
+        <article class="relative mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-5">
           <h2
-            class="text-4xl font-extrabold capitalize leading-tight lg:text-5xl"
+            class="min-w-0 break-words text-4xl font-extrabold capitalize leading-tight [overflow-wrap:anywhere] lg:text-5xl"
             :class="getArticleImageUrl(article) ? 'text-white' : 'text-main'"
           >
             {{ article.title.toLowerCase() }}
           </h2>
           <div
-            class="prose prose-sm max-h-56 max-w-none overflow-hidden dark:prose-invert sm:max-h-72"
+            class="prose prose-sm max-h-56 max-w-none overflow-hidden break-words dark:prose-invert [overflow-wrap:anywhere] sm:max-h-72"
             :class="getArticleImageUrl(article) ? 'text-white/85' : 'text-sub'"
           >
             {{ article.summary }}

@@ -96,7 +96,7 @@ definePageMeta({
 </script>
 
 <template>
-  <main>
+  <main class="w-full min-w-0">
     <SuggestedArticleSwipe
       source="word"
       :terms="word_suggestion_terms"
