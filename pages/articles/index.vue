@@ -58,6 +58,90 @@ const show_mobile_search = computed(
 );
 const is_restoring_feed_scroll = ref(sanitized_content.value.length > 0);
 
+const NO_IMAGE_GRADIENT_PALETTES = [
+  ["#f472b6", "#a78bfa", "#38bdf8"],
+  ["#34d399", "#22d3ee", "#60a5fa"],
+  ["#fbbf24", "#fb923c", "#f43f5e"],
+  ["#c084fc", "#818cf8", "#2dd4bf"],
+  ["#4ade80", "#a3e635", "#eab308"],
+  ["#2dd4bf", "#93c5fd", "#e879f9"],
+  ["#fb7185", "#d946ef", "#38bdf8"],
+  ["#fcd34d", "#f97316", "#a855f7"],
+] as const;
+
+function hashArticleKey(article: Article): number {
+  const key = String(article.id ?? article.slug ?? article.title ?? "");
+  let h = 0;
+  for (let i = 0; i < key.length; i++) {
+    h = (Math.imul(31, h) + key.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function getNoImagePalette(article: Article): readonly [string, string, string] {
+  return NO_IMAGE_GRADIENT_PALETTES[
+    hashArticleKey(article) % NO_IMAGE_GRADIENT_PALETTES.length
+  ];
+}
+
+/** Matches article hero orbs (`bg-teal-100/70`, `bg-amber-100/70`) with vivid palette hues. */
+function hexToRgba(hex: string, alpha: number): string {
+  const n = hex.replace("#", "").trim();
+  if (n.length !== 6) return `rgba(148, 163, 184, ${alpha})`;
+  const r = Number.parseInt(n.slice(0, 2), 16);
+  const g = Number.parseInt(n.slice(2, 4), 16);
+  const b = Number.parseInt(n.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** Orb positions: corner blooms + extra accents (hero-style + fuller field). */
+const NO_IMAGE_ORB_SLOTS = [
+  {
+    positionClass:
+      "-right-24 -top-24 h-56 w-56 lg:-right-32 lg:-top-32 lg:h-80 lg:w-80",
+    colorIx: 0,
+    alpha: 0.7,
+  },
+  {
+    positionClass:
+      "-bottom-24 -left-20 h-48 w-48 lg:-bottom-32 lg:-left-28 lg:h-72 lg:w-72",
+    colorIx: 2,
+    alpha: 0.7,
+  },
+  {
+    positionClass:
+      "left-1/2 -top-14 h-44 w-44 -translate-x-1/2 lg:-top-20 lg:h-60 lg:w-60",
+    colorIx: 1,
+    alpha: 0.42,
+  },
+  {
+    positionClass:
+      "-left-20 top-[28%] h-40 w-40 -translate-y-1/2 lg:-left-28 lg:h-56 lg:w-56",
+    colorIx: 1,
+    alpha: 0.5,
+  },
+  {
+    positionClass:
+      "right-[8%] -bottom-12 h-52 w-52 translate-y-1/2 lg:-bottom-16 lg:h-72 lg:w-72",
+    colorIx: 0,
+    alpha: 0.48,
+  },
+] as const;
+
+function getNoImageHeroOrbs(article: Article) {
+  const palette = getNoImagePalette(article);
+  const colors = [...palette];
+  const h = hashArticleKey(article);
+
+  return NO_IMAGE_ORB_SLOTS.map((slot, i) => {
+    const color = colors[(slot.colorIx + h + i) % 3];
+    return {
+      className: `pointer-events-none absolute -z-10 rounded-full blur-3xl lg:blur-[5rem] dark:opacity-40 ${slot.positionClass}`,
+      style: { backgroundColor: hexToRgba(color, slot.alpha) },
+    };
+  });
+}
+
 function getArticleImages(article: Article) {
   return (
     article.file?.filter((file) => {
@@ -109,11 +193,7 @@ function getArticleCardStyle(article: Article) {
   const image_url = getArticleImageUrl(article);
 
   if (!image_url) {
-    return {
-      backgroundImage:
-        "linear-gradient(135deg, rgba(248, 250, 252, 0.4), rgba(226, 232, 240, 0.34)), linear-gradient(45deg, rgba(15, 23, 42, 0.025), rgba(20, 184, 166, 0.04), rgba(245, 158, 11, 0.03))",
-      backgroundBlendMode: "normal, soft-light",
-    };
+    return {};
   }
 
   return {
@@ -548,29 +628,41 @@ onBeforeUnmount(() => {
         :ref="(element) => setArticleItem(element, index)"
         :to="app_routes.articles.view(encodeURI(article.slug as string))"
         :style="getArticleCardStyle(article)"
-        class="relative isolate flex min-h-full min-w-0 snap-start snap-always flex-col justify-end overflow-hidden bg-cover bg-center px-5 py-8 text-sm break-words outline-none transition-colors hover:bg-base-light focus-visible:ring-2 focus-visible:ring-gray-900 [overflow-wrap:anywhere] dark:focus-visible:ring-gray-100 sm:px-8 lg:justify-center lg:px-12 border-gray-400 dark:border-gray-600 mb-4 lg-mb-6"
+        :class="[
+          'relative isolate mb-4 flex min-h-full min-w-0 snap-start snap-always flex-col overflow-hidden text-sm break-words outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gray-900 [overflow-wrap:anywhere] dark:focus-visible:ring-gray-100 lg-mb-6',
+          getArticleImageUrl(article)
+            ? 'justify-end bg-cover bg-center px-5 py-8 hover:bg-base-light sm:px-8 lg:justify-center lg:px-12'
+            : 'justify-center rounded-2xl border border-gray-200 bg-base-white px-5 py-6 shadow-sm hover:bg-base-light dark:border-gray-800 sm:px-8 lg:px-10',
+        ]"
       >
-        <div
-          v-if="!getArticleImageUrl(article)"
-          class="pointer-events-none absolute -inset-8 -z-10 bg-gradient-to-br from-slate-200 via-white to-teal-100 opacity-80 blur-3xl dark:from-gray-950 dark:via-gray-800 dark:to-teal-950"
-        ></div>
-        <div
-          v-if="!getArticleImageUrl(article)"
-          class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(145deg,rgba(255,255,255,0.52),rgba(255,255,255,0.08)_46%,rgba(15,23,42,0.08))] backdrop-blur-sm dark:bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(17,24,39,0.2)_46%,rgba(0,0,0,0.28))]"
-        ></div>
+        <template v-if="!getArticleImageUrl(article)">
+          <div
+            v-for="(orb, orb_i) in getNoImageHeroOrbs(article)"
+            :key="`${article.id}-orb-${orb_i}`"
+            :class="orb.className"
+            :style="orb.style"
+          ></div>
+        </template>
 
         <article
           class="relative mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-5"
+          :class="
+            getArticleImageUrl(article) ? '' : 'items-center text-center'
+          "
         >
           <h2
-            class="min-w-0 break-words text-4xl font-extrabold capitalize leading-tight [overflow-wrap:anywhere] lg:text-5xl"
+            class="min-w-0 text-balance break-words text-4xl font-extrabold capitalize leading-tight tracking-tight [overflow-wrap:anywhere] sm:text-5xl"
             :class="getArticleImageUrl(article) ? 'text-white' : 'text-main'"
           >
             {{ article.title.toLowerCase() }}
           </h2>
           <div
-            class="prose prose-sm max-h-56 max-w-none overflow-hidden break-words dark:prose-invert [overflow-wrap:anywhere] sm:max-h-72"
-            :class="getArticleImageUrl(article) ? 'text-white/85' : 'text-sub'"
+            class="max-h-56 max-w-none overflow-hidden break-words [overflow-wrap:anywhere] sm:max-h-72"
+            :class="
+              getArticleImageUrl(article)
+                ? 'prose prose-sm text-white/85 dark:prose-invert'
+                : 'text-sm font-medium text-muted'
+            "
           >
             {{ article.summary }}
           </div>
