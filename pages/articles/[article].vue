@@ -113,9 +113,6 @@ useSeoMeta({
       </div>
 
       <header class="mx-auto max-w-3xl text-center">
-        <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-muted">
-          Knowledgebase Article
-        </p>
         <Skeleton
           v-if="is_loading"
           class="mx-auto h-12 w-4/5 max-w-xl rounded-full sm:h-14"
