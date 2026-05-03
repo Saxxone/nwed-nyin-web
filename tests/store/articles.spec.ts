@@ -50,6 +50,56 @@ describe("useArticleStore", () => {
     );
   });
 
+  it("fetches suggested articles with source context", async () => {
+    const articles = [{ id: "article-1", title: "Title", content: "Body" }];
+    mockedUseApiConnect.mockResolvedValueOnce(articles);
+
+    const store = useArticleStore();
+    await expect(
+      store.fetchSuggestedArticles({
+        source: "word",
+        terms: ["ụlọ", "house"],
+        excludeSlugs: ["seen-article"],
+        take: 3,
+      }),
+    ).resolves.toEqual(articles);
+
+    expect(mockedUseApiConnect).toHaveBeenCalledWith(
+      "/article/related?source=word&take=3&terms=%E1%BB%A5l%E1%BB%8D%2Chouse&excludeSlugs=seen-article",
+      FetchMethod.GET,
+    );
+  });
+
+  it("prefetches and caches article metadata with markdown", async () => {
+    const article = { id: "article-1", title: "Title", content: "Body" };
+    mockedUseApiConnect
+      .mockResolvedValueOnce(article)
+      .mockResolvedValueOnce("# Title");
+
+    const store = useArticleStore();
+
+    await expect(store.prefetchArticlePayload("article-1")).resolves.toEqual({
+      article,
+      markdown: "# Title",
+    });
+    await expect(store.prefetchArticlePayload("article-1")).resolves.toEqual({
+      article,
+      markdown: "# Title",
+    });
+
+    expect(mockedUseApiConnect).toHaveBeenCalledTimes(2);
+    expect(mockedUseApiConnect).toHaveBeenNthCalledWith(
+      1,
+      "/article/article/article-1",
+      FetchMethod.GET,
+    );
+    expect(mockedUseApiConnect).toHaveBeenNthCalledWith(
+      2,
+      "/article/markdown?path=article-1.md",
+      FetchMethod.GET,
+    );
+  });
+
   it("publishes articles with a POST request", async () => {
     const article = { title: "Title", content: "Body" };
     mockedUseApiConnect.mockResolvedValueOnce(article);

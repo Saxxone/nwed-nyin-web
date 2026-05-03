@@ -6,8 +6,16 @@ import type { Pagination } from "~/types/types";
 import { FetchMethod } from "~/types/types";
 import api_routes from "~/utils/api-routes";
 
+export type SuggestedArticleSource = "article" | "word";
+
+export type ArticlePrefetchPayload = {
+  article: Article;
+  markdown: string;
+};
+
 export const useArticleStore = defineStore("articles", () => {
   const last_article = ref<Article | null>(null);
+  const article_payload_cache = ref<Record<string, ArticlePrefetchPayload>>({});
   async function fetchArticles(
     pagination: Pagination = { cursor: "1", skip: 0, take: 10 },
   ) {
@@ -66,6 +74,60 @@ export const useArticleStore = defineStore("articles", () => {
       console.error("Error fetching articles:", error);
       throw error;
     }
+  }
+
+  async function fetchSuggestedArticles({
+    source,
+    slug,
+    terms = [],
+    excludeSlugs = [],
+    take = 5,
+  }: {
+    source: SuggestedArticleSource;
+    slug?: string;
+    terms?: string[];
+    excludeSlugs?: string[];
+    take?: number;
+  }) {
+    try {
+      const response = await useApiConnect<null, Article[]>(
+        api_routes.articles.related({ source, slug, terms, excludeSlugs, take }),
+        FetchMethod.GET,
+      );
+
+      if ("message" in response) {
+        throw new Error(response.message);
+      } else {
+        return response;
+      }
+    } catch (error) {
+      console.error("Error fetching suggested articles:", error);
+      throw error;
+    }
+  }
+
+  async function prefetchArticlePayload(
+    slug: string,
+    { force = false }: { force?: boolean } = {},
+  ): Promise<ArticlePrefetchPayload> {
+    const cache_key = decodeURI(slug);
+
+    if (!force && article_payload_cache.value[cache_key]) {
+      return article_payload_cache.value[cache_key];
+    }
+
+    const [article, markdown] = await Promise.all([
+      fetchArticle(cache_key),
+      fetchMarkdown(`${cache_key}.md`),
+    ]);
+
+    const payload = { article, markdown };
+    article_payload_cache.value = {
+      ...article_payload_cache.value,
+      [cache_key]: payload,
+    };
+
+    return payload;
   }
 
   async function publishArticle(article: Article): Promise<Article> {
@@ -154,6 +216,8 @@ export const useArticleStore = defineStore("articles", () => {
     fetchArticles,
     fetchArticle,
     fetchMarkdown,
+    fetchSuggestedArticles,
+    prefetchArticlePayload,
     createArticle,
     searchArticles,
     updateArticle,

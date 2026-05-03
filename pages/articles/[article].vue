@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/toast/use-toast";
 import DOMPurify from "dompurify";
 import { ArrowLeft, Edit3 } from "lucide-vue-next";
 import { marked } from "marked";
+import SuggestedArticleSwipe from "~/components/article/SuggestedArticleSwipe.vue";
 import { useArticleStore } from "~/store/articles";
 import type { Article } from "~/types/article";
 import app_routes from "~/utils/routes";
@@ -34,6 +35,18 @@ const reading_time = computed(() => {
   if (!word_count) return "Quick read";
 
   return `${Math.max(1, Math.ceil(word_count / 200))} min read`;
+});
+const article_suggestion_terms = computed(() => {
+  const keywords = article.value.metadata?.keywords;
+  const keyword_terms = Array.isArray(keywords)
+    ? keywords.filter((keyword): keyword is string => typeof keyword === "string")
+    : [];
+
+  return [
+    ...(article.value.categories ?? []),
+    ...(article.value.tags ?? []),
+    ...keyword_terms,
+  ].filter((term): term is string => Boolean(term?.trim()));
 });
 
 async function getArticleMeta(slug: string) {
@@ -84,6 +97,13 @@ useSeoMeta({
 
 <template>
   <main class="article-view">
+    <SuggestedArticleSwipe
+      source="article"
+      :current-slug="slug"
+      :terms="article_suggestion_terms"
+      :back-to="app_routes.articles.list"
+    />
+
     <section
       class="relative isolate overflow-hidden rounded-2xl border border-gray-200 bg-base-white px-5 py-6 shadow-sm dark:border-gray-800 sm:px-8 lg:px-10"
     >

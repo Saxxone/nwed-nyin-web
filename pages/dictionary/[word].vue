@@ -3,6 +3,7 @@ import Definition from "@/components/dictionary/Definition.vue";
 import DefinitionSkeleton from "@/components/app/DefinitionSkeleton.vue";
 import { useDictStore } from "@/store/dictionary";
 import type { Word } from "@/types/word";
+import SuggestedArticleSwipe from "~/components/article/SuggestedArticleSwipe.vue";
 import app_routes from "~/utils/routes";
 
 const word = ref<Word>();
@@ -10,6 +11,19 @@ const word = ref<Word>();
 const route = useRoute();
 const dictStore = useDictStore();
 const is_loading = ref(false);
+const word_suggestion_terms = computed(() => {
+  if (!word.value) return [];
+
+  return [
+    word.value.term,
+    word.value.alt_spelling,
+    ...word.value.definitions.flatMap((definition) => [
+      definition.meaning,
+      ...definition.synonyms.map((synonym) => synonym.synonym),
+      ...definition.antonyms.map((antonym) => antonym.antonym),
+    ]),
+  ].filter((term): term is string => Boolean(term?.trim()));
+});
 
 function gotoEdit() {
   if (!word.value) return;
@@ -83,6 +97,12 @@ definePageMeta({
 
 <template>
   <main>
+    <SuggestedArticleSwipe
+      source="word"
+      :terms="word_suggestion_terms"
+      :back-to="app_routes.dictionary.list"
+    />
+
     <div class="flex items-center justify-end">
       <div class="p-2 cursor-pointer" @click="gotoEdit">
         <IconsEditIcon width="16" height="16" />

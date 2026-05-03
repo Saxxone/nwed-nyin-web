@@ -22,6 +22,30 @@ const api_routes = {
       `/article/search?term=${encodeURIComponent(
         query,
       )}&skip=${encodeURIComponent(skip)}&take=${encodeURIComponent(take)}`,
+    related: ({
+      source,
+      slug,
+      terms = [],
+      excludeSlugs = [],
+      take = 5,
+    }: {
+      source: "article" | "word";
+      slug?: string;
+      terms?: string[];
+      excludeSlugs?: string[];
+      take?: number;
+    }) => {
+      const params = new URLSearchParams({
+        source,
+        take: String(take),
+      });
+
+      if (slug) params.set("slug", slug);
+      if (terms.length) params.set("terms", terms.join(","));
+      if (excludeSlugs.length) params.set("excludeSlugs", excludeSlugs.join(","));
+
+      return `/article/related?${params.toString()}`;
+    },
     edit: (slug: string) => `/article/${slug}/edit`,
   },
   auth: {
