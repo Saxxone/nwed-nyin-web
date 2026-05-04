@@ -135,7 +135,7 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/** Rich jewel-tone glow on dark UIs (Cf. hero `dark:bg-teal-950/40`). */
+/** Linear blend between two hex colours (used to mute orb hues in dark mode). */
 function mixHexToward(hex: string, targetHex: string, amount: number): string {
   const t = Math.min(1, Math.max(0, amount));
   const [r1, g1, b1] = parseHexRgb(hex);
@@ -146,10 +146,10 @@ function mixHexToward(hex: string, targetHex: string, amount: number): string {
   return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
-/** Dark: vivid glow — low mix + high alpha so orbs read almost as bright as light mode. */
-const DARK_ORB_TINT_TARGET = "#334155";
-const DARK_ORB_MIX = 0.24;
-const DARK_ORB_ALPHA_SCALE = 1;
+/** Dark: matte orbs — strong mix toward neutral zinc so glow stays soft and low-chroma. */
+const DARK_ORB_TINT_TARGET = "#3f3f46";
+const DARK_ORB_MIX = 0.58;
+const DARK_ORB_ALPHA_SCALE = 0.88;
 
 /** Orb positions: corner blooms + extra accents (hero-style + fuller field). */
 const NO_IMAGE_ORB_SLOTS = [
