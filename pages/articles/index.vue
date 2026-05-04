@@ -81,10 +81,33 @@ function hashArticleKey(article: Article): number {
   return Math.abs(h);
 }
 
-function getNoImagePalette(article: Article): readonly [string, string, string] {
-  return NO_IMAGE_GRADIENT_PALETTES[
-    hashArticleKey(article) % NO_IMAGE_GRADIENT_PALETTES.length
-  ];
+/** 0–360; grayscale → -1 (skip hue comparison). */
+function rgbToHue(r: number, g: number, b: number): number {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  if (max === min) return -1;
+  const d = max - min;
+  let h = 0;
+  switch (max) {
+    case rn:
+      h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+      break;
+    case gn:
+      h = ((bn - rn) / d + 2) / 6;
+      break;
+    default:
+      h = ((rn - gn) / d + 4) / 6;
+  }
+  return h * 360;
+}
+
+function circularHueDistance(a: number, b: number): number {
+  if (a < 0 || b < 0) return 180;
+  const d = Math.abs(a - b);
+  return Math.min(d, 360 - d);
 }
 
 /** Matches article hero orbs (`bg-teal-100/70`, `bg-amber-100/70`) with vivid palette hues. */
@@ -97,6 +120,15 @@ function parseHexRgb(hex: string): [number, number, number] {
     Number.parseInt(n.slice(4, 6), 16),
   ];
 }
+
+/** Per palette, hue of first stop — used to avoid consecutive “same family” combos. */
+const NO_IMAGE_PALETTE_ANCHOR_HUES = NO_IMAGE_GRADIENT_PALETTES.map((p) => {
+  const [r, g, b] = parseHexRgb(p[0]);
+  return rgbToHue(r, g, b);
+});
+
+/** Min degrees on the wheel between consecutive no-image cards’ palettes. */
+const NO_IMAGE_CONSECUTIVE_MIN_HUE_SEP = 48;
 
 function hexToRgba(hex: string, alpha: number): string {
   const [r, g, b] = parseHexRgb(hex);
@@ -161,8 +193,8 @@ function orbBackgroundColor(slot: (typeof NO_IMAGE_ORB_SLOTS)[number], color: st
   return hexToRgba(mixed, slot.alpha * DARK_ORB_ALPHA_SCALE);
 }
 
-function getNoImageHeroOrbs(article: Article) {
-  const palette = getNoImagePalette(article);
+function getNoImageHeroOrbs(article: Article, feedIndex: number) {
+  const palette = getNoImagePalette(article, feedIndex);
   const colors = [...palette];
   const h = hashArticleKey(article);
 
@@ -220,6 +252,63 @@ function selectArticleImageUrl(article: Article) {
 
 function getArticleImageUrl(article: Article) {
   return selectArticleImageUrl(article);
+}
+
+/** Prefer hash-based palette, but never same index / too-similar hue vs previous no-image card. */
+function resolveFeedNoImagePaletteIndex(
+  article: Article,
+  lastIdx: number | null,
+): number {
+  const n = NO_IMAGE_GRADIENT_PALETTES.length;
+  const h0 = hashArticleKey(article) % n;
+  if (lastIdx === null) return h0;
+
+  for (let k = 0; k < n; k++) {
+    const candidate = (h0 + k) % n;
+    if (candidate === lastIdx) continue;
+    if (
+      circularHueDistance(
+        NO_IMAGE_PALETTE_ANCHOR_HUES[candidate],
+        NO_IMAGE_PALETTE_ANCHOR_HUES[lastIdx],
+      ) < NO_IMAGE_CONSECUTIVE_MIN_HUE_SEP
+    )
+      continue;
+    return candidate;
+  }
+  for (let k = 0; k < n; k++) {
+    const candidate = (h0 + k) % n;
+    if (candidate !== lastIdx) return candidate;
+  }
+  return h0;
+}
+
+const no_image_feed_palette_index = computed(() => {
+  const articles = sanitized_content.value;
+  const out: (number | null)[] = new Array(articles.length).fill(null);
+  let last: number | null = null;
+  for (let i = 0; i < articles.length; i++) {
+    if (getArticleImageUrl(articles[i])) {
+      last = null;
+      continue;
+    }
+    const idx = resolveFeedNoImagePaletteIndex(articles[i], last);
+    out[i] = idx;
+    last = idx;
+  }
+  return out;
+});
+
+function getNoImagePalette(
+  article: Article,
+  feedIndex: number,
+): readonly [string, string, string] {
+  const resolved = no_image_feed_palette_index.value[feedIndex];
+  const n = NO_IMAGE_GRADIENT_PALETTES.length;
+  const idx =
+    resolved !== null && resolved !== undefined
+      ? resolved
+      : hashArticleKey(article) % n;
+  return NO_IMAGE_GRADIENT_PALETTES[idx];
 }
 
 function getArticleCardStyle(article: Article) {
@@ -685,7 +774,7 @@ onBeforeUnmount(() => {
       >
         <template v-if="!getArticleImageUrl(article)">
           <div
-            v-for="(orb, orb_i) in getNoImageHeroOrbs(article)"
+            v-for="(orb, orb_i) in getNoImageHeroOrbs(article, index)"
             :key="`${article.id}-orb-${orb_i}`"
             :class="orb.className"
             :style="orb.style"
