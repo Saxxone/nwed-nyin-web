@@ -586,7 +586,7 @@ onBeforeUnmount(() => {
     <section
       v-else
       ref="feed"
-      class="relative min-w-0 max-w-full h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain scroll-bar-none rounded-lg bg-base-white lg:h-[calc(100dvh-14rem)]"
+      class="relative min-w-0 max-w-full h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain scroll-bar-none rounded-2xl bg-base-white lg:h-[calc(100dvh-14rem)]"
       :class="
         is_restoring_feed_scroll
           ? 'invisible snap-none scroll-auto'
@@ -629,10 +629,10 @@ onBeforeUnmount(() => {
         :to="app_routes.articles.view(encodeURI(article.slug as string))"
         :style="getArticleCardStyle(article)"
         :class="[
-          'relative isolate mb-4 flex min-h-full min-w-0 snap-start snap-always flex-col overflow-hidden text-sm break-words outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gray-900 [overflow-wrap:anywhere] dark:focus-visible:ring-gray-100 lg-mb-6',
+          'relative isolate mb-4 flex min-h-full min-w-0 snap-start snap-always flex-col overflow-hidden text-sm break-words outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gray-900 [overflow-wrap:anywhere] dark:focus-visible:ring-gray-100 lg-mb-6 rounded-2xl',
           getArticleImageUrl(article)
             ? 'justify-end bg-cover bg-center px-5 py-8 hover:bg-base-light sm:px-8 lg:justify-center lg:px-12'
-            : 'justify-center rounded-2xl border border-gray-200 bg-base-white px-5 py-6 shadow-sm hover:bg-base-light dark:border-gray-800 sm:px-8 lg:px-10',
+            : 'justify-center border border-gray-200 bg-base-white px-5 py-6 shadow-sm hover:bg-base-light dark:border-gray-800 sm:px-8 lg:px-10',
         ]"
       >
         <template v-if="!getArticleImageUrl(article)">
@@ -646,12 +646,9 @@ onBeforeUnmount(() => {
 
         <article
           class="relative mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-5"
-          :class="
-            getArticleImageUrl(article) ? '' : 'items-center text-center'
-          "
         >
           <h2
-            class="min-w-0 text-balance break-words text-4xl font-extrabold capitalize leading-tight tracking-tight [overflow-wrap:anywhere] sm:text-5xl"
+            class="min-w-0 break-words text-4xl font-extrabold capitalize leading-tight [overflow-wrap:anywhere] lg:text-5xl"
             :class="getArticleImageUrl(article) ? 'text-white' : 'text-main'"
           >
             {{ article.title.toLowerCase() }}
