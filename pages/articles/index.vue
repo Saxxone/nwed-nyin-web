@@ -58,6 +58,9 @@ const show_mobile_search = computed(
 );
 const is_restoring_feed_scroll = ref(sanitized_content.value.length > 0);
 
+/** Syncs with `DarkMode.vue` / `document.documentElement.classList` (`dark`). */
+const html_is_dark = ref(false);
+
 const NO_IMAGE_GRADIENT_PALETTES = [
   ["#f472b6", "#a78bfa", "#38bdf8"],
   ["#34d399", "#22d3ee", "#60a5fa"],
@@ -85,14 +88,36 @@ function getNoImagePalette(article: Article): readonly [string, string, string] 
 }
 
 /** Matches article hero orbs (`bg-teal-100/70`, `bg-amber-100/70`) with vivid palette hues. */
-function hexToRgba(hex: string, alpha: number): string {
+function parseHexRgb(hex: string): [number, number, number] {
   const n = hex.replace("#", "").trim();
-  if (n.length !== 6) return `rgba(148, 163, 184, ${alpha})`;
-  const r = Number.parseInt(n.slice(0, 2), 16);
-  const g = Number.parseInt(n.slice(2, 4), 16);
-  const b = Number.parseInt(n.slice(4, 6), 16);
+  if (n.length !== 6) return [148, 163, 184];
+  return [
+    Number.parseInt(n.slice(0, 2), 16),
+    Number.parseInt(n.slice(2, 4), 16),
+    Number.parseInt(n.slice(4, 6), 16),
+  ];
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const [r, g, b] = parseHexRgb(hex);
   return `rgba(${r},${g},${b},${alpha})`;
 }
+
+/** Rich jewel-tone glow on dark UIs (Cf. hero `dark:bg-teal-950/40`). */
+function mixHexToward(hex: string, targetHex: string, amount: number): string {
+  const t = Math.min(1, Math.max(0, amount));
+  const [r1, g1, b1] = parseHexRgb(hex);
+  const [r2, g2, b2] = parseHexRgb(targetHex);
+  const r = Math.round(r1 + (r2 - r1) * t);
+  const g = Math.round(g1 + (g2 - g1) * t);
+  const b = Math.round(b1 + (b2 - b1) * t);
+  return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** Dark: vivid glow — low mix + high alpha so orbs read almost as bright as light mode. */
+const DARK_ORB_TINT_TARGET = "#334155";
+const DARK_ORB_MIX = 0.24;
+const DARK_ORB_ALPHA_SCALE = 1;
 
 /** Orb positions: corner blooms + extra accents (hero-style + fuller field). */
 const NO_IMAGE_ORB_SLOTS = [
@@ -128,6 +153,14 @@ const NO_IMAGE_ORB_SLOTS = [
   },
 ] as const;
 
+function orbBackgroundColor(slot: (typeof NO_IMAGE_ORB_SLOTS)[number], color: string) {
+  if (!html_is_dark.value) {
+    return hexToRgba(color, slot.alpha);
+  }
+  const mixed = mixHexToward(color, DARK_ORB_TINT_TARGET, DARK_ORB_MIX);
+  return hexToRgba(mixed, slot.alpha * DARK_ORB_ALPHA_SCALE);
+}
+
 function getNoImageHeroOrbs(article: Article) {
   const palette = getNoImagePalette(article);
   const colors = [...palette];
@@ -136,8 +169,8 @@ function getNoImageHeroOrbs(article: Article) {
   return NO_IMAGE_ORB_SLOTS.map((slot, i) => {
     const color = colors[(slot.colorIx + h + i) % 3];
     return {
-      className: `pointer-events-none absolute -z-10 rounded-full blur-3xl lg:blur-[5rem] dark:opacity-40 ${slot.positionClass}`,
-      style: { backgroundColor: hexToRgba(color, slot.alpha) },
+      className: `pointer-events-none absolute -z-10 rounded-full blur-3xl lg:blur-[5rem] ${slot.positionClass}`,
+      style: { backgroundColor: orbBackgroundColor(slot, color) },
     };
   });
 }
@@ -415,7 +448,20 @@ onBeforeUpdate(() => {
   article_items.value = [];
 });
 
+let html_dark_observer: MutationObserver | null = null;
+
 onMounted(async () => {
+  if (import.meta.client) {
+    html_is_dark.value = document.documentElement.classList.contains("dark");
+    html_dark_observer = new MutationObserver(() => {
+      html_is_dark.value = document.documentElement.classList.contains("dark");
+    });
+    html_dark_observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
+
   const restored_scroll_top = articles_feed_state.value.scrollTop;
 
   if (sanitized_content.value.length === 0) {
@@ -433,6 +479,8 @@ onBeforeRouteLeave(() => {
 });
 
 onBeforeUnmount(() => {
+  html_dark_observer?.disconnect();
+  html_dark_observer = null;
   clearAutoScrollTimer();
   if (scroll_settle_timer.value) clearTimeout(scroll_settle_timer.value);
   if (search_timer.value) clearTimeout(search_timer.value);
