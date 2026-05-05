@@ -49,6 +49,9 @@ const article_items = ref<HTMLElement[]>([]);
 const auto_scroll_timer = ref<ReturnType<typeof setTimeout> | null>(null);
 const scroll_settle_timer = ref<ReturnType<typeof setTimeout> | null>(null);
 const search_timer = ref<ReturnType<typeof setTimeout> | null>(null);
+/** Bumped when the browse/search list is replaced so stale in-flight fetches cannot overwrite state or clear loading incorrectly. */
+const articles_list_generation = ref(0);
+const search_debounce_ms = 320;
 const is_searching = computed(() => search_query.value.trim().length > 0);
 const show_search_results = computed(
   () => is_searching.value && !is_loading.value,
@@ -345,20 +348,38 @@ async function restoreFeedScroll(scroll_top: number) {
   is_restoring_feed_scroll.value = false;
 }
 
-async function getArticles({ append = false } = {}) {
-  if (
-    (append && is_loading_more.value) ||
-    (!append && is_loading.value) ||
-    !has_more_articles.value
-  )
-    return;
+async function getArticles({
+  append = false,
+  list_generation_when_started,
+}: {
+  append?: boolean;
+  /** When omitted, coherence is keyed off the generation at invocation time (fine for append). */
+  list_generation_when_started?: number;
+} = {}) {
+  const coherence_gen =
+    list_generation_when_started ?? articles_list_generation.value;
+
+  if (append) {
+    if (is_loading_more.value || !has_more_articles.value) return;
+  } else {
+    const can_start =
+      !is_loading.value ||
+      list_generation_when_started === articles_list_generation.value;
+    if (!can_start) return;
+  }
 
   try {
-    if (append) is_loading_more.value = true;
-    else is_loading.value = true;
+    if (append) {
+      is_loading_more.value = true;
+    } else {
+      is_loading.value = true;
+      sanitized_content.value = [];
+      article_items.value = [];
+    }
 
     const skip = append ? sanitized_content.value.length : 0;
-    const items = is_searching.value
+    const searching = search_query.value.trim().length > 0;
+    const items = searching
       ? await articleStore.searchArticles(search_query.value.trim(), {
           skip,
           take: page_size,
@@ -368,19 +389,23 @@ async function getArticles({ append = false } = {}) {
           skip,
           take: page_size,
         });
+    if (coherence_gen !== articles_list_generation.value) return;
     sanitized_content.value = append
       ? [...sanitized_content.value, ...items]
       : items;
     has_more_articles.value = items.length === page_size;
     saveFeedState();
   } catch (error) {
+    if (coherence_gen !== articles_list_generation.value) return;
     toast({
       title: "Error loading article",
       description: error as string,
     });
   } finally {
-    is_loading.value = false;
-    is_loading_more.value = false;
+    if (coherence_gen === articles_list_generation.value) {
+      is_loading.value = false;
+      is_loading_more.value = false;
+    }
   }
 }
 
@@ -496,13 +521,14 @@ function resetFeedPosition() {
 }
 
 async function refreshArticles() {
+  articles_list_generation.value += 1;
+  const gen = articles_list_generation.value;
   has_more_articles.value = true;
-  sanitized_content.value = [];
-  article_items.value = [];
   resetFeedPosition();
   clearAutoScrollTimer();
-  await getArticles();
+  await getArticles({ list_generation_when_started: gen });
   await nextTick();
+  if (gen !== articles_list_generation.value) return;
   saveFeedState({ scroll_top: 0 });
   scheduleAutoScroll();
 }
@@ -554,7 +580,9 @@ onMounted(async () => {
   const restored_scroll_top = articles_feed_state.value.scrollTop;
 
   if (sanitized_content.value.length === 0) {
-    await getArticles();
+    articles_list_generation.value += 1;
+    const initial_gen = articles_list_generation.value;
+    await getArticles({ list_generation_when_started: initial_gen });
     is_restoring_feed_scroll.value = false;
   } else {
     await restoreFeedScroll(restored_scroll_top);
@@ -566,6 +594,26 @@ onMounted(async () => {
 onBeforeRouteLeave(() => {
   saveFeedState();
 });
+
+watch(
+  () => search_query.value,
+  () => {
+    if (search_timer.value) clearTimeout(search_timer.value);
+    search_timer.value = setTimeout(() => {
+      search_timer.value = null;
+      articles_list_generation.value += 1;
+      const gen = articles_list_generation.value;
+      has_more_articles.value = true;
+      resetFeedPosition();
+      clearAutoScrollTimer();
+      void getArticles({ list_generation_when_started: gen }).then(() => {
+        if (gen !== articles_list_generation.value) return;
+        saveFeedState({ scroll_top: 0 });
+        scheduleAutoScroll();
+      });
+    }, search_debounce_ms);
+  },
+);
 
 onBeforeUnmount(() => {
   html_dark_observer?.disconnect();
