@@ -74,6 +74,11 @@ const globalStore = useGlobalStore();
 const blob_url = ref<string>("");
 const compressed_file = ref<File>();
 
+/** True while multipart upload + resolving file URLs runs. */
+const is_uploading = ref(false);
+const upload_pct = ref(0);
+const upload_length_known = ref(true);
+
 const form = ref({
   name: "",
   description: "",
@@ -106,12 +111,23 @@ async function upload() {
   if (!form.value.name || !form.value.description) return;
   if (!compressed_file.value) return;
 
+  is_uploading.value = true;
+  upload_pct.value = 0;
+  upload_length_known.value = true;
+
   try {
     const file_for_upload = fileWithMultipartFilename(
       compressed_file.value,
       form.value.name,
     );
-    const response = await globalStore.uploadFiles([file_for_upload]);
+    const response = await globalStore.uploadFiles([file_for_upload], {
+      on_upload_progress(pct, length_known) {
+        upload_pct.value = pct;
+        upload_length_known.value = length_known;
+      },
+    });
+    upload_pct.value = 100;
+    upload_length_known.value = true;
     await getFileUrls(response);
     toast({
       title: `${form.value.name} uploaded successfully`,
@@ -122,6 +138,10 @@ async function upload() {
       title: `Error uploading ${props.file.name}`,
       description: `${error instanceof Error ? error.message : "Unknown error"}`,
     });
+  } finally {
+    is_uploading.value = false;
+    upload_pct.value = 0;
+    upload_length_known.value = true;
   }
 }
 async function handleImageCompression() {
@@ -208,7 +228,13 @@ onBeforeUnmount(() => {
     <div class="bg-base-light p-4 rounded-lg w-full max-w-lg m-4">
       <div class="flex justify-between items-center">
         <h2>Upload File</h2>
-        <IconsCloseIcon class="h-6 w-6" @click="emit('close')" />
+        <IconsCloseIcon
+          class="h-6 w-6 shrink-0 cursor-pointer"
+          :class="{
+            'pointer-events-none cursor-not-allowed opacity-40': is_uploading,
+          }"
+          @click="!is_uploading && emit('close')"
+        />
       </div>
       <form @submit.prevent.stop="upload">
         <div v-if="blob_url" class="my-4">
@@ -235,7 +261,7 @@ onBeforeUnmount(() => {
             loop
           />
         </div>
-        <fieldset>
+        <fieldset :disabled="is_uploading">
           <label for="name" class="font-semibold mb-1 block">File name</label>
           <input
             id="name"
@@ -276,19 +302,53 @@ onBeforeUnmount(() => {
             </option>
           </select>
         </fieldset>
+
+        <div
+          v-if="is_uploading"
+          class="my-4"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div
+            class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+          >
+            <div
+              class="h-full rounded-full bg-indigo-500 transition-[width] duration-150 ease-out"
+              :class="{ 'motion-safe:animate-pulse': !upload_length_known }"
+              :style="{
+                width: upload_length_known ? `${upload_pct}%` : '35%',
+              }"
+            />
+          </div>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {{
+              upload_length_known
+                ? `Uploading… ${upload_pct}%`
+                : "Uploading…"
+            }}
+          </p>
+        </div>
+
         <div class="flex justify-end">
           <Button
             type="button"
             class="mr-4 border border-gray-200 dark:border-gray-800"
             variant="outline"
+            :disabled="is_uploading"
             @click="emit('close')"
             >Cancel</Button
           >
           <Button
             type="submit"
-            :disabled="!form.name || !form.description || !compressed_file"
-            >Save</Button
+            :disabled="
+              !form.name ||
+              !form.description ||
+              !compressed_file ||
+              is_uploading
+            "
           >
+            {{ is_uploading ? "Uploading…" : "Save" }}
+          </Button>
         </div>
       </form>
     </div>

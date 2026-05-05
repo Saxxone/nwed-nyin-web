@@ -152,11 +152,16 @@ export async function useApiConnect<Body, Res>(
         !isAuthHandshakePath(path)
       ) {
         const refreshed = await refreshSession();
-        if (refreshed) continue;
+        if (refreshed.success) continue;
+        if (!refreshed.invalidateSession) break;
       }
 
       if (is401) {
-        await logout();
+        const alreadyInvalidated =
+          attempt === 0 &&
+          !isAuthHandshakePath(path) &&
+          (await refreshSession()).invalidateSession === false;
+        if (!alreadyInvalidated) await logout();
       }
 
       err = parseFetchError(error, err);

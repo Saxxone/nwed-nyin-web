@@ -19,8 +19,28 @@ function hasBearerToken(payload: unknown): payload is User {
   );
 }
 
+/** Result of exchanging the refresh token; drives retry vs logout in API helpers. */
+export type RefreshSessionResult =
+  | { success: true }
+  | { success: false; invalidateSession: boolean };
+
+function httpStatusFromUnknown(err: unknown): number | undefined {
+  const e = err as {
+    statusCode?: number;
+    status?: number;
+    response?: { status?: number };
+  };
+  const fromResponse =
+    typeof e.response?.status === "number" ? e.response.status : undefined;
+  return typeof e.statusCode === "number"
+    ? e.statusCode
+    : typeof e.status === "number"
+      ? e.status
+      : fromResponse;
+}
+
 export const useAuthStore = defineStore("auth", () => {
-  let refresh_in_flight: Promise<boolean> | null = null;
+  let refresh_in_flight: Promise<RefreshSessionResult> | null = null;
 
   const is_logged_in = useStorage("is_logged_in", false);
   const { toast } = useToast();
@@ -34,39 +54,59 @@ export const useAuthStore = defineStore("auth", () => {
    * Exchanges refresh_token for a new pair. Uses $fetch (not useApiConnect) to
    * avoid recursion. Concurrent callers in this tab share one refresh; across
    * tabs, `withAuthRefreshCoordination` serializes so only one refresh runs.
+   *
+   * On 401 from `/auth/refresh`, re-reads `refresh_token` once and retries so a
+   * peer tab that just rotated the row does not force logout. Network errors do
+   * not set `invalidateSession`.
    */
-  async function refreshSession(): Promise<boolean> {
+  async function refreshSession(): Promise<RefreshSessionResult> {
     const rt = readLocalStorageTrimmed("refresh_token");
-    if (!rt) return false;
+    if (!rt) return { success: false, invalidateSession: true };
 
     if (refresh_in_flight) return refresh_in_flight;
 
     const api_url = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
-    if (!api_url?.trim()) return false;
+    if (!api_url?.trim())
+      return { success: false, invalidateSession: false };
 
     refresh_in_flight = (async () => {
       try {
         return await withAuthRefreshCoordination(async () => {
-          const body_refresh = readLocalStorageTrimmed("refresh_token");
-          if (!body_refresh) return false;
+          const max_attempts = 2;
+          for (let attempt = 0; attempt < max_attempts; attempt++) {
+            const body_refresh = readLocalStorageTrimmed("refresh_token");
+            if (!body_refresh)
+              return { success: false, invalidateSession: true };
 
-          const res = await $fetch<{
-            access_token: string;
-            refresh_token?: string;
-          }>(`${api_url}${api_routes.auth.refresh}`, {
-            method: "POST",
-            body: { refresh_token: body_refresh },
-          });
-          if (!res?.access_token?.trim()) return false;
-          access_token.value = res.access_token;
-          if (res.refresh_token?.trim()) {
-            refresh_token.value = res.refresh_token;
+            try {
+              const res = await $fetch<{
+                access_token: string;
+                refresh_token?: string;
+              }>(`${api_url}${api_routes.auth.refresh}`, {
+                method: "POST",
+                body: { refresh_token: body_refresh },
+              });
+              if (!res?.access_token?.trim())
+                return { success: false, invalidateSession: true };
+              access_token.value = res.access_token;
+              if (res.refresh_token?.trim()) {
+                refresh_token.value = res.refresh_token;
+              }
+              is_logged_in.value = true;
+              return { success: true };
+            } catch (err: unknown) {
+              const status = httpStatusFromUnknown(err);
+              const is401 = status === 401;
+              if (is401 && attempt + 1 < max_attempts) continue;
+              if (is401)
+                return { success: false, invalidateSession: true };
+              return { success: false, invalidateSession: false };
+            }
           }
-          is_logged_in.value = true;
-          return true;
+          return { success: false, invalidateSession: true };
         });
       } catch {
-        return false;
+        return { success: false, invalidateSession: false };
       } finally {
         refresh_in_flight = null;
       }
