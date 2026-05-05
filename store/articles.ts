@@ -176,6 +176,9 @@ export const useArticleStore = defineStore("articles", () => {
 
   async function fetchArticleRevisions(article_id: string) {
     try {
+      if (!article_id?.trim()) {
+        throw new Error("Article id is required to load revisions");
+      }
       const response = await useApiConnect<undefined, ArticleRevision[]>(
         api_routes.articles.revisions(article_id),
         FetchMethod.GET,
@@ -183,6 +186,9 @@ export const useArticleStore = defineStore("articles", () => {
 
       if ("message" in response) {
         throw new Error(response.message);
+      }
+      if (!Array.isArray(response)) {
+        throw new Error("Unexpected response when loading revisions");
       }
       return response;
     } catch (error) {

@@ -138,17 +138,30 @@ button:disabled {
 .prose blockquote {
   @apply border-l-4 border-gray-300 pl-4 italic my-4;
 }
+/* Outside markers: with TipTap, each <li> wraps text in a block <p>. "inside"
+   puts the bullet on its own line above that paragraph; outside keeps bullet
+   and text on one line. */
 .prose ul {
-  list-style-position: inside;
+  list-style-position: outside;
   list-style-type: disc;
   margin-bottom: 1rem;
-  padding-left: 1rem;
+  padding-left: 1.5rem;
 }
 .prose ol {
-  list-style-position: inside;
+  list-style-position: outside;
   list-style-type: decimal;
   margin-bottom: 1rem;
-  padding-left: 1rem;
+  padding-left: 1.5rem;
+}
+.prose li > p {
+  margin-top: 0;
+  margin-bottom: 0.35em;
+}
+.prose li > p:last-child {
+  margin-bottom: 0;
+}
+.prose li > p:not(:first-child) {
+  margin-top: 0.5em;
 }
 .prose a {
   @apply text-blue-600 hover:underline dark:text-blue-400;

@@ -24,8 +24,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "radix-vue";
-import { ChevronDown, History, Table } from "lucide-vue-next";
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { ChevronDown, Table } from "lucide-vue-next";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
 import ArticleWysiwygEditor from "~/components/article/ArticleWysiwygEditor.vue";
 import { useArticleStore } from "~/store/articles";
 import type { Article, ArticleRevision } from "~/types/article";
@@ -114,11 +121,12 @@ const selected_article_revision = computed(() =>
 );
 
 async function load_article_revisions() {
-  if (!article.value.id) return;
+  const id = article.value.id;
+  if (!id) return;
 
   revisions_loading.value = true;
   try {
-    const list = await articleStore.fetchArticleRevisions(article.value.id);
+    const list = await articleStore.fetchArticleRevisions(id);
     article_revisions.value = list;
     selected_article_revision_id.value = list[0]?.id ?? null;
   } catch (error) {
@@ -551,8 +559,12 @@ onMounted(async () => {
       current_edit_slug.value = slug;
       await getArticleMeta(slug);
       await getMarkdownFile(slug + ".md");
+      const keys = getArticleDraftKeys(slug);
+      localStorage.setItem(keys.title, article.value.title);
+      localStorage.setItem(keys.content, article.value.content);
+    } else {
+      retrieveContentFromStorage();
     }
-    retrieveContentFromStorage();
   } finally {
     is_initializing_article.value = false;
     if (

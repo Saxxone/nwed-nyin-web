@@ -2,7 +2,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast/use-toast";
 import DOMPurify from "dompurify";
-import { ArrowLeft, Edit3, History } from "lucide-vue-next";
+import { ArrowLeft, Edit3 } from "lucide-vue-next";
 import { marked } from "marked";
 import SuggestedArticleSwipe from "~/components/article/SuggestedArticleSwipe.vue";
 import { useArticleStore } from "~/store/articles";
