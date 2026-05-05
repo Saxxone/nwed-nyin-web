@@ -5,7 +5,7 @@ import type { Pagination } from "~/types/types";
 import { FetchMethod } from "~/types/types";
 import type { PartOfSpeech, Word } from "~/types/word";
 import api_routes from "~/utils/api-routes";
-import { useAuthStore } from "~/store/auth";
+import { fetchWithAuthRetry } from "~/utils/fetch-with-auth-retry";
 
 function dictionaryListSearchParams(pagination: Pagination): string {
   const skip =
@@ -237,16 +237,10 @@ export const useDictStore = defineStore("dict", () => {
 
   async function fetchSound(path: string): Promise<Blob> {
     const api_url = import.meta.env.VITE_API_BASE_URL as string | undefined;
-    const authStore = useAuthStore();
     const url = `${api_url ?? ""}${api_routes.dictionary.getSound(path)}`;
 
     try {
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${authStore.access_token ?? ""}`,
-        },
-      });
+      const res = await fetchWithAuthRetry(url, { method: "GET" });
 
       if (!res.ok) {
         let message = res.statusText;

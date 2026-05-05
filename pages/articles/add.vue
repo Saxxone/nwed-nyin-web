@@ -11,10 +11,20 @@ import { useToast } from "@/components/ui/toast/use-toast";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDebounceFn, useFileDialog } from "@vueuse/core";
-import { History, Table } from "lucide-vue-next";
+import {
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRoot,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "radix-vue";
+import { ChevronDown, History, Table } from "lucide-vue-next";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import ArticleWysiwygEditor from "~/components/article/ArticleWysiwygEditor.vue";
 import { useArticleStore } from "~/store/articles";
@@ -197,7 +207,10 @@ watch(
   { flush: "post" },
 );
 
-const actions: FormatAction[] = [
+const HEADING_LEVELS = [1, 2, 3] as const;
+
+/** Toolbar blocks to the left of the heading dropdown. */
+const toolbar_actions_before_heading: FormatAction[] = [
   {
     label: "Bold",
     icon: "bold",
@@ -222,13 +235,10 @@ const actions: FormatAction[] = [
     shortcut: "Ctrl+U",
     markdown: { prefix: "<u>", suffix: "</u>" },
   },
-  {
-    label: "Heading",
-    icon: "heading",
-    formatting: "font-heading",
-    command: "heading",
-    markdown: { prefix: "# " },
-  },
+];
+
+/** Toolbar blocks to the right of the heading dropdown. */
+const toolbar_actions_after_heading: FormatAction[] = [
   {
     label: "Link",
     icon: "link",
@@ -252,6 +262,8 @@ const actions: FormatAction[] = [
     markdown: { prefix: "- " },
   },
 ];
+
+const heading_menu_open = ref(false);
 
 type NonFormattingAction = {
   label: string;
@@ -328,10 +340,11 @@ function applyFormat(evt: Event, action?: FormatAction) {
     case "underline":
       ed.chain().focus().toggleUnderline().run();
       break;
-    case "heading":
-      // Matches previous markdown toolbar (`# `) — level-1 heading.
-      ed.chain().focus().toggleHeading({ level: 1 }).run();
+    case "heading": {
+      const level = action.headingLevel ?? 1;
+      ed.chain().focus().toggleHeading({ level }).run();
       break;
+    }
     case "link": {
       const url = prompt("Enter URL:", "https://");
       if (!url) break;
@@ -373,6 +386,16 @@ function insertTable() {
     ?.chain()
     .focus()
     .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+    .run();
+}
+
+function applyHeadingLevel(level: (typeof HEADING_LEVELS)[number]) {
+  heading_menu_open.value = false;
+  body_editor.value
+    ?.getTiptap()
+    ?.chain()
+    .focus()
+    .toggleHeading({ level })
     .run();
 }
 
@@ -599,7 +622,10 @@ onUnmounted(() => {
         >
           <div class="flex min-w-0 shrink-0 items-center gap-1 overflow-x-auto">
             <TooltipProvider>
-              <Tooltip v-for="action in actions" :key="action.label">
+              <Tooltip
+                v-for="action in toolbar_actions_before_heading"
+                :key="action.label"
+              >
                 <TooltipTrigger as-child>
                   <button
                     type="button"
@@ -624,7 +650,87 @@ onUnmounted(() => {
                       v-if="action.icon === 'strikethrough'"
                       width="20"
                     />
-                    <span v-if="action.icon === 'heading'">H</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <div>
+                    <span>{{ action.label }}</span>
+                    <span v-if="action.shortcut" class="ml-2 text-xs">{{
+                      action.shortcut
+                    }}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+
+              <DropdownMenuRoot
+                v-model:open="heading_menu_open"
+                :modal="false"
+              >
+                <DropdownMenuTrigger as-child>
+                  <button
+                    type="button"
+                    class="inline-flex shrink-0 cursor-pointer select-none items-center gap-0.5 rounded border-0 px-2 py-3 text-xs font-semibold transition-colors duration-300 ease-in-out outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    :class="{
+                      'bg-base-light': is_scrolled,
+                      'bg-base-white': !is_scrolled,
+                    }"
+                    aria-haspopup="menu"
+                    :aria-expanded="heading_menu_open"
+                    title="Heading level"
+                  >
+                    H
+                    <ChevronDown
+                      class="h-3.5 w-3.5 opacity-70"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    align="start"
+                    side="bottom"
+                    :side-offset="6"
+                    class="z-[100] min-w-[10rem] overflow-hidden rounded-md border border-gray-200 bg-base-white p-1 text-sm shadow-md outline-none dark:border-gray-700 dark:bg-zinc-900"
+                  >
+                    <DropdownMenuLabel
+                      class="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400"
+                    >
+                      Heading level
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator
+                      class="-mx-1 my-1 h-px bg-gray-100 dark:bg-gray-800"
+                    />
+                    <DropdownMenuItem
+                      v-for="level in HEADING_LEVELS"
+                      :key="level"
+                      class="cursor-pointer rounded px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-zinc-800"
+                      @select="applyHeadingLevel(level)"
+                    >
+                      Heading {{ level }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenuRoot>
+
+              <Tooltip
+                v-for="action in toolbar_actions_after_heading"
+                :key="action.label"
+              >
+                <TooltipTrigger as-child>
+                  <button
+                    type="button"
+                    class="inline-flex shrink-0 cursor-pointer select-none rounded border-0 p-2 transition-colors duration-300 ease-in-out outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    :class="{
+                      'bg-base-light': is_scrolled,
+                      'bg-base-white': !is_scrolled,
+                    }"
+                    @pointerdown="preserveSelectionOnToolbarPointerdown"
+                    @click="applyFormat($event, action)"
+                  >
+                    <IconsStrikethroughIcon
+                      v-if="action.icon === 'strikethrough'"
+                      width="20"
+                    />
                     <IconsLinkIcon v-if="action.icon === 'link'" width="20" />
                     <IconsQuoteIcon v-if="action.icon === 'quote'" width="20" />
                     <IconsListIcon v-if="action.icon === 'list'" width="20" />

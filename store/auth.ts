@@ -16,6 +16,8 @@ function hasBearerToken(payload: unknown): payload is User {
 }
 
 export const useAuthStore = defineStore("auth", () => {
+  let refresh_in_flight: Promise<boolean> | null = null;
+
   const is_logged_in = useStorage("is_logged_in", false);
   const { toast } = useToast();
   const access_token = useStorage("access_token", "");
@@ -23,6 +25,45 @@ export const useAuthStore = defineStore("auth", () => {
   const user = useStorage("user", {} as User, localStorage, {
     mergeDefaults: true,
   });
+
+  /**
+   * Exchanges refresh_token for a new pair. Uses $fetch (not useApiConnect) to
+   * avoid recursion. Concurrent callers share one refresh request.
+   */
+  async function refreshSession(): Promise<boolean> {
+    const rt = refresh_token.value?.trim();
+    if (!rt) return false;
+
+    if (refresh_in_flight) return refresh_in_flight;
+
+    const api_url = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
+    if (!api_url?.trim()) return false;
+
+    refresh_in_flight = (async () => {
+      try {
+        const res = await $fetch<{
+          access_token: string;
+          refresh_token?: string;
+        }>(`${api_url}${api_routes.auth.refresh}`, {
+          method: "POST",
+          body: { refresh_token: rt },
+        });
+        if (!res?.access_token?.trim()) return false;
+        access_token.value = res.access_token;
+        if (res.refresh_token?.trim()) {
+          refresh_token.value = res.refresh_token;
+        }
+        is_logged_in.value = true;
+        return true;
+      } catch {
+        return false;
+      } finally {
+        refresh_in_flight = null;
+      }
+    })();
+
+    return refresh_in_flight;
+  }
 
   async function signup(userData: Partial<User>) {
     const response = await useApiConnect<Partial<User>, User>(
@@ -166,8 +207,10 @@ export const useAuthStore = defineStore("auth", () => {
   return {
     is_logged_in,
     access_token,
+    refresh_token,
     user,
     getAuthUserProfile,
+    refreshSession,
     signup,
     login,
     logout,

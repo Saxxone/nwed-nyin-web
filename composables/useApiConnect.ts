@@ -18,6 +18,40 @@ function toApiError(base: Error, patch: Partial<Error>): Error {
   };
 }
 
+/** Routes that obtain tokens or must not trigger refresh (avoid loops). */
+function isAuthHandshakePath(path: string): boolean {
+  const p = path.split("?")[0]?.replace(/^\/+/, "") ?? "";
+  return (
+    p === "auth/refresh" ||
+    p.startsWith("auth/login") ||
+    p.startsWith("auth/signup") ||
+    p.startsWith("auth/register")
+  );
+}
+
+function parseFetchError(error: unknown, err: Error): Error {
+  const e = error as {
+    statusCode?: number;
+    status?: number;
+    statusMessage?: string;
+    data?: { statusCode?: number; message?: unknown };
+    message?: string;
+  };
+  const data =
+    e.data && typeof e.data === "object"
+      ? e.data
+      : ({} as { statusCode?: number; message?: unknown });
+  const statusFromBody =
+    typeof data.statusCode === "number" ? data.statusCode : undefined;
+  const status =
+    statusFromBody ?? e.statusCode ?? e.status ?? err.status;
+  const message = normalizeApiMessage(
+    data.message,
+    e.statusMessage || e.message || err.message,
+  );
+  return toApiError(err, { message, status });
+}
+
 /**
  * Makes an API call using the provided parameters.
  *
@@ -40,7 +74,7 @@ export async function useApiConnect<Body, Res>(
 ): Promise<Res | Error> {
   const api_url = import.meta.env.VITE_API_BASE_URL;
   const authStore = useAuthStore();
-  const { logout } = authStore;
+  const { logout, refreshSession } = authStore;
   const globalStore = useGlobalStore();
   const { api_loading } = storeToRefs(globalStore);
 
@@ -54,87 +88,82 @@ export async function useApiConnect<Body, Res>(
     type: "error",
   };
 
-  const res = await $fetch<Res>(url, {
-    method,
-    headers: {
-      ...(content_type !== "multipart/form-data" && {
-        "Content-Type": content_type,
-      }),
-      Authorization: "Bearer " + authStore.access_token,
-      enctype: "multipart/form-data",
-    },
-    body: body ?? undefined,
-    cache: cache,
+  let res: Res | Error | undefined;
 
-    async onRequest({ options }) {
-      options.query = options.query || {};
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      res = await $fetch<Res>(url, {
+        method,
+        headers: {
+          ...(content_type !== "multipart/form-data" && {
+            "Content-Type": content_type,
+          }),
+          Authorization:
+            "Bearer " + (authStore.access_token ?? ""),
+          enctype: "multipart/form-data",
+        },
+        body: body ?? undefined,
+        cache: cache,
 
-      // modify request or options
-    },
+        async onRequest({ options }) {
+          options.query = options.query || {};
+        },
 
-    async onRequestError({ response }) {
-      const data = response?._data;
-      const status =
-        typeof response?.status === "number"
-          ? response.status
-          : typeof data?.statusCode === "number"
-            ? data.statusCode
-            : 500;
-      err = toApiError(err, {
-        message: normalizeApiMessage(
-          data?.message,
-          response?.statusText || err.message,
-        ),
-        status,
+        async onRequestError({ response }) {
+          const data = response?._data;
+          const status =
+            typeof response?.status === "number"
+              ? response.status
+              : typeof data?.statusCode === "number"
+                ? data.statusCode
+                : 500;
+          err = toApiError(err, {
+            message: normalizeApiMessage(
+              data?.message,
+              response?.statusText || err.message,
+            ),
+            status,
+          });
+        },
+
+        async onResponseError({ response }) {
+          const data = response._data;
+          const status =
+            response.status ||
+            (typeof data?.statusCode === "number" ? data.statusCode : err.status);
+          err = toApiError(err, {
+            message: normalizeApiMessage(
+              data?.message,
+              response.statusText || err.message,
+            ),
+            status,
+          });
+        },
       });
-    },
+      break;
+    } catch (error: unknown) {
+      console.log(error);
+      const e = error as { statusCode?: number; status?: number };
+      const is401 = e.statusCode === 401 || e.status === 401;
 
-    async onResponse() {
-      // handle response
-    },
-
-    async onResponseError({ response }) {
-      if (response.status === 401) {
-        logout();
+      if (
+        is401 &&
+        attempt === 0 &&
+        !isAuthHandshakePath(path)
+      ) {
+        const refreshed = await refreshSession();
+        if (refreshed) continue;
       }
-      const data = response._data;
-      const status =
-        response.status ||
-        (typeof data?.statusCode === "number" ? data.statusCode : err.status);
-      err = toApiError(err, {
-        message: normalizeApiMessage(
-          data?.message,
-          response.statusText || err.message,
-        ),
-        status,
-      });
-    },
-  }).catch((error: {
-    statusCode?: number;
-    status?: number;
-    statusMessage?: string;
-    data?: { statusCode?: number; message?: unknown };
-    message?: string;
-  }) => {
-    console.log(error);
-    if (error.statusCode === 401 || error.status === 401) {
-      logout();
+
+      if (is401) {
+        await logout();
+      }
+
+      err = parseFetchError(error, err);
+      res = err;
+      break;
     }
-    const data =
-      error.data && typeof error.data === "object"
-        ? error.data
-        : ({} as { statusCode?: number; message?: unknown });
-    const statusFromBody =
-      typeof data.statusCode === "number" ? data.statusCode : undefined;
-    const status =
-      statusFromBody ?? error.statusCode ?? error.status ?? err.status;
-    const message = normalizeApiMessage(
-      data.message,
-      error.statusMessage || error.message || err.message,
-    );
-    err = toApiError(err, { message, status });
-    return err;
-  });
+  }
 
   api_loading.value = false;
 

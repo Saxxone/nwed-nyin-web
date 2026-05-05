@@ -13,10 +13,9 @@ export const HeadingAtxTightInput = Extension.create({
   addInputRules() {
     return [
       new InputRule({
-        find: /^(#{1,6})(\S+)\s$/,
+        find: /^(#{1,3})(\S+)\s$/,
         handler: ({ range, match, chain }) => {
           const level = match[1].length;
-          if (level > 6) return null;
           const title = match[2];
           if (!title) return null;
 
@@ -45,7 +44,7 @@ export const HeadingAtxTightInput = Extension.create({
         if (!selection.empty) return false;
 
         const text = $from.parent.textContent;
-        const m = text.match(/^(#{1,6})(\S+)$/);
+        const m = text.match(/^(#{1,3})(\S+)$/);
         if (!m) return false;
 
         const level = m[1].length;

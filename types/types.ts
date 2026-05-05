@@ -76,6 +76,8 @@ export interface FormatAction {
   formatting: string;
   command: FormatCommand;
   shortcut?: string;
+  /** When `command` is `"heading"`, which ATX level (1–3) to apply in the editor / markdown. */
+  headingLevel?: 1 | 2 | 3;
   markdown: {
     prefix: string;
     suffix?: string;

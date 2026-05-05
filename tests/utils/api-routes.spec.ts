@@ -26,6 +26,7 @@ describe("api_routes", () => {
   it("exposes auth and file routes", () => {
     expect(apiRoutes.auth.login).toBe("/auth/login");
     expect(apiRoutes.auth.register).toBe("/auth/register");
+    expect(apiRoutes.auth.refresh).toBe("/auth/refresh");
     expect(apiRoutes.auth.profile).toBe("/auth/profile");
     expect(apiRoutes.files.download("cover.png")).toBe(
       "/file/download/cover.png",

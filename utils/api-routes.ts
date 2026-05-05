@@ -56,6 +56,7 @@ const api_routes = {
     register: "/auth/register",
     google_login: "/auth/login/google",
     google_signup: "/auth/signup/google",
+    refresh: "/auth/refresh",
     logout: "/auth/logout",
     profile: "/auth/profile",
   },

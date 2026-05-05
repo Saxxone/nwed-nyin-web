@@ -16,6 +16,7 @@ import { normalizeArticleImagePosition } from "~/utils/article-editor";
 import {
   editorHtmlToMarkdown,
   markdownToEditorHtml,
+  normalizePastedHtmlProseForEditor,
 } from "~/utils/article-markdown-bridge";
 import { ref, watch } from "vue";
 import {
@@ -48,6 +49,9 @@ const lastEmittedMd = ref(props.modelValue);
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
+      heading: {
+        levels: [1, 2, 3],
+      },
       link: {
         openOnClick: false,
         autolink: true,
@@ -74,6 +78,9 @@ const editor = useEditor({
     attributes: {
       class:
         "article-content prose prose-sm max-w-none min-h-[55vh] cursor-text rounded-lg bg-base-light p-3 dark:prose-invert focus:outline-none sm:min-h-96 sm:p-4 sm:text-base",
+    },
+    transformPastedHTML(html) {
+      return normalizePastedHtmlProseForEditor(html);
     },
   },
   editable: !props.disabled,

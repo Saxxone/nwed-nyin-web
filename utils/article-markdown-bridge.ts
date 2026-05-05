@@ -82,6 +82,11 @@ function sanitizeArticleHtml(html: string): string {
   });
 }
 
+/** Used by paste normalization — same rules as markdown pipeline. */
+export function sanitizeArticleEditorHtml(html: string): string {
+  return sanitizeArticleHtml(html);
+}
+
 export async function markdownToEditorHtml(markdown: string): Promise<string> {
   const md = markdown?.trim() ? markdown : "";
   if (!md) return "<p></p>";
@@ -127,7 +132,142 @@ export function looksLikeMarkdown(text: string): boolean {
   return false;
 }
 
-/** Prefer default HTML paste when the clipboard already has real rich structure. */
+function escapeHtmlPlainText(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function clipboardPlainLooksLikeFencedCodeBlock(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  return /^```[\s\S]*```/m.test(t) || t.startsWith("```");
+}
+
+function preLooksLikeSourceEditorHighlighting(pre: HTMLPreElement): boolean {
+  const cls = `${pre.className} ${pre.getAttribute("class") ?? ""}`;
+  if (/language-|hljs|prettyprint|line-numbers|wp-block-code/i.test(cls))
+    return true;
+  if (
+    pre.querySelector(
+      ".hljs, .token, [class*='syntax'], [class*='highlight']",
+    )
+  )
+    return true;
+  return false;
+}
+
+/**
+ * Find a single "prose in pre" block: Windows/Office often wraps `<pre>` in `<div>`,
+ * or only a `<pre>` is the real content among wrappers (cf. plain macOS single `<pre>`).
+ */
+function findLoneProsePreInPaste(body: HTMLElement): HTMLPreElement | null {
+  const skipTags = new Set([
+    "meta",
+    "style",
+    "title",
+    "link",
+    "base",
+    "script",
+  ]);
+
+  const meaningfulTop = [...body.children].filter((el) => {
+    const t = el.tagName.toLowerCase();
+    if (skipTags.has(t)) return false;
+    return true;
+  });
+
+  if (meaningfulTop.length === 1 && meaningfulTop[0]!.tagName.toLowerCase() === "pre") {
+    return meaningfulTop[0] as HTMLPreElement;
+  }
+
+  if (
+    meaningfulTop.length === 1 &&
+    meaningfulTop[0]!.tagName.toLowerCase() === "div"
+  ) {
+    const div = meaningfulTop[0]!;
+    const inner = [...div.children].filter((el) => {
+      const t = el.tagName.toLowerCase();
+      if (skipTags.has(t)) return false;
+      return true;
+    });
+    if (
+      inner.length === 1 &&
+      inner[0]!.tagName.toLowerCase() === "pre"
+    ) {
+      return inner[0] as HTMLPreElement;
+    }
+  }
+
+  const allPres = body.querySelectorAll("pre");
+  if (allPres.length !== 1) return null;
+  const onlyPre = allPres[0] as HTMLPreElement;
+  const bodyLen = (body.textContent ?? "").replace(/\s+/g, " ").trim().length;
+  const preLen = (onlyPre.textContent ?? "").replace(/\s+/g, " ").trim().length;
+  if (bodyLen === 0) return null;
+  if (preLen / bodyLen >= 0.85) return onlyPre;
+
+  return null;
+}
+
+/**
+ * When apps wrap formatted prose in `<pre>` / `<pre><code>` (common on macOS "Match Style"
+ * and some Windows sources), TipTap would otherwise create a code block.
+ * Unwrap to paragraphs, markdown, or inline HTML. Platform-agnostic — uses pasted HTML only.
+ */
+export function normalizePastedHtmlProseForEditor(html: string): string {
+  if (!html?.trim() || !/<pre\b/i.test(html)) return html;
+
+  let doc: Document;
+  try {
+    doc = new DOMParser().parseFromString(html, "text/html");
+  } catch {
+    return html;
+  }
+
+  const body = doc.body;
+  const pre = findLoneProsePreInPaste(body);
+  if (!pre) return html;
+
+  if (preLooksLikeSourceEditorHighlighting(pre)) return html;
+
+  const innerBlock = pre.querySelector(":scope > code") ?? pre;
+  const innerText = innerBlock.textContent ?? "";
+
+  if (clipboardPlainLooksLikeFencedCodeBlock(innerText)) return html;
+
+  const innerHtmlRaw = innerBlock.innerHTML.trim();
+
+  if (/<\s*(strong|b|em|i|u|a|span|br)\b/i.test(innerHtmlRaw)) {
+    const wrap = doc.createElement("div");
+    wrap.innerHTML = innerHtmlRaw;
+    return sanitizeArticleEditorHtml(wrap.innerHTML);
+  }
+
+  const plain = innerText.trim();
+  if (!plain) return html;
+
+  if (looksLikeMarkdown(plain)) return markdownToEditorHtmlSync(plain);
+
+  const paras = plain.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  if (paras.length === 0) return "<p></p>";
+  if (paras.length === 1) {
+    return sanitizeArticleEditorHtml(
+      `<p>${escapeHtmlPlainText(paras[0]!).replace(/\n/g, "<br>")}</p>`,
+    );
+  }
+  return sanitizeArticleEditorHtml(
+    paras
+      .map((p) => `<p>${escapeHtmlPlainText(p).replace(/\n/g, "<br>")}</p>`)
+      .join(""),
+  );
+}
+
+/** Prefer default HTML paste when the clipboard already has real rich document structure.
+ *  Note: `<pre>` is excluded — many apps wrap *formatted prose* in pre/code on paste (macOS/Windows);
+ *  those are normalized via {@link normalizePastedHtmlProseForEditor} instead of becoming a code block.
+ */
 export function clipboardHtmlLooksStructured(html: string): boolean {
   const h = html.trim().toLowerCase();
   if (!h) return false;
@@ -137,7 +277,6 @@ export function clipboardHtmlLooksStructured(html: string): boolean {
     /<ul[\s>]/.test(h) ||
     /<ol[\s>]/.test(h) ||
     /<blockquote[\s>]/.test(h) ||
-    /<pre[\s>]/.test(h) ||
     /<table[\s>]/.test(h) ||
     /<figure[\s>]/.test(h)
   );
