@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDebounceFn, useFileDialog } from "@vueuse/core";
-import { History } from "lucide-vue-next";
+import { History, Table } from "lucide-vue-next";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import ArticleWysiwygEditor from "~/components/article/ArticleWysiwygEditor.vue";
 import { useArticleStore } from "~/store/articles";
@@ -267,6 +267,11 @@ const { open, reset, onCancel, onChange } = useFileDialog({
 
 const non_formatting_actions: NonFormattingAction[] = [
   {
+    label: "Insert table",
+    command: insertTable,
+    icon: "table",
+  },
+  {
     label: "Upload media",
     command: () => open(),
     icon: "media",
@@ -360,6 +365,15 @@ function undo() {
 
 function redo() {
   body_editor.value?.getTiptap()?.chain().focus().redo().run();
+}
+
+function insertTable() {
+  body_editor.value
+    ?.getTiptap()
+    ?.chain()
+    .focus()
+    .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+    .run();
 }
 
 function discardFile() {
@@ -650,6 +664,11 @@ onUnmounted(() => {
                     <IconsUndoIcon v-if="action.icon === 'undo'" width="20" />
                     <IconsRedoIcon v-if="action.icon === 'redo'" width="20" />
                     <IconsMediaIcon v-if="action.icon === 'media'" width="20" />
+                    <Table
+                      v-if="action.icon === 'table'"
+                      class="h-5 w-5"
+                      aria-hidden="true"
+                    />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">

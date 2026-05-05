@@ -1,11 +1,84 @@
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import TurndownService from "turndown";
+import { gfm } from "turndown-plugin-gfm";
+
+const TABLE_TAGS = [
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "th",
+  "td",
+  "caption",
+  "colgroup",
+  "col",
+] as const;
+
+let dompurify_hooks_installed = false;
+
+function allowSafeTableCellStyle(node: Element, style: string | undefined): string {
+  if (!style?.trim()) return "";
+  const parts = style.split(";").map((s) => s.trim()).filter(Boolean);
+  const allowed: string[] = [];
+  for (const p of parts) {
+    const idx = p.indexOf(":");
+    if (idx === -1) continue;
+    const prop = p.slice(0, idx).trim().toLowerCase();
+    const val = p.slice(idx + 1).trim();
+    if (!val) continue;
+    if (prop === "text-align") {
+      const v = val.toLowerCase();
+      if (v === "left" || v === "right" || v === "center") allowed.push(`${prop}: ${v}`);
+    }
+    if (prop === "background-color") {
+      if (/^rgba?\([\d\s.,%]+\)$/i.test(val) || /^#[0-9a-f]{3,8}$/i.test(val))
+        allowed.push(`${prop}: ${val}`);
+    }
+  }
+  return allowed.join("; ");
+}
+
+function installTableSanitizerHooks(): void {
+  if (dompurify_hooks_installed) return;
+  dompurify_hooks_installed = true;
+
+  DOMPurify.addHook("uponSanitizeAttribute", (node, data) => {
+    const el = node as Element;
+    const name = data.attrName;
+    if (name !== "style") return;
+    const tag = el.nodeName;
+    if (tag !== "TD" && tag !== "TH" && tag !== "TABLE" && tag !== "COL")
+      return;
+    const safe = allowSafeTableCellStyle(el, el.getAttribute("style") ?? undefined);
+    if (safe) {
+      el.setAttribute("style", safe);
+      data.keepAttr = true;
+    } else {
+      data.keepAttr = false;
+    }
+  });
+}
 
 function sanitizeArticleHtml(html: string): string {
+  installTableSanitizerHooks();
   return DOMPurify.sanitize(html, {
-    ADD_TAGS: ["figure", "figcaption"],
-    ADD_ATTR: ["class", "loading", "decoding", "width", "height"],
+    ADD_TAGS: ["figure", "figcaption", ...TABLE_TAGS],
+    ADD_ATTR: [
+      "class",
+      "loading",
+      "decoding",
+      "width",
+      "height",
+      "colspan",
+      "rowspan",
+      "align",
+      "scope",
+      "style",
+      "colwidth",
+      "data-bg-color",
+    ],
   });
 }
 
@@ -47,6 +120,9 @@ export function looksLikeMarkdown(text: string): boolean {
   if (/__[^_\n]/.test(t)) return true;
   if (/~~[^~\n]/.test(t)) return true;
   if (/^[-*]{3,}\s*$/m.test(t)) return true;
+  // GFM pipe table (header row + separator)
+  if (/^\s*\|?.+\|.+\|\s*$/m.test(t) && /^\s*\|[\s\-:|]+\|\s*$/m.test(t))
+    return true;
 
   return false;
 }
@@ -76,6 +152,7 @@ function getTurndown(): TurndownService {
       codeBlockStyle: "fenced",
       emDelimiter: "_",
     });
+    gfm(td);
 
     td.addRule("articleFigure", {
       filter(node) {

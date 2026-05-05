@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import Placeholder from "@tiptap/extension-placeholder";
+import {
+  Table,
+  TableRow,
+} from "@tiptap/extension-table";
 import StarterKit from "@tiptap/starter-kit";
 import type { Editor } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
+import ArticleTableBubbleMenu from "~/components/article/ArticleTableBubbleMenu.vue";
 import { ArticleImageFigure } from "~/extensions/article-image-figure";
 import { HeadingAtxTightInput } from "~/extensions/heading-atx-tight-input";
 import { MarkdownPaste } from "~/extensions/markdown-paste";
@@ -13,6 +18,10 @@ import {
   markdownToEditorHtml,
 } from "~/utils/article-markdown-bridge";
 import { ref, watch } from "vue";
+import {
+  ArticleTableCell,
+  ArticleTableHeader,
+} from "~/extensions/article-table-cells";
 
 async function setEditorHtmlFromMarkdown(
   ed: Editor,
@@ -44,6 +53,16 @@ const editor = useEditor({
         autolink: true,
       },
     }),
+    Table.configure({
+      resizable: true,
+      renderWrapper: true,
+      cellMinWidth: 72,
+      handleWidth: 6,
+      lastColumnResizable: true,
+    }),
+    ArticleTableCell,
+    ArticleTableHeader,
+    TableRow,
     Placeholder.configure({
       placeholder: "Start writing…",
     }),
@@ -142,6 +161,48 @@ defineExpose({
 
 <template>
   <div class="min-h-[55vh] sm:min-h-96">
+    <ArticleTableBubbleMenu :editor="editor ?? undefined" />
     <EditorContent v-if="editor" :editor="editor" />
   </div>
 </template>
+
+<style scoped>
+/* TipTap tables: visible grid while editing (matches public article table treatment). */
+:deep(.article-content table) {
+  border-collapse: collapse;
+}
+:deep(.article-content th),
+:deep(.article-content td) {
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(229 231 235);
+  padding: 0.375rem 0.5rem;
+  vertical-align: top;
+}
+:global(.dark) :deep(.article-content th),
+:global(.dark) :deep(.article-content td) {
+  border-color: rgb(31 41 55);
+}
+/* ProseMirror column resize (from @tiptap/pm tables) */
+:deep(.column-resize-handle) {
+  bottom: -1px;
+  top: 0;
+  right: -3px;
+  position: absolute;
+  width: 6px;
+  z-index: 20;
+  background-color: rgb(45 212 191 / 0.55);
+  pointer-events: auto;
+  cursor: col-resize;
+}
+
+:deep(.article-content.resize-cursor),
+:deep(.resize-cursor) {
+  cursor: col-resize;
+}
+
+:deep(.tableWrapper) {
+  overflow-x: auto;
+  padding: 2px 0;
+}
+</style>

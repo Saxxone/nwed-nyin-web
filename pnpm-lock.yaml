@@ -17,12 +17,18 @@ dependencies:
   '@tiptap/core':
     specifier: ^3.22.5
     version: 3.22.5(@tiptap/pm@3.22.5)
+  '@tiptap/extension-bubble-menu':
+    specifier: ^3.22.5
+    version: 3.22.5(@tiptap/core@3.22.5)(@tiptap/pm@3.22.5)
   '@tiptap/extension-link':
     specifier: ^3.22.5
     version: 3.22.5(@tiptap/core@3.22.5)(@tiptap/pm@3.22.5)
   '@tiptap/extension-placeholder':
     specifier: ^3.22.5
     version: 3.22.5(@tiptap/extensions@3.22.5)
+  '@tiptap/extension-table':
+    specifier: ^3.22.5
+    version: 3.22.5(@tiptap/core@3.22.5)(@tiptap/pm@3.22.5)
   '@tiptap/extension-underline':
     specifier: ^3.22.5
     version: 3.22.5(@tiptap/core@3.22.5)
@@ -89,6 +95,9 @@ dependencies:
   turndown:
     specifier: ^7.2.4
     version: 7.2.4
+  turndown-plugin-gfm:
+    specifier: ^1.0.2
+    version: 1.0.2
   vee-validate:
     specifier: ^4.15.0
     version: 4.15.0(vue@3.5.13)
@@ -2065,7 +2074,6 @@ packages:
       '@tiptap/core': 3.22.5(@tiptap/pm@3.22.5)
       '@tiptap/pm': 3.22.5
     dev: false
-    optional: true
 
   /@tiptap/extension-bullet-list@3.22.5(@tiptap/extension-list@3.22.5):
     resolution: {integrity: sha512-cf54fG9AybU8NgPMv1TOcoqAkELeRc/VpnSCt/rIJZphWQx9nsFmrtkrlCatrIcCaGtNZYwlHlMnC5LVVMu0uA==}
@@ -2232,6 +2240,16 @@ packages:
       '@tiptap/core': 3.22.5
     dependencies:
       '@tiptap/core': 3.22.5(@tiptap/pm@3.22.5)
+    dev: false
+
+  /@tiptap/extension-table@3.22.5(@tiptap/core@3.22.5)(@tiptap/pm@3.22.5):
+    resolution: {integrity: sha512-GMBM07bCwzHx1NK08zXRr2mNTDnP78Hd0VxFsRBIDFddDMZ2qG5jhwKHXN5cHMTrdWokWFUjvnEeJeV3guHoGg==}
+    peerDependencies:
+      '@tiptap/core': 3.22.5
+      '@tiptap/pm': 3.22.5
+    dependencies:
+      '@tiptap/core': 3.22.5(@tiptap/pm@3.22.5)
+      '@tiptap/pm': 3.22.5
     dev: false
 
   /@tiptap/extension-text@3.22.5(@tiptap/core@3.22.5):
@@ -7725,6 +7743,10 @@ packages:
     resolution: {integrity: sha512-LxhtAkPDTkVCMQjt2h6eBVY28KCjikZqZfMcC15YBeNjkgUpdCfBu5HoiOTDu86v6smE8yOjyEktJ8hlbANHQA==}
     engines: {node: '>=0.6.x'}
     dev: true
+
+  /turndown-plugin-gfm@1.0.2:
+    resolution: {integrity: sha512-vwz9tfvF7XN/jE0dGoBei3FXWuvll78ohzCZQuOb+ZjWrs3a0XhQVomJEb2Qh4VHTPNRO4GPZh0V7VRbiWwkRg==}
+    dev: false
 
   /turndown@7.2.4:
     resolution: {integrity: sha512-I8yFsfRzmzK0WV1pNNOA4A7y4RDfFxPRxb3t+e3ui14qSGOxGtiSP6GjeX+Y6CHb7HYaFj7ECUD7VE5kQMZWGQ==}
