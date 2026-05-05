@@ -52,6 +52,8 @@ export interface ArticleRevision {
   created_at: string;
   created_by: string;
   content: unknown;
+  /** If the API could not find this revision number, it returns the latest stored row with version <= requested. */
+  requested_version?: number;
 }
 
 export interface Article {

@@ -20,6 +20,8 @@ const api_routes = {
     add: "/article/add",
     update: (id: string) => `/article/update/${id}`,
     revisions: (id: string) => `/article/revisions/${id}`,
+    revisionAt: (id: string, version: number) =>
+      `/article/revisions/${id}/v/${version}`,
     search: (query: string, skip: number = 0, take: number = 10) =>
       `/article/search?term=${encodeURIComponent(
         query,
