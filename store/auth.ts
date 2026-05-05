@@ -2,6 +2,10 @@ import { useToast } from "@/components/ui/toast/use-toast";
 import { useStorage } from "@vueuse/core";
 import { FetchMethod, isApiError } from "~/types/types";
 import type { User } from "~/types/user";
+import {
+  readLocalStorageTrimmed,
+  withAuthRefreshCoordination,
+} from "~/utils/auth-refresh-coordination";
 import api_routes from "~/utils/api-routes";
 import app_routes from "~/utils/routes";
 
@@ -28,10 +32,11 @@ export const useAuthStore = defineStore("auth", () => {
 
   /**
    * Exchanges refresh_token for a new pair. Uses $fetch (not useApiConnect) to
-   * avoid recursion. Concurrent callers share one refresh request.
+   * avoid recursion. Concurrent callers in this tab share one refresh; across
+   * tabs, `withAuthRefreshCoordination` serializes so only one refresh runs.
    */
   async function refreshSession(): Promise<boolean> {
-    const rt = refresh_token.value?.trim();
+    const rt = readLocalStorageTrimmed("refresh_token");
     if (!rt) return false;
 
     if (refresh_in_flight) return refresh_in_flight;
@@ -41,20 +46,25 @@ export const useAuthStore = defineStore("auth", () => {
 
     refresh_in_flight = (async () => {
       try {
-        const res = await $fetch<{
-          access_token: string;
-          refresh_token?: string;
-        }>(`${api_url}${api_routes.auth.refresh}`, {
-          method: "POST",
-          body: { refresh_token: rt },
+        return await withAuthRefreshCoordination(async () => {
+          const body_refresh = readLocalStorageTrimmed("refresh_token");
+          if (!body_refresh) return false;
+
+          const res = await $fetch<{
+            access_token: string;
+            refresh_token?: string;
+          }>(`${api_url}${api_routes.auth.refresh}`, {
+            method: "POST",
+            body: { refresh_token: body_refresh },
+          });
+          if (!res?.access_token?.trim()) return false;
+          access_token.value = res.access_token;
+          if (res.refresh_token?.trim()) {
+            refresh_token.value = res.refresh_token;
+          }
+          is_logged_in.value = true;
+          return true;
         });
-        if (!res?.access_token?.trim()) return false;
-        access_token.value = res.access_token;
-        if (res.refresh_token?.trim()) {
-          refresh_token.value = res.refresh_token;
-        }
-        is_logged_in.value = true;
-        return true;
       } catch {
         return false;
       } finally {
