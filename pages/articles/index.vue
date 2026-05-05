@@ -64,15 +64,16 @@ const is_restoring_feed_scroll = ref(sanitized_content.value.length > 0);
 /** Syncs with `DarkMode.vue` / `document.documentElement.classList` (`dark`). */
 const html_is_dark = ref(false);
 
+/** Pastel stops (~Tailwind 200–250): soft blurs for no-image cards without neon saturation. */
 const NO_IMAGE_GRADIENT_PALETTES = [
-  ["#f472b6", "#a78bfa", "#38bdf8"],
-  ["#34d399", "#22d3ee", "#60a5fa"],
-  ["#fbbf24", "#fb923c", "#f43f5e"],
-  ["#c084fc", "#818cf8", "#2dd4bf"],
-  ["#4ade80", "#a3e635", "#eab308"],
-  ["#2dd4bf", "#93c5fd", "#e879f9"],
-  ["#fb7185", "#d946ef", "#38bdf8"],
-  ["#fcd34d", "#f97316", "#a855f7"],
+  ["#fbcfe8", "#ddd6fe", "#bae6fd"],
+  ["#a7f3d0", "#a5f3fc", "#bfdbfe"],
+  ["#dbeafe", "#cffafe", "#fecdd3"],
+  ["#ddd6fe", "#c7d2fe", "#99f6e4"],
+  ["#bbf7d0", "#d9f99d", "#e0e7ff"],
+  ["#99f6e4", "#bfdbfe", "#f5d0fe"],
+  ["#fecdd3", "#f5d0fe", "#bae6fd"],
+  ["#e0f2fe", "#dbeafe", "#e9d5ff"],
 ] as const;
 
 function hashArticleKey(article: Article): number {
@@ -113,7 +114,7 @@ function circularHueDistance(a: number, b: number): number {
   return Math.min(d, 360 - d);
 }
 
-/** Matches article hero orbs (`bg-teal-100/70`, `bg-amber-100/70`) with vivid palette hues. */
+/** Matches soft hero-style orbs; hues align with mild gradient stops above. */
 function parseHexRgb(hex: string): [number, number, number] {
   const n = hex.replace("#", "").trim();
   if (n.length !== 6) return [148, 163, 184];
