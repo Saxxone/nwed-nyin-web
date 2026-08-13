@@ -6,7 +6,8 @@ const api_routes = {
     updateSound: (id: string) => `/file/upload-sound/${id}`,
     view: (word: string) => `/dictionary/${word}`,
     viewById: (id: string) => `/dictionary/id/${id}`,
-    search: (query: string) => `/dictionary/search?term=${query}`,
+    search: (query: string) =>
+      `/dictionary/search?term=${encodeURIComponent(query)}`,
     jump: `/dictionary/jump`,
     parts_of_speech: "/dictionary/parts-of-speech",
     getSound: (path: string) =>

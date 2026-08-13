@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useApiConnect } from "~/composables/useApiConnect";
 import type { Pagination } from "~/types/types";
 import { FetchMethod } from "~/types/types";
-import type { PartOfSpeech, Word } from "~/types/word";
+import type { DictionarySearchHit, PartOfSpeech, Word } from "~/types/word";
 import api_routes from "~/utils/api-routes";
 import { fetchWithAuthRetry } from "~/utils/fetch-with-auth-retry";
 
@@ -22,11 +22,7 @@ function dictionaryListSearchParams(pagination: Pagination): string {
   ];
   const cursor =
     typeof pagination.cursor === "string" ? pagination.cursor.trim() : "";
-  if (
-    cursor.length > 0 &&
-    cursor !== "undefined" &&
-    cursor !== "null"
-  ) {
+  if (cursor.length > 0 && cursor !== "undefined" && cursor !== "null") {
     parts.unshift(`cursor=${encodeURIComponent(cursor)}`);
   }
   return parts.join("&");
@@ -36,9 +32,7 @@ function dictionaryJumpSearchParams(
   alphabet: string,
   pagination: Pagination,
 ): string {
-  const parts: string[] = [
-    `alphabet=${encodeURIComponent(alphabet.trim())}`,
-  ];
+  const parts: string[] = [`alphabet=${encodeURIComponent(alphabet.trim())}`];
   const take =
     typeof pagination.take === "number" && Number.isFinite(pagination.take)
       ? pagination.take
@@ -46,11 +40,7 @@ function dictionaryJumpSearchParams(
   parts.push(`take=${encodeURIComponent(String(take))}`);
   const cursor =
     typeof pagination.cursor === "string" ? pagination.cursor.trim() : "";
-  if (
-    cursor.length > 0 &&
-    cursor !== "undefined" &&
-    cursor !== "null"
-  ) {
+  if (cursor.length > 0 && cursor !== "undefined" && cursor !== "null") {
     parts.push(`cursor=${encodeURIComponent(cursor)}`);
   }
   return parts.join("&");
@@ -111,7 +101,7 @@ export const useDictStore = defineStore("dict", () => {
 
   async function searchWord(word: string) {
     try {
-      const response = await useApiConnect<string, Word[]>(
+      const response = await useApiConnect<string, DictionarySearchHit[]>(
         api_routes.dictionary.search(word),
         FetchMethod.GET,
       );
@@ -143,13 +133,10 @@ export const useDictStore = defineStore("dict", () => {
           audioCount: number;
         }
       >(
-        `${api_routes.dictionary.jump}?${dictionaryJumpSearchParams(
-          alphabet,
-          {
-            cursor: pagination.cursor,
-            take: pagination.take,
-          },
-        )}`,
+        `${api_routes.dictionary.jump}?${dictionaryJumpSearchParams(alphabet, {
+          cursor: pagination.cursor,
+          take: pagination.take,
+        })}`,
         FetchMethod.GET,
       );
 
@@ -245,7 +232,7 @@ export const useDictStore = defineStore("dict", () => {
       if (!res.ok) {
         let message = res.statusText;
         try {
-          const body = await res.json() as {
+          const body = (await res.json()) as {
             message?: unknown;
           };
           if (typeof body?.message === "string") message = body.message;

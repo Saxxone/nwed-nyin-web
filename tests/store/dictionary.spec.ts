@@ -80,6 +80,32 @@ describe("useDictStore", () => {
     );
   });
 
+  it("searches natural-language meanings through an encoded route", async () => {
+    const results = [
+      {
+        id: "word-1",
+        term: "ufok",
+        alt_spelling: "ufọk",
+        definitions: [],
+        search_match: {
+          field: "meaning",
+          text: "House, home, or a place where people live.",
+        },
+      },
+    ];
+    mockedUseApiConnect.mockResolvedValueOnce(results);
+
+    const store = useDictStore();
+    await expect(store.searchWord("place where people live")).resolves.toEqual(
+      results,
+    );
+
+    expect(mockedUseApiConnect).toHaveBeenCalledWith(
+      "/dictionary/search?term=place%20where%20people%20live",
+      FetchMethod.GET,
+    );
+  });
+
   it("throws API error messages from word fetches", async () => {
     mockedUseApiConnect.mockResolvedValueOnce({ message: "Dictionary failed" });
 

@@ -2,8 +2,9 @@
 import { useToast } from "@/components/ui/toast/use-toast";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-vue-next";
 import type { ComponentPublicInstance } from "vue";
+import { useDebouncedSearch } from "~/composables/useDebouncedSearch";
 import { useArticleStore } from "~/store/articles";
-import type { Article } from "~/types/article";
+import type { Article, ArticleSearchHit } from "~/types/article";
 import app_routes from "~/utils/routes";
 
 type ArticlesFeedState = {
@@ -36,7 +37,6 @@ const page_size = 10;
 const auto_scroll_delay = 5000;
 const api_url = import.meta.env.VITE_API_BASE_URL;
 const articleStore = useArticleStore();
-const search_query = ref(articles_feed_state.value.searchQuery);
 const is_mobile_search_open = ref(false);
 const sanitized_content = ref<Article[]>([
   ...articles_feed_state.value.articles,
@@ -48,16 +48,27 @@ const feed = ref<HTMLElement | null>(null);
 const article_items = ref<HTMLElement[]>([]);
 const auto_scroll_timer = ref<ReturnType<typeof setTimeout> | null>(null);
 const scroll_settle_timer = ref<ReturnType<typeof setTimeout> | null>(null);
-const search_timer = ref<ReturnType<typeof setTimeout> | null>(null);
 /** Bumped when the browse feed is replaced so stale in-flight fetches cannot overwrite state incorrectly. */
 const articles_list_generation = ref(0);
-/** Bumped per search request so stale search responses cannot overwrite the dropdown. */
-const search_list_generation = ref(0);
-const search_debounce_ms = 320;
-/** Results shown only in the search dropdown; the main feed always uses browse pagination. */
-const search_results = ref<Article[]>([]);
-const is_search_loading = ref(false);
-const is_searching = computed(() => search_query.value.trim().length > 0);
+const {
+  query: search_query,
+  results: search_results,
+  isLoading: is_search_loading,
+  errorMessage: search_error,
+  hasQuery: is_searching,
+  clear: clear_article_search,
+} = useDebouncedSearch<ArticleSearchHit>({
+  initialQuery: articles_feed_state.value.searchQuery,
+  search: (query) =>
+    articleStore.searchArticles(query, { skip: 0, take: page_size }),
+  onError: (error) => {
+    toast({
+      title: "Search failed",
+      description: error instanceof Error ? error.message : String(error),
+    });
+  },
+  onSettled: saveFeedState,
+});
 const show_search_results = computed(
   () => is_searching.value && !is_loading.value,
 );
@@ -194,7 +205,10 @@ const NO_IMAGE_ORB_SLOTS = [
   },
 ] as const;
 
-function orbBackgroundColor(slot: (typeof NO_IMAGE_ORB_SLOTS)[number], color: string) {
+function orbBackgroundColor(
+  slot: (typeof NO_IMAGE_ORB_SLOTS)[number],
+  color: string,
+) {
   if (!html_is_dark.value) {
     return hexToRgba(color, slot.alpha);
   }
@@ -540,40 +554,8 @@ async function openMobileSearch() {
 }
 
 function closeMobileSearch() {
-  search_list_generation.value += 1;
-  search_query.value = "";
-  search_results.value = [];
+  clear_article_search();
   is_mobile_search_open.value = false;
-}
-
-async function fetchSearchResults(trimmed_query: string) {
-  if (!trimmed_query) {
-    search_results.value = [];
-    is_search_loading.value = false;
-    return;
-  }
-  search_list_generation.value += 1;
-  const gen = search_list_generation.value;
-  is_search_loading.value = true;
-  try {
-    const items = await articleStore.searchArticles(trimmed_query, {
-      skip: 0,
-      take: page_size,
-    });
-    if (gen !== search_list_generation.value) return;
-    search_results.value = items;
-  } catch (error) {
-    if (gen !== search_list_generation.value) return;
-    toast({
-      title: "Search failed",
-      description: error as string,
-    });
-    search_results.value = [];
-  } finally {
-    if (gen === search_list_generation.value) {
-      is_search_loading.value = false;
-    }
-  }
 }
 
 function setArticleItem(
@@ -621,41 +603,17 @@ onMounted(async () => {
   }
 
   scheduleAutoScroll();
-
-  const initial_search = search_query.value.trim();
-  if (initial_search) {
-    void fetchSearchResults(initial_search);
-  }
 });
 
 onBeforeRouteLeave(() => {
   saveFeedState();
 });
 
-watch(
-  () => search_query.value,
-  () => {
-    if (search_timer.value) clearTimeout(search_timer.value);
-    const trimmed = search_query.value.trim();
-    if (!trimmed) {
-      search_list_generation.value += 1;
-      search_results.value = [];
-      is_search_loading.value = false;
-      return;
-    }
-    search_timer.value = setTimeout(() => {
-      search_timer.value = null;
-      void fetchSearchResults(trimmed);
-    }, search_debounce_ms);
-  },
-);
-
 onBeforeUnmount(() => {
   html_dark_observer?.disconnect();
   html_dark_observer = null;
   clearAutoScrollTimer();
   if (scroll_settle_timer.value) clearTimeout(scroll_settle_timer.value);
-  if (search_timer.value) clearTimeout(search_timer.value);
 });
 </script>
 
@@ -673,8 +631,8 @@ onBeforeUnmount(() => {
           v-model="search_query"
           class="input !mb-0 w-full"
           type="search"
-          placeholder="Search articles..."
-          aria-label="Search articles"
+          placeholder="Search articles by topic or content..."
+          aria-label="Search articles by topic or content"
           aria-controls="article-search-results"
           :aria-expanded="show_search_results"
         />
@@ -697,31 +655,44 @@ onBeforeUnmount(() => {
           </div>
 
           <template v-else>
-            <NuxtLink
-              v-for="article in search_results"
-              :key="`${article.id}-search-result`"
-              :to="app_routes.articles.view(encodeURI(article.slug as string))"
-              class="block min-w-0 max-w-full border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
-              role="option"
-            >
-              <p
-                class="break-words text-sm font-semibold capitalize text-main [overflow-wrap:anywhere]"
-              >
-                {{ article.title.toLowerCase() }}
-              </p>
-              <div
-                class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden break-words text-xs text-muted [overflow-wrap:anywhere] dark:prose-invert"
-              >
-                {{ article.summary }}
-              </div>
-            </NuxtLink>
-
             <div
-              v-if="search_results.length === 0"
+              v-if="search_error"
               class="px-4 py-6 text-center text-sm text-muted"
+              role="status"
             >
-              No articles found.
+              {{ search_error }} Try again as you continue typing.
             </div>
+
+            <template v-else>
+              <NuxtLink
+                v-for="article in search_results"
+                :key="`${article.id}-search-result`"
+                :to="
+                  app_routes.articles.view(encodeURI(article.slug as string))
+                "
+                class="block min-w-0 max-w-full border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
+                role="option"
+              >
+                <p
+                  class="break-words text-sm font-semibold capitalize text-main [overflow-wrap:anywhere]"
+                >
+                  {{ article.title.toLowerCase() }}
+                </p>
+                <div
+                  class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden break-words text-xs text-muted [overflow-wrap:anywhere] dark:prose-invert"
+                >
+                  {{ article.search_match?.text ?? article.summary }}
+                </div>
+              </NuxtLink>
+
+              <div
+                v-if="search_results.length === 0"
+                class="px-4 py-6 text-center text-sm text-muted"
+                role="status"
+              >
+                No articles found.
+              </div>
+            </template>
           </template>
         </div>
       </div>
@@ -758,8 +729,8 @@ onBeforeUnmount(() => {
           v-model="search_query"
           class="input !mb-0 w-full"
           type="search"
-          placeholder="Search articles..."
-          aria-label="Search articles"
+          placeholder="Search articles by topic or content..."
+          aria-label="Search articles by topic or content"
           aria-controls="mobile-article-search-results"
           :aria-expanded="show_search_results"
         />
@@ -791,31 +762,42 @@ onBeforeUnmount(() => {
         </div>
 
         <template v-else>
-          <NuxtLink
-            v-for="article in search_results"
-            :key="`${article.id}-mobile-search-result`"
-            :to="app_routes.articles.view(encodeURI(article.slug as string))"
-            class="block min-w-0 max-w-full border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
-            role="option"
-          >
-            <p
-              class="break-words text-sm font-semibold capitalize text-main [overflow-wrap:anywhere]"
-            >
-              {{ article.title.toLowerCase() }}
-            </p>
-            <div
-              class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden break-words text-xs text-muted [overflow-wrap:anywhere] dark:prose-invert"
-            >
-              {{ article.summary }}
-            </div>
-          </NuxtLink>
-
           <div
-            v-if="search_results.length === 0"
+            v-if="search_error"
             class="px-4 py-6 text-center text-sm text-muted"
+            role="status"
           >
-            No articles found.
+            {{ search_error }} Try again as you continue typing.
           </div>
+
+          <template v-else>
+            <NuxtLink
+              v-for="article in search_results"
+              :key="`${article.id}-mobile-search-result`"
+              :to="app_routes.articles.view(encodeURI(article.slug as string))"
+              class="block min-w-0 max-w-full border-b border-gray-100 px-4 py-3 outline-none transition-colors last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
+              role="option"
+            >
+              <p
+                class="break-words text-sm font-semibold capitalize text-main [overflow-wrap:anywhere]"
+              >
+                {{ article.title.toLowerCase() }}
+              </p>
+              <div
+                class="prose prose-sm mt-1 max-h-12 max-w-none overflow-hidden break-words text-xs text-muted [overflow-wrap:anywhere] dark:prose-invert"
+              >
+                {{ article.search_match?.text ?? article.summary }}
+              </div>
+            </NuxtLink>
+
+            <div
+              v-if="search_results.length === 0"
+              class="px-4 py-6 text-center text-sm text-muted"
+              role="status"
+            >
+              No articles found.
+            </div>
+          </template>
         </template>
       </div>
     </div>

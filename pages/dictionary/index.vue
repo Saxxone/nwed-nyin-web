@@ -3,12 +3,13 @@ import Definition from "@/components/dictionary/Definition.vue";
 import { useDictStore } from "@/store/dictionary";
 import DefinitionSkeleton from "~/components/app/DefinitionSkeleton.vue";
 import WayPoints from "~/components/dictionary/WayPoints.vue";
-import type { Word } from "~/types/word";
+import { useDebouncedSearch } from "~/composables/useDebouncedSearch";
+import type { DictionarySearchHit, Word } from "~/types/word";
 import app_routes from "~/utils/routes";
 
 type DictionaryListState = {
   words: Word[];
-  searchResults: Word[];
+  searchResults: DictionarySearchHit[];
   count: number;
   audioCount: number;
   take: number;
@@ -33,15 +34,24 @@ const is_loading = ref(false);
 const count = ref(dictionary_list_state.value.count);
 const audio_count = ref(dictionary_list_state.value.audioCount);
 const take = ref(dictionary_list_state.value.take);
-const query = ref(dictionary_list_state.value.query);
-const search_results = ref<Word[]>([
-  ...dictionary_list_state.value.searchResults,
-]);
 const dictStore = useDictStore();
+const {
+  query,
+  results: search_results,
+  isLoading: is_search_loading,
+  errorMessage: search_error,
+  hasQuery: has_search_query,
+  execute: execute_search,
+  clear: clear_dictionary_search,
+} = useDebouncedSearch<DictionarySearchHit>({
+  initialQuery: dictionary_list_state.value.query,
+  initialResults: dictionary_list_state.value.searchResults,
+  search: (search_query) => dictStore.searchWord(search_query),
+  onSettled: saveDictionaryListState,
+});
 
-async function search() {
-  search_results.value = await dictStore.searchWord(query.value);
-  saveDictionaryListState();
+function search() {
+  void execute_search(query.value);
 }
 
 function saveDictionaryListState(options?: {
@@ -124,7 +134,7 @@ async function jumpToAlphabet(alphabet: string) {
     count.value = total_count;
     audio_count.value = audioCount;
     words.value = dictionary;
-    search_results.value = [];
+    clear_dictionary_search();
     saveDictionaryListState({ scroll_y: 0 });
     is_loading.value = false;
     scrollToTop();
@@ -216,30 +226,69 @@ definePageMeta({
             v-model="query"
             class="input"
             type="search"
-            placeholder="Search..."
-            @keydown.enter="search"
+            placeholder="Search words or meanings..."
+            aria-label="Search words or meanings"
+            aria-controls="dictionary-search-results"
+            :aria-expanded="has_search_query"
           />
         </form>
         <div
-          v-if="search_results.length > 0"
+          v-if="has_search_query"
+          id="dictionary-search-results"
           class="absolute right-0 top-full z-30 mt-2 max-h-80 w-72 max-w-[min(100%,18rem)] overflow-y-auto rounded-lg bg-base-white shadow-lg dark:border dark:border-gray-700"
+          role="listbox"
         >
-          <div></div>
-          <NuxtLink
-            v-for="word in search_results"
-            :key="word.id + 'search'"
-            :to="`${routes.dictionary.view(encodeURI(word.term), encodeURI(word.id as string))}`"
-            class="block max-w-full min-w-0 border-b border-gray-100 p-4 last:border-b-0 dark:border-gray-800"
+          <div
+            v-if="is_search_loading"
+            class="flex items-center justify-center py-8"
           >
-            <div class="break-words font-medium [overflow-wrap:anywhere]">
-              {{ word.term }}
+            <div
+              class="mx-auto h-8 w-8 rounded-full bg-base-light p-1.5 shadow-lg"
+            >
+              <IconsLoadingIcon />
             </div>
-            <div class="mt-1 max-w-full text-sm text-muted">
-              <p class="break-words [overflow-wrap:anywhere]">
-                {{ word.definitions[0].meaning }}
-              </p>
+          </div>
+
+          <template v-else>
+            <div
+              v-if="search_error"
+              class="px-4 py-6 text-center text-sm text-muted"
+              role="status"
+            >
+              {{ search_error }} Try again as you continue typing.
             </div>
-          </NuxtLink>
+
+            <template v-else>
+              <NuxtLink
+                v-for="word in search_results"
+                :key="word.id + 'search'"
+                :to="`${routes.dictionary.view(encodeURI(word.term), encodeURI(word.id as string))}`"
+                class="block max-w-full min-w-0 border-b border-gray-100 p-4 outline-none last:border-b-0 hover:bg-base-light focus-visible:bg-base-light dark:border-gray-800"
+                role="option"
+              >
+                <div class="break-words font-medium [overflow-wrap:anywhere]">
+                  {{ word.term }}
+                </div>
+                <div class="mt-1 max-w-full text-sm text-muted">
+                  <p class="break-words [overflow-wrap:anywhere]">
+                    {{
+                      word.search_match?.text ??
+                      word.definitions[0]?.meaning ??
+                      ""
+                    }}
+                  </p>
+                </div>
+              </NuxtLink>
+
+              <div
+                v-if="search_results.length === 0"
+                class="px-4 py-6 text-center text-sm text-muted"
+                role="status"
+              >
+                No words found.
+              </div>
+            </template>
+          </template>
         </div>
       </div>
     </div>
@@ -251,11 +300,7 @@ definePageMeta({
       <div v-if="is_loading && words.length < 1">
         <DefinitionSkeleton v-for="i in 5" :key="'definition-skeleton-' + i" />
       </div>
-      <Definition
-        v-for="word in words"
-        :key="word.id"
-        :word="word"
-      />
+      <Definition v-for="word in words" :key="word.id" :word="word" />
       <WayPoints @jump="jumpToAlphabet" />
       <AppInfiniteScroll
         :enabled="infinite_scroll_enabled"

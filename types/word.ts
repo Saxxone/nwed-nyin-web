@@ -21,6 +21,13 @@ export interface Word {
   [key: string]: any;
 }
 
+export interface DictionarySearchHit extends Word {
+  search_match: {
+    field: "term" | "alt_spelling" | "meaning";
+    text: string;
+  };
+}
+
 export interface Definition {
   id?: string;
   word_id?: string;

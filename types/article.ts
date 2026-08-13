@@ -69,3 +69,10 @@ export interface Article {
   metadata?: ArticleMetadata | null;
   contributors?: ArticleContributor[];
 }
+
+export interface ArticleSearchHit extends Article {
+  search_match: {
+    field: "title" | "summary" | "slug" | "tag" | "category" | "section";
+    text: string;
+  };
+}

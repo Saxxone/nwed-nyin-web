@@ -21,6 +21,9 @@ describe("api_routes", () => {
     expect(apiRoutes.dictionary.updateSound("word-id")).toBe(
       "/file/upload-sound/word-id",
     );
+    expect(apiRoutes.dictionary.search("place where people live")).toBe(
+      "/dictionary/search?term=place%20where%20people%20live",
+    );
   });
 
   it("exposes auth and file routes", () => {

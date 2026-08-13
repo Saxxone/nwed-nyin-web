@@ -1,7 +1,11 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useApiConnect } from "~/composables/useApiConnect";
-import type { Article, ArticleRevision } from "~/types/article";
+import type {
+  Article,
+  ArticleRevision,
+  ArticleSearchHit,
+} from "~/types/article";
 import type { Pagination } from "~/types/types";
 import { FetchMethod } from "~/types/types";
 import api_routes from "~/utils/api-routes";
@@ -202,7 +206,7 @@ export const useArticleStore = defineStore("articles", () => {
     pagination: Pagination = { skip: 0, take: 10 },
   ) {
     try {
-      const response = await useApiConnect<string, Article[]>(
+      const response = await useApiConnect<string, ArticleSearchHit[]>(
         api_routes.articles.search(
           query,
           pagination.skip ?? 0,
